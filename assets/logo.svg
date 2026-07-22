@@ -1,27 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 80" width="400" height="80">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
   <defs>
-    <linearGradient id="leafGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#2d6a4f"/>
-      <stop offset="100%" style="stop-color:#52b788"/>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1b4332"/>
+      <stop offset="50%" style="stop-color:#2d6a4f"/>
+      <stop offset="100%" style="stop-color:#40916c"/>
     </linearGradient>
-    <linearGradient id="textGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#2d6a4f"/>
-      <stop offset="50%" style="stop-color:#40916c"/>
-      <stop offset="100%" style="stop-color:#52b788"/>
+    <linearGradient id="shine" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:rgba(255,255,255,0.15)"/>
+      <stop offset="100%" style="stop-color:rgba(255,255,255,0)"/>
     </linearGradient>
-    <filter id="shadow" x="-5%" y="-5%" width="110%" height="120%">
-      <feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-color="#2d6a4f" flood-opacity="0.3"/>
-    </filter>
   </defs>
-  <!-- Leaf icon -->
-  <g transform="translate(10, 8) scale(0.9)" filter="url(#shadow)">
-    <path d="M35 5 C20 5, 5 20, 5 35 C5 55, 25 70, 45 65 C35 55, 30 40, 35 25 C40 40, 45 55, 55 65 C75 70, 95 55, 95 35 C95 20, 80 5, 65 5 C55 5, 45 15, 35 5Z" fill="url(#leafGrad)"/>
-    <path d="M50 20 C50 20, 50 50, 50 60" stroke="#fff" stroke-width="1.5" fill="none" opacity="0.5"/>
-    <path d="M50 35 C40 30, 32 35, 32 35" stroke="#fff" stroke-width="1" fill="none" opacity="0.4"/>
-    <path d="M50 45 C60 40, 68 45, 68 45" stroke="#fff" stroke-width="1" fill="none" opacity="0.4"/>
-  </g>
-  <!-- Text: Aravali -->
-  <text x="115" y="42" font-family="Arial, Helvetica, sans-serif" font-size="32" font-weight="bold" fill="url(#textGrad)" filter="url(#shadow)">Aravali</text>
-  <!-- Text: Store -->
-  <text x="115" y="68" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="400" fill="#40916c" letter-spacing="6">STORE</text>
+  <rect width="64" height="64" rx="14" ry="14" fill="url(#bg)"/>
+  <rect width="64" height="64" rx="14" ry="14" fill="url(#shine)"/>
+  <text x="32" y="44" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="bold" fill="white" letter-spacing="-1">SS</text>
 </svg>
