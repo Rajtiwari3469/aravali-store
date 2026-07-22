@@ -143,6 +143,7 @@ const DB = {
   clearAllData() {
     const tables = ['products', 'banners', 'catalogs', 'orders', 'users', 'stock_logs', 'settings', 'returns'];
     tables.forEach(t => localStorage.removeItem(this._key(t)));
+    localStorage.removeItem('aravali_addresses');
   },
 
   logStockChange(productId, productName, change, reason) {
@@ -254,6 +255,90 @@ function generateSeedStockLogs() {
   return logs;
 }
 
+function generateSeedReturns() {
+  const orders = DB.getAll('orders');
+  const users = DB.getAll('users');
+  if (orders.length === 0) return [];
+
+  const reasons = ['Damaged product', 'Wrong item received', 'Product quality issue', 'Expired product', 'Missing items', 'No longer needed'];
+  const statuses = ['pending', 'pending', 'approved', 'approved', 'rejected', 'refunded'];
+  const returns = [];
+  const now = Date.now();
+
+  const deliveredOrders = orders.filter(o => o.status === 'delivered');
+  const sampleSize = Math.min(12, deliveredOrders.length);
+
+  for (let i = 0; i < sampleSize; i++) {
+    const order = deliveredOrders[Math.floor(Math.random() * deliveredOrders.length)];
+    const user = order.userId ? users.find(u => u.id === order.userId) : null;
+    const firstItem = (order.items || [])[0] || {};
+    const status = statuses[Math.floor(Math.random() * statuses.length)];
+    const createdDate = new Date(now - Math.floor(Math.random() * 20) * 86400000);
+
+    returns.push({
+      id: now.toString(36) + Math.random().toString(36).substr(2, 9) + i,
+      orderId: order.id,
+      userId: order.userId || null,
+      customerName: user ? user.name : (order.userName || 'Guest'),
+      productName: firstItem.name || 'Full Order',
+      productId: firstItem.productId || null,
+      qty: (order.items || []).reduce((s, i) => s + (i.qty || 1), 0),
+      reason: reasons[Math.floor(Math.random() * reasons.length)],
+      additionalInfo: Math.random() > 0.6 ? 'Please resolve this quickly.' : '',
+      refundAmount: order.total || 0,
+      status: status,
+      createdAt: createdDate.toISOString(),
+      reviewedAt: status !== 'pending' ? new Date(createdDate.getTime() + Math.floor(Math.random() * 3) * 86400000).toISOString() : null,
+      refundedAt: status === 'refunded' ? new Date(createdDate.getTime() + Math.floor(Math.random() * 5) * 86400000).toISOString() : null,
+      rejectReason: status === 'rejected' ? 'Item is not eligible for return as per policy.' : null
+    });
+  }
+  return returns;
+}
+
+function generateSeedAddresses() {
+  const users = DB.getAll('users');
+  if (users.length === 0) return;
+
+  const addressTemplates = [
+    { line: '12 MG Road, Near City Mall', city: 'Udaipur', state: 'Rajasthan', pincode: '313001' },
+    { line: '45 Park Street, Block B', city: 'Jaipur', state: 'Rajasthan', pincode: '302001' },
+    { line: '78 Civil Lines, Sector 3', city: 'Delhi', state: 'Delhi', pincode: '110001' },
+    { line: '23 Gomti Nagar, Phase 2', city: 'Lucknow', state: 'Uttar Pradesh', pincode: '226010' },
+    { line: '90 Hazratganj, Main Road', city: 'Lucknow', state: 'Uttar Pradesh', pincode: '226001' },
+    { line: '34 Aundh, Baner Road', city: 'Pune', state: 'Maharashtra', pincode: '411007' },
+    { line: '56 Whitefield, IT Park Road', city: 'Bangalore', state: 'Karnataka', pincode: '560066' },
+    { line: '67 Salt Lake, Sector V', city: 'Kolkata', state: 'West Bengal', pincode: '700091' },
+    { line: '81 Banjara Hills, Road No 12', city: 'Hyderabad', state: 'Telangana', pincode: '500034' },
+    { line: '14 Deccan Gymkhana, FC Road', city: 'Pune', state: 'Maharashtra', pincode: '411004' },
+    { line: '22 Anna Salai, T Nagar', city: 'Chennai', state: 'Tamil Nadu', pincode: '600017' },
+    { line: '39 Lajpat Nagar, Part 1', city: 'Delhi', state: 'Delhi', pincode: '110024' },
+    { line: '51 Koramangala, 5th Block', city: 'Bangalore', state: 'Karnataka', pincode: '560095' },
+    { line: '63 Andheri West, Link Road', city: 'Mumbai', state: 'Maharashtra', pincode: '400053' },
+    { line: '76 DLF Phase 3', city: 'Gurgaon', state: 'Haryana', pincode: '122002' }
+  ];
+
+  users.forEach((user, i) => {
+    const addrs = JSON.parse(localStorage.getItem('aravali_addresses') || '[]');
+    const existing = addrs.filter(a => a.userId === user.id);
+    if (existing.length > 0) return;
+
+    const addr = addressTemplates[i % addressTemplates.length];
+    addrs.push({
+      userId: user.id,
+      name: user.name || 'User',
+      phone: user.phone || '',
+      line: addr.line,
+      city: addr.city,
+      state: addr.state,
+      pincode: addr.pincode,
+      type: i % 3 === 0 ? 'work' : 'home',
+      isDefault: true
+    });
+    localStorage.setItem('aravali_addresses', JSON.stringify(addrs));
+  });
+}
+
 function initDB() {
   if (typeof SEED_DATA !== 'undefined') {
     DB.seed('products', SEED_DATA.products);
@@ -283,6 +368,12 @@ function initDB() {
   if (DB.getAll('stock_logs').length === 0) {
     DB.seed('stock_logs', generateSeedStockLogs());
   }
+
+  if (DB.getAll('returns').length === 0) {
+    DB.seed('returns', generateSeedReturns());
+  }
+
+  generateSeedAddresses();
 }
 
 if (typeof window !== 'undefined') {
