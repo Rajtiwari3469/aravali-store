@@ -16,80 +16,104 @@
       margin: 0 auto;
       padding: 0 20px 60px;
     }
-    .dashboard-sidebar {
+    .dash-sidebar {
       position: sticky;
       top: 100px;
       height: fit-content;
     }
-    .dashboard-sidebar .sidebar-menu {
-      list-style: none;
-      padding: 0;
-      margin: 0;
+    .dash-sidebar .sidebar-menu { list-style: none; padding: 0; margin: 0; }
+    .dash-sidebar .sidebar-menu li { margin-bottom: 4px; }
+    .dash-sidebar .sidebar-menu li a {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 16px; border-radius: 10px;
+      color: var(--text-light); text-decoration: none;
+      transition: all 0.2s; font-size: 0.92rem; font-weight: 500;
     }
-    .dashboard-sidebar .sidebar-menu li {
-      margin-bottom: 4px;
+    .dash-sidebar .sidebar-menu li a:hover,
+    .dash-sidebar .sidebar-menu li a.active-link {
+      background: rgba(82,183,136,0.12); color: var(--primary);
     }
-    .dashboard-sidebar .sidebar-menu li a {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 12px 16px;
-      border-radius: 10px;
-      color: #ccc;
-      text-decoration: none;
-      transition: all 0.2s;
-      font-size: 0.95rem;
+    .dash-content > .dash-section { display: none; }
+    .dash-content > .dash-section.active { display: block; }
+
+    .profile-header {
+      display: flex; align-items: center; gap: 24px;
+      margin-bottom: 28px; padding-bottom: 24px;
+      border-bottom: 1px solid rgba(45,106,79,0.08);
     }
-    .dashboard-sidebar .sidebar-menu li a:hover,
-    .dashboard-sidebar .sidebar-menu li a.active-link {
-      background: rgba(255, 107, 53, 0.15);
-      color: #ff6b35;
+    .profile-avatar {
+      width: 100px; height: 100px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2.5rem; color: white; overflow: hidden;
+      position: relative; flex-shrink: 0; cursor: pointer;
+      border: 3px solid white; box-shadow: 0 4px 16px rgba(45,106,79,0.2);
     }
-    .dashboard-content .form-group {
-      margin-bottom: 18px;
+    .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .profile-avatar .avatar-overlay {
+      position: absolute; inset: 0; background: rgba(0,0,0,0.5);
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 0.7rem; font-weight: 600; text-align: center;
+      opacity: 0; transition: opacity 0.2s; border-radius: 50%;
     }
-    .dashboard-content .form-group label {
-      display: block;
+    .profile-avatar:hover .avatar-overlay { opacity: 1; }
+    .profile-info h3 { font-size: 1.3rem; color: var(--primary-dark); margin-bottom: 4px; }
+    .profile-info p { color: var(--text-muted); font-size: 0.88rem; }
+
+    .stat-row {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 28px;
+    }
+    .stat-mini {
+      background: rgba(82,183,136,0.06); border-radius: 12px; padding: 16px; text-align: center;
+    }
+    .stat-mini h4 { font-size: 1.4rem; color: var(--primary); margin-bottom: 2px; }
+    .stat-mini p { font-size: 0.78rem; color: var(--text-muted); }
+
+    .order-card-dash {
+      background: rgba(255,255,255,0.5); border: 1px solid rgba(45,106,79,0.06);
+      border-radius: 12px; padding: 16px; margin-bottom: 12px;
+    }
+    .order-card-dash .order-top {
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;
+    }
+    .order-card-dash .order-id { font-weight: 700; color: var(--primary-dark); }
+    .order-card-dash .order-items { font-size: 0.85rem; color: var(--text-light); margin-bottom: 8px; }
+    .order-card-dash .order-bottom {
+      display: flex; justify-content: space-between; font-size: 0.85rem;
+      padding-top: 8px; border-top: 1px solid rgba(45,106,79,0.06);
+    }
+
+    .addr-card {
+      background: rgba(255,255,255,0.5); border: 1px solid rgba(45,106,79,0.08);
+      border-radius: 12px; padding: 16px; margin-bottom: 12px; position: relative;
+      transition: var(--transition);
+    }
+    .addr-card:hover { border-color: var(--secondary); }
+    .addr-card.default-addr { border-color: var(--primary); border-width: 2px; }
+    .addr-card .default-badge {
+      display: inline-block; padding: 2px 8px; background: var(--primary);
+      color: white; border-radius: 10px; font-size: 0.68rem; font-weight: 700;
       margin-bottom: 6px;
-      font-weight: 500;
-      font-size: 0.9rem;
-      color: #bbb;
     }
-    .dashboard-content .form-group input {
-      width: 100%;
-      padding: 10px 14px;
-      border-radius: 10px;
-      border: 1px solid rgba(255,255,255,0.1);
-      background: rgba(255,255,255,0.05);
-      color: #fff;
-      font-size: 0.95rem;
-      box-sizing: border-box;
+    .addr-card .addr-name { font-weight: 600; color: var(--text); }
+    .addr-card .addr-phone { color: var(--text-muted); font-size: 0.85rem; }
+    .addr-card .addr-line { color: var(--text-light); font-size: 0.88rem; margin-top: 4px; }
+    .addr-card .addr-actions {
+      position: absolute; top: 12px; right: 12px; display: flex; gap: 6px;
     }
-    .address-card {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 12px;
-      position: relative;
+    .addr-card .addr-actions button {
+      width: 28px; height: 28px; border-radius: 6px; border: 1px solid rgba(45,106,79,0.12);
+      background: white; cursor: pointer; font-size: 0.8rem;
+      display: flex; align-items: center; justify-content: center; transition: 0.2s;
     }
-    .address-card .delete-addr {
-      position: absolute;
-      top: 10px;
-      right: 12px;
-      background: none;
-      border: none;
-      color: #e74c3c;
-      cursor: pointer;
-      font-size: 1.1rem;
-    }
+    .addr-card .addr-actions button:hover { background: rgba(82,183,136,0.1); }
+    .addr-card .addr-actions button.delete-btn:hover { background: rgba(230,57,70,0.1); color: var(--danger); border-color: var(--danger); }
+
     @media (max-width: 768px) {
-      .dashboard-layout {
-        grid-template-columns: 1fr;
-      }
-      .dashboard-sidebar {
-        position: static;
-      }
+      .dashboard-layout { grid-template-columns: 1fr; }
+      .dash-sidebar { position: static; }
+      .profile-header { flex-direction: column; text-align: center; }
+      .stat-row { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -120,108 +144,152 @@
   </section>
 
   <div class="dashboard-layout">
-    <aside class="dashboard-sidebar glass-card" style="padding:16px;border-radius:16px;">
+    <aside class="dash-sidebar glass-card" style="padding:16px;border-radius:16px;">
       <ul class="sidebar-menu">
-        <li><a href="dashboard.html" class="active-link" data-section="profile">👤 My Profile</a></li>
-        <li><a href="dashboard.html?section=orders" data-section="orders">📦 My Orders</a></li>
+        <li><a href="#" class="active-link" data-section="profile" onclick="Dash.go('profile');return false;">👤 My Profile</a></li>
+        <li><a href="#" data-section="orders" onclick="Dash.go('orders');return false;">📦 My Orders</a></li>
         <li><a href="wishlist.html">❤️ Wishlist</a></li>
-        <li><a href="dashboard.html?section=addresses" data-section="addresses">📍 Addresses</a></li>
-        <li><a href="dashboard.html?section=settings" data-section="settings">⚙️ Settings</a></li>
-        <li><a href="#" onclick="App.logout(); return false;">🚪 Logout</a></li>
+        <li><a href="#" data-section="addresses" onclick="Dash.go('addresses');return false;">📍 Addresses</a></li>
+        <li><a href="#" data-section="settings" onclick="Dash.go('settings');return false;">⚙️ Settings</a></li>
+        <li style="margin-top:12px;border-top:1px solid rgba(45,106,79,0.08);padding-top:12px;"><a href="#" onclick="App.logout();return false;" style="color:var(--danger);">🚪 Logout</a></li>
       </ul>
     </aside>
 
-    <main class="dashboard-content">
-      <div id="section-profile" class="glass-card" style="padding:30px;border-radius:16px;">
-        <h2 style="margin-top:0;">My Profile</h2>
-        <form id="profileForm" onsubmit="DashboardApp.saveProfile(event)">
+    <main class="dash-content">
+
+      <!-- ===== PROFILE ===== -->
+      <div id="sec-profile" class="dash-section active glass-card" style="padding:30px;border-radius:16px;">
+        <div class="profile-header">
+          <div class="profile-avatar" onclick="document.getElementById('avatarInput').click()" id="avatarBox">
+            <img id="avatarPreview" src="" alt="" style="display:none;">
+            <span id="avatarEmoji">👤</span>
+            <div class="avatar-overlay">📷<br>Change</div>
+          </div>
+          <input type="file" id="avatarInput" accept="image/*" style="display:none;">
+          <div class="profile-info">
+            <h3 id="profileDisplayName">User</h3>
+            <p id="profileDisplayEmail">email@example.com</p>
+          </div>
+        </div>
+
+        <div class="stat-row" id="profileStats"></div>
+
+        <h3 style="margin-bottom:16px;color:var(--primary-dark);">Edit Profile</h3>
+        <form id="profileForm" onsubmit="Dash.saveProfile(event)">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
             <div class="form-group">
               <label>Full Name</label>
-              <input type="text" id="profile-name" placeholder="Your name">
+              <input type="text" id="pf-name" placeholder="Your name" required>
             </div>
             <div class="form-group">
               <label>Phone Number</label>
-              <input type="tel" id="profile-phone" placeholder="Your phone">
+              <input type="tel" id="pf-phone" placeholder="Your phone">
             </div>
           </div>
           <div class="form-group">
             <label>Email Address</label>
-            <input type="email" id="profile-email" placeholder="Your email">
+            <input type="email" id="pf-email" placeholder="Your email" required>
           </div>
-          <button type="submit" class="btn btn-primary" style="padding:12px 32px;border:none;border-radius:10px;background:linear-gradient(135deg,#ff6b35,#f7931e);color:#fff;font-weight:600;cursor:pointer;font-size:1rem;">Save Changes</button>
+          <button type="submit" class="btn btn-primary" style="padding:12px 32px;">Save Changes</button>
         </form>
       </div>
 
-      <div id="section-orders" class="glass-card" style="padding:30px;border-radius:16px;display:none;">
-        <h2 style="margin-top:0;">My Orders</h2>
-        <div id="orders-list"><p style="color:#aaa;">Loading your orders...</p></div>
+      <!-- ===== ORDERS ===== -->
+      <div id="sec-orders" class="dash-section glass-card" style="padding:30px;border-radius:16px;">
+        <h2 style="margin-top:0;margin-bottom:20px;">My Orders</h2>
+        <div id="ordersList"></div>
       </div>
 
-      <div id="section-addresses" class="glass-card" style="padding:30px;border-radius:16px;display:none;">
-        <h2 style="margin-top:0;">My Addresses</h2>
-        <div id="addresses-list" style="margin-bottom:24px;"></div>
-        <h3 style="margin-top:0;">Add New Address</h3>
-        <form id="addressForm" onsubmit="DashboardApp.saveAddress(event)">
+      <!-- ===== ADDRESSES ===== -->
+      <div id="sec-addresses" class="dash-section glass-card" style="padding:30px;border-radius:16px;">
+        <h2 style="margin-top:0;margin-bottom:20px;">My Addresses</h2>
+        <div id="addrList" style="margin-bottom:28px;"></div>
+
+        <h3 style="margin-top:0;margin-bottom:16px;color:var(--primary-dark);" id="addrFormTitle">Add New Address</h3>
+        <form id="addrForm" onsubmit="Dash.saveAddress(event)">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
             <div class="form-group">
               <label>Full Name</label>
-              <input type="text" id="addr-name" placeholder="Recipient name" required>
+              <input type="text" id="af-name" placeholder="Recipient name" required>
             </div>
             <div class="form-group">
               <label>Phone Number</label>
-              <input type="tel" id="addr-phone" placeholder="Phone number" required>
+              <input type="tel" id="af-phone" placeholder="Phone number" required>
             </div>
           </div>
           <div class="form-group">
             <label>Address Line</label>
-            <input type="text" id="addr-line" placeholder="Street address, apartment, etc." required>
+            <input type="text" id="af-line" placeholder="Street address, apartment, floor" required>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
             <div class="form-group">
               <label>City</label>
-              <input type="text" id="addr-city" placeholder="City" required>
+              <input type="text" id="af-city" placeholder="City" required>
             </div>
             <div class="form-group">
               <label>State</label>
-              <input type="text" id="addr-state" placeholder="State" required>
+              <input type="text" id="af-state" placeholder="State" required>
             </div>
             <div class="form-group">
               <label>Pincode</label>
-              <input type="text" id="addr-pincode" placeholder="Pincode" required>
+              <input type="text" id="af-pincode" placeholder="Pincode" required>
             </div>
           </div>
-          <button type="submit" class="btn btn-primary" style="padding:12px 32px;border:none;border-radius:10px;background:linear-gradient(135deg,#ff6b35,#f7931e);color:#fff;font-weight:600;cursor:pointer;font-size:1rem;">Add Address</button>
+          <div class="form-group">
+            <label>Address Type</label>
+            <select id="af-type">
+              <option value="home">🏠 Home</option>
+              <option value="work">🏢 Work</option>
+              <option value="other">📍 Other</option>
+            </select>
+          </div>
+          <input type="hidden" id="af-edit-id" value="">
+          <div style="display:flex;gap:10px;">
+            <button type="submit" class="btn btn-primary" style="padding:12px 32px;" id="addrSubmitBtn">Add Address</button>
+            <button type="button" class="btn btn-secondary" style="padding:12px 24px;display:none;" id="addrCancelBtn" onclick="Dash.cancelEdit()">Cancel</button>
+          </div>
         </form>
       </div>
 
-      <div id="section-settings" class="glass-card" style="padding:30px;border-radius:16px;display:none;">
-        <h2 style="margin-top:0;">Change Password</h2>
-        <form id="passwordForm" onsubmit="DashboardApp.changePassword(event)">
-          <div class="form-group">
-            <label>Current Password</label>
-            <div class="password-wrapper">
-              <input type="password" id="current-password" placeholder="Enter current password" required>
-              <button type="button" class="password-toggle" onclick="App.togglePassword('current-password')">👁️</button>
+      <!-- ===== SETTINGS ===== -->
+      <div id="sec-settings" class="dash-section glass-card" style="padding:30px;border-radius:16px;">
+        <h2 style="margin-top:0;margin-bottom:20px;">Settings</h2>
+
+        <div style="margin-bottom:28px;">
+          <h3 style="margin-bottom:14px;color:var(--primary-dark);">Change Password</h3>
+          <form id="passForm" onsubmit="Dash.changePassword(event)">
+            <div class="form-group">
+              <label>Current Password</label>
+              <div class="password-wrapper">
+                <input type="password" id="s-current" placeholder="Enter current password" required>
+                <button type="button" class="password-toggle" onclick="App.togglePassword('s-current')">👁️</button>
+              </div>
             </div>
-          </div>
-          <div class="form-group">
-            <label>New Password</label>
-            <div class="password-wrapper">
-              <input type="password" id="new-password" placeholder="Enter new password" required minlength="6">
-              <button type="button" class="password-toggle" onclick="App.togglePassword('new-password')">👁️</button>
+            <div class="form-group">
+              <label>New Password</label>
+              <div class="password-wrapper">
+                <input type="password" id="s-new" placeholder="Enter new password" required minlength="6">
+                <button type="button" class="password-toggle" onclick="App.togglePassword('s-new')">👁️</button>
+              </div>
             </div>
-          </div>
-          <div class="form-group">
-            <label>Confirm New Password</label>
-            <div class="password-wrapper">
-              <input type="password" id="confirm-password" placeholder="Confirm new password" required minlength="6">
-              <button type="button" class="password-toggle" onclick="App.togglePassword('confirm-password')">👁️</button>
+            <div class="form-group">
+              <label>Confirm New Password</label>
+              <div class="password-wrapper">
+                <input type="password" id="s-confirm" placeholder="Confirm new password" required minlength="6">
+                <button type="button" class="password-toggle" onclick="App.togglePassword('s-confirm')">👁️</button>
+              </div>
             </div>
-          </div>
-          <button type="submit" class="btn btn-primary" style="padding:12px 32px;border:none;border-radius:10px;background:linear-gradient(135deg,#ff6b35,#f7931e);color:#fff;font-weight:600;cursor:pointer;font-size:1rem;">Update Password</button>
-        </form>
+            <button type="submit" class="btn btn-primary" style="padding:12px 32px;">Update Password</button>
+          </form>
+        </div>
+
+        <div style="border-top:1px solid rgba(45,106,79,0.08);padding-top:24px;margin-top:24px;">
+          <h3 style="margin-bottom:10px;color:var(--danger);">Danger Zone</h3>
+          <p style="font-size:0.88rem;color:var(--text-muted);margin-bottom:14px;">Permanently delete your account and all associated data. This action cannot be undone.</p>
+          <button class="btn btn-danger" onclick="Dash.deleteAccount()">Delete My Account</button>
+        </div>
       </div>
+
     </main>
   </div>
 
@@ -231,7 +299,7 @@
       <div><h3>Policies</h3><ul><li><a href="privacy-policy.html">Privacy Policy</a></li><li><a href="terms-conditions.html">Terms & Conditions</a></li><li><a href="refund-return.html">Refund & Return</a></li><li><a href="shipping-policy.html">Shipping Policy</a></li><li><a href="cookie-policy.html">Cookie Policy</a></li></ul></div>
       <div><h3>Contact</h3><ul><li>📍 Udaipur, Rajasthan</li><li>📞 +91 98765 43210</li></ul></div>
     </div>
-    <div class="footer-bottom"><span>© 2026 Aravali Store. All rights reserved.</span></div>
+    <div class="footer-bottom"><span>© 2026 Aravali Store. All rights reserved.</span><span>I ❤️ INDIA</span></div>
   </footer>
 
   <script src="DBMS/data.js"></script>
@@ -239,109 +307,253 @@
   <script src="js/app.js"></script>
   <script>
     if (!App.requireAuth()) {
-      // redirect handled by requireAuth
+      // redirect handled
     } else {
-      const DashboardApp = {
+      const Dash = {
+        currentSection: 'profile',
+        editingAddrId: null,
+
         init() {
           const params = new URLSearchParams(window.location.search);
           const section = params.get('section') || 'profile';
-          this.showSection(section);
+          this.go(section);
           this.loadProfile();
-          if (section === 'addresses') this.loadAddresses();
-          if (section === 'orders') this.loadOrders();
+          this.initAvatar();
         },
 
-        showSection(name) {
-          document.querySelectorAll('.dashboard-content > div').forEach(el => el.style.display = 'none');
-          const target = document.getElementById('section-' + name);
-          if (target) target.style.display = 'block';
-          document.querySelectorAll('.sidebar-menu li a[data-section]').forEach(a => {
+        go(name) {
+          this.currentSection = name;
+          document.querySelectorAll('.dash-section').forEach(el => el.classList.remove('active'));
+          const sec = document.getElementById('sec-' + name);
+          if (sec) sec.classList.add('active');
+          document.querySelectorAll('.sidebar-menu a[data-section]').forEach(a => {
             a.classList.toggle('active-link', a.dataset.section === name);
           });
+          if (name === 'orders') this.loadOrders();
+          if (name === 'addresses') this.loadAddresses();
+          if (name === 'profile') this.loadProfile();
         },
 
+        // ===== PROFILE =====
         loadProfile() {
           const user = App.currentUser;
           if (!user) return;
-          document.getElementById('profile-name').value = user.name || '';
-          document.getElementById('profile-email').value = user.email || '';
-          document.getElementById('profile-phone').value = user.phone || '';
+          document.getElementById('pf-name').value = user.name || '';
+          document.getElementById('pf-email').value = user.email || '';
+          document.getElementById('pf-phone').value = user.phone || '';
+          document.getElementById('profileDisplayName').textContent = user.name || 'User';
+          document.getElementById('profileDisplayEmail').textContent = user.email || '';
+
+          if (user.avatar) {
+            document.getElementById('avatarPreview').src = user.avatar;
+            document.getElementById('avatarPreview').style.display = 'block';
+            document.getElementById('avatarEmoji').style.display = 'none';
+          } else {
+            document.getElementById('avatarPreview').style.display = 'none';
+            document.getElementById('avatarEmoji').style.display = 'block';
+            document.getElementById('avatarEmoji').textContent = (user.name || 'U').charAt(0).toUpperCase();
+          }
+
+          const orders = App.getOrders();
+          const addresses = JSON.parse(localStorage.getItem('aravali_addresses') || '[]');
+          document.getElementById('profileStats').innerHTML = `
+            <div class="stat-mini"><h4>${orders.length}</h4><p>Total Orders</p></div>
+            <div class="stat-mini"><h4>${App.formatCurrency(orders.reduce((s,o) => s + (o.total||0), 0))}</h4><p>Total Spent</p></div>
+            <div class="stat-mini"><h4>${addresses.length}</h4><p>Saved Addresses</p></div>`;
+        },
+
+        initAvatar() {
+          const input = document.getElementById('avatarInput');
+          input.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            if (file.size > 300 * 1024) {
+              App.showToast('Image too large. Max 300KB.', 'error');
+              return;
+            }
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+              App.updateCurrentUser({ avatar: ev.target.result });
+              this.loadProfile();
+              App.updateNav();
+              App.showToast('Profile photo updated!', 'success');
+            };
+            reader.readAsDataURL(file);
+          });
         },
 
         saveProfile(e) {
           e.preventDefault();
-          const user = App.currentUser;
-          if (!user) return;
-          user.name = document.getElementById('profile-name').value.trim();
-          user.email = document.getElementById('profile-email').value.trim();
-          user.phone = document.getElementById('profile-phone').value.trim();
-          App.updateCurrentUser(user);
-          App.showToast('Profile updated successfully!');
+          const name = document.getElementById('pf-name').value.trim();
+          const email = document.getElementById('pf-email').value.trim();
+          const phone = document.getElementById('pf-phone').value.trim();
+          if (!name || !email) {
+            App.showToast('Name and email are required', 'error');
+            return;
+          }
+          const users = DB.getAll('users');
+          const duplicate = users.find(u => u.email === email && u.id !== App.currentUser.id);
+          if (duplicate) {
+            App.showToast('Email is already registered', 'error');
+            return;
+          }
+          App.updateCurrentUser({ name, email, phone });
+          this.loadProfile();
+          App.updateNav();
+          App.showToast('Profile updated successfully!', 'success');
+        },
+
+        // ===== ORDERS =====
+        loadOrders() {
+          const container = document.getElementById('ordersList');
+          const orders = App.getOrders().reverse();
+          if (orders.length === 0) {
+            container.innerHTML = `
+              <div class="empty-state" style="padding:40px;">
+                <div class="empty-icon">📦</div>
+                <h3>No orders yet</h3>
+                <p>Start shopping to place your first order!</p>
+                <a href="shop.html" class="btn btn-primary">Browse Products</a>
+              </div>`;
+            return;
+          }
+          container.innerHTML = orders.map(o => `
+            <div class="order-card-dash">
+              <div class="order-top">
+                <span class="order-id">#${o.id.slice(-6).toUpperCase()}</span>
+                <span class="order-status ${o.status}">${o.status}</span>
+              </div>
+              <div class="order-items">
+                ${(o.items||[]).map(item => `${item.name} × ${item.qty}`).join(', ')}
+              </div>
+              <div class="order-bottom">
+                <span style="color:var(--text-muted);">${App.formatDate(o.orderDate || o.createdAt)}</span>
+                <span style="font-weight:700;color:var(--primary);">${App.formatCurrency(o.total||0)}</span>
+              </div>
+              <div style="font-size:0.78rem;color:var(--text-muted);margin-top:6px;">
+                📍 ${o.address || 'N/A'} • 💳 ${o.paymentMethod || 'N/A'}
+              </div>
+            </div>
+          `).join('');
+        },
+
+        // ===== ADDRESSES =====
+        getAddresses() {
+          return JSON.parse(localStorage.getItem('aravali_addresses') || '[]');
+        },
+
+        saveAddresses(addrs) {
+          localStorage.setItem('aravali_addresses', JSON.stringify(addrs));
         },
 
         loadAddresses() {
-          const addresses = JSON.parse(localStorage.getItem('aravali_addresses') || '[]');
-          const container = document.getElementById('addresses-list');
-          if (addresses.length === 0) {
-            container.innerHTML = '<p style="color:#aaa;">No saved addresses yet. Add one below.</p>';
+          const addrs = this.getAddresses();
+          const container = document.getElementById('addrList');
+          if (addrs.length === 0) {
+            container.innerHTML = '<p style="color:var(--text-muted);padding:12px 0;">No saved addresses yet. Add one below.</p>';
             return;
           }
-          container.innerHTML = addresses.map((a, i) => `
-            <div class="address-card">
-              <button class="delete-addr" onclick="DashboardApp.deleteAddress(${i})" title="Delete">✕</button>
-              <strong>${a.name}</strong> &nbsp;|&nbsp; ${a.phone}<br>
-              <span style="color:#bbb;">${a.line}, ${a.city}, ${a.state} - ${a.pincode}</span>
-            </div>
-          `).join('');
+          container.innerHTML = addrs.map((a, i) => {
+            const isDefault = a.isDefault;
+            const typeEmoji = a.type === 'work' ? '🏢' : a.type === 'work' ? '🏢' : '🏠';
+            return `
+            <div class="addr-card ${isDefault ? 'default-addr' : ''}">
+              <div class="addr-actions">
+                ${!isDefault ? `<button onclick="Dash.setDefault(${i})" title="Set as default">⭐</button>` : ''}
+                <button onclick="Dash.editAddress(${i})" title="Edit">✏️</button>
+                <button class="delete-btn" onclick="Dash.deleteAddress(${i})" title="Delete">🗑️</button>
+              </div>
+              ${isDefault ? '<span class="default-badge">DEFAULT</span>' : ''}
+              <div class="addr-name">${typeEmoji} ${a.name}</div>
+              <div class="addr-phone">${a.phone}</div>
+              <div class="addr-line">${a.line}, ${a.city}, ${a.state} - ${a.pincode}</div>
+            </div>`;
+          }).join('');
         },
 
         saveAddress(e) {
           e.preventDefault();
-          const addresses = JSON.parse(localStorage.getItem('aravali_addresses') || '[]');
-          addresses.push({
-            name: document.getElementById('addr-name').value.trim(),
-            phone: document.getElementById('addr-phone').value.trim(),
-            line: document.getElementById('addr-line').value.trim(),
-            city: document.getElementById('addr-city').value.trim(),
-            state: document.getElementById('addr-state').value.trim(),
-            pincode: document.getElementById('addr-pincode').value.trim()
-          });
-          localStorage.setItem('aravali_addresses', JSON.stringify(addresses));
-          document.getElementById('addressForm').reset();
+          const addrs = this.getAddresses();
+          const data = {
+            name: document.getElementById('af-name').value.trim(),
+            phone: document.getElementById('af-phone').value.trim(),
+            line: document.getElementById('af-line').value.trim(),
+            city: document.getElementById('af-city').value.trim(),
+            state: document.getElementById('af-state').value.trim(),
+            pincode: document.getElementById('af-pincode').value.trim(),
+            type: document.getElementById('af-type').value
+          };
+
+          const editId = document.getElementById('af-edit-id').value;
+          if (editId !== '') {
+            const idx = parseInt(editId);
+            data.isDefault = addrs[idx].isDefault;
+            addrs[idx] = data;
+            App.showToast('Address updated!', 'success');
+          } else {
+            if (addrs.length === 0) data.isDefault = true;
+            addrs.push(data);
+            App.showToast('Address added!', 'success');
+          }
+
+          this.saveAddresses(addrs);
+          this.cancelEdit();
           this.loadAddresses();
-          App.showToast('Address added successfully!');
+          this.loadProfile();
+        },
+
+        editAddress(index) {
+          const addrs = this.getAddresses();
+          const a = addrs[index];
+          if (!a) return;
+          document.getElementById('af-name').value = a.name;
+          document.getElementById('af-phone').value = a.phone;
+          document.getElementById('af-line').value = a.line;
+          document.getElementById('af-city').value = a.city;
+          document.getElementById('af-state').value = a.state;
+          document.getElementById('af-pincode').value = a.pincode;
+          document.getElementById('af-type').value = a.type || 'home';
+          document.getElementById('af-edit-id').value = index;
+          document.getElementById('addrFormTitle').textContent = 'Edit Address';
+          document.getElementById('addrSubmitBtn').textContent = 'Update Address';
+          document.getElementById('addrCancelBtn').style.display = 'inline-flex';
+          document.getElementById('addrForm').scrollIntoView({ behavior: 'smooth' });
+        },
+
+        cancelEdit() {
+          document.getElementById('addrForm').reset();
+          document.getElementById('af-edit-id').value = '';
+          document.getElementById('addrFormTitle').textContent = 'Add New Address';
+          document.getElementById('addrSubmitBtn').textContent = 'Add Address';
+          document.getElementById('addrCancelBtn').style.display = 'none';
         },
 
         deleteAddress(index) {
-          const addresses = JSON.parse(localStorage.getItem('aravali_addresses') || '[]');
-          addresses.splice(index, 1);
-          localStorage.setItem('aravali_addresses', JSON.stringify(addresses));
+          if (!confirm('Delete this address?')) return;
+          const addrs = this.getAddresses();
+          const wasDefault = addrs[index].isDefault;
+          addrs.splice(index, 1);
+          if (wasDefault && addrs.length > 0) addrs[0].isDefault = true;
+          this.saveAddresses(addrs);
           this.loadAddresses();
-          App.showToast('Address removed.');
+          this.loadProfile();
+          App.showToast('Address removed', 'info');
         },
 
-        loadOrders() {
-          const container = document.getElementById('orders-list');
-          const user = App.currentUser;
-          if (!user) return;
-          const orders = App.getOrders ? App.getOrders() : [];
-          if (orders.length === 0) {
-            container.innerHTML = '<p style="color:#aaa;">No orders yet. <a href="shop.html" style="color:#ff6b35;">Start shopping</a></p>';
-            return;
-          }
-          container.innerHTML = orders.map(o => `
-            <div class="address-card">
-              <strong>Order #${o.id || 'N/A'}</strong> &nbsp;|&nbsp; <span style="color:#aaa;">${o.date || ''}</span><br>
-              <span style="color:#bbb;">Total: ₹${o.total || 0} &nbsp;|&nbsp; Status: ${o.status || 'Pending'}</span>
-            </div>
-          `).join('');
+        setDefault(index) {
+          const addrs = this.getAddresses();
+          addrs.forEach((a, i) => a.isDefault = (i === index));
+          this.saveAddresses(addrs);
+          this.loadAddresses();
+          App.showToast('Default address updated', 'success');
         },
 
+        // ===== SETTINGS =====
         changePassword(e) {
           e.preventDefault();
-          const current = document.getElementById('current-password').value;
-          const newPass = document.getElementById('new-password').value;
-          const confirm = document.getElementById('confirm-password').value;
+          const current = document.getElementById('s-current').value;
+          const newPass = document.getElementById('s-new').value;
+          const confirm = document.getElementById('s-confirm').value;
           const user = App.currentUser;
           if (!user) return;
 
@@ -357,14 +569,24 @@
             App.showToast('Password must be at least 6 characters!', 'error');
             return;
           }
-          user.password = newPass;
-          App.updateCurrentUser(user);
-          document.getElementById('passwordForm').reset();
-          App.showToast('Password updated successfully!');
+          App.updateCurrentUser({ password: newPass });
+          document.getElementById('passForm').reset();
+          App.showToast('Password updated successfully!', 'success');
+        },
+
+        deleteAccount() {
+          if (!confirm('Are you sure you want to delete your account? This cannot be undone.')) return;
+          if (!confirm('All your data will be permanently removed. Continue?')) return;
+          const userId = App.currentUser.id;
+          DB.delete('users', userId);
+          App.currentUser = null;
+          localStorage.removeItem('aravali_currentUser');
+          App.showToast('Account deleted. Redirecting...', 'info');
+          setTimeout(() => window.location.href = 'index.html', 1500);
         }
       };
 
-      document.addEventListener('DOMContentLoaded', () => DashboardApp.init());
+      document.addEventListener('DOMContentLoaded', () => Dash.init());
     }
   </script>
 </body>

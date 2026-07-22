@@ -12,10 +12,13 @@ const App = {
   updateNav() {
     document.querySelectorAll('.nav-user-section').forEach(el => {
       if (this.currentUser) {
+        const avatarHtml = this.currentUser.avatar
+          ? `<img src="${this.currentUser.avatar}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;">`
+          : `<span>${(this.currentUser.name || 'U').charAt(0).toUpperCase()}</span>`;
         el.innerHTML = `
           <div class="user-dropdown">
-            <button class="nav-icon-btn" onclick="App.toggleUserDropdown()">
-              <span>👤</span>
+            <button class="nav-icon-btn" onclick="App.toggleUserDropdown()" style="font-size:1rem;">
+              ${avatarHtml}
             </button>
             <div class="user-dropdown-menu" id="userDropdown">
               <div style="padding:10px 14px;font-weight:600;font-size:0.88rem;border-bottom:1px solid rgba(45,106,79,0.08);margin-bottom:4px;">
@@ -97,6 +100,20 @@ const App = {
 
   isAdmin() {
     return this.currentUser && this.currentUser.isAdmin;
+  },
+
+  updateCurrentUser(data) {
+    this.currentUser = { ...this.currentUser, ...data };
+    localStorage.setItem('aravali_currentUser', JSON.stringify(this.currentUser));
+    // Also update in users DB
+    if (this.currentUser.id && !this.currentUser.isAdmin) {
+      DB.update('users', this.currentUser.id, data);
+    }
+  },
+
+  getOrders() {
+    if (!this.currentUser) return [];
+    return DB.query('orders', o => o.userId === this.currentUser.id);
   },
 
   requireAuth() {
