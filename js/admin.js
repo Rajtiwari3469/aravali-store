@@ -100,7 +100,7 @@ const Admin = {
     const users = DB.getAll('users');
     const totalRevenue = orders.reduce((sum, o) => sum + (o.total || 0), 0);
     const pendingOrders = orders.filter(o => o.status === 'pending').length;
-    const stockSummary = DB.getStockSummary();
+    const deliveredOrders = orders.filter(o => o.status === 'delivered').length;
     const outOfStockProducts = DB.getOutOfStockProducts();
     const lowStockProducts = DB.getLowStockProducts(5);
 
@@ -124,16 +124,19 @@ const Admin = {
           <div class="stat-info"><h3>${App.formatCurrency(totalRevenue)}</h3><p>Revenue</p></div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(230,57,70,0.15);">⚠️</div>
-          <div class="stat-info"><h3>${outOfStockProducts.length}</h3><p>Out of Stock</p></div>
+          <div class="stat-icon" style="background:rgba(244,140,6,0.15);">⏳</div>
+          <div class="stat-info"><h3>${pendingOrders}</h3><p>Pending Orders</p></div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(244,140,6,0.15);">📉</div>
-          <div class="stat-info"><h3>${lowStockProducts.length}</h3><p>Low Stock (≤5)</p></div>
+          <div class="stat-icon" style="background:rgba(82,183,136,0.15);">✅</div>
+          <div class="stat-info"><h3>${deliveredOrders}</h3><p>Delivered</p></div>
         </div>`;
     }
 
-    // Stock Alert Banner
+    // Stock Alert Banner (placed after stat-cards)
+    const existingAlert = main.querySelector('.stock-alert-banner');
+    if (existingAlert) existingAlert.remove();
+
     if (outOfStockProducts.length > 0 || lowStockProducts.length > 0) {
       const alertHtml = `
         <div class="stock-alert-banner" style="background:rgba(230,57,70,0.08);border:1px solid rgba(230,57,70,0.2);border-radius:var(--border-radius);padding:20px;margin-bottom:28px;">
@@ -168,33 +171,48 @@ const Admin = {
             </div>
           ` : ''}
         </div>`;
-      main.insertAdjacentHTML('afterbegin', alertHtml);
+
+      if (statCards) {
+        statCards.insertAdjacentHTML('afterend', alertHtml);
+      } else {
+        main.insertAdjacentHTML('afterbegin', alertHtml);
+      }
     }
 
-    // Sales chart
+    // Sales chart - dynamic last 6 months
     const chartContainer = document.querySelector('.chart-bars');
     if (chartContainer) {
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-      const maxRevenue = Math.max(...orders.map(o => o.total || 0), 100);
-      chartContainer.innerHTML = months.map((m, i) => {
+      const now = new Date();
+      const months = [];
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        months.push({ label: d.toLocaleString('en', { month: 'short' }), month: d.getMonth(), year: d.getFullYear() });
+      }
+
+      const monthRevenues = months.map(m => {
         const monthOrders = orders.filter(o => {
           const d = new Date(o.orderDate || o.createdAt);
-          return d.getMonth() === i;
+          return d.getMonth() === m.month && d.getFullYear() === m.year;
         });
-        const monthRevenue = monthOrders.reduce((sum, o) => sum + (o.total || 0), 0);
-        const height = Math.max(8, (monthRevenue / maxRevenue) * 150);
+        return monthOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+      });
+
+      const maxRevenue = Math.max(...monthRevenues, 100);
+      chartContainer.innerHTML = months.map((m, i) => {
+        const height = Math.max(8, (monthRevenues[i] / maxRevenue) * 150);
         return `
           <div class="chart-bar" style="height:${height}px;">
-            <span class="bar-value">${App.formatCurrency(monthRevenue)}</span>
-            <span class="bar-label">${m}</span>
+            <span class="bar-value">${App.formatCurrency(monthRevenues[i])}</span>
+            <span class="bar-label">${m.label}</span>
           </div>`;
       }).join('');
     }
 
-    // Recent orders
+    // Recent orders (sorted by date, newest first)
     const recentContainer = document.querySelector('.recent-orders-list');
     if (recentContainer) {
-      const recent = orders.slice(-5).reverse();
+      const sorted = [...orders].sort((a, b) => new Date(b.orderDate || b.createdAt) - new Date(a.orderDate || a.createdAt));
+      const recent = sorted.slice(0, 5);
       if (recent.length === 0) {
         recentContainer.innerHTML = '<p style="color:var(--text-muted);padding:16px;">No orders yet.</p>';
       } else {
@@ -202,7 +220,7 @@ const Admin = {
           <div class="recent-order-item">
             <div class="order-info">
               <span class="order-id">#${o.id.slice(-6).toUpperCase()}</span>
-              <span class="order-date">${App.formatDate(o.orderDate || o.createdAt)}</span>
+              <span class="order-date">${o.userName || 'Guest'} • ${App.formatDate(o.orderDate || o.createdAt)}</span>
             </div>
             <span class="order-status ${o.status}">${o.status}</span>
             <span style="font-weight:600;">${App.formatCurrency(o.total)}</span>
@@ -678,21 +696,31 @@ const Admin = {
         </div>
 
         <div class="glass-card" style="padding:30px;margin-top:20px;">
-          <h3 style="margin-bottom:6px;color:var(--primary-dark);">⚠️ Manage Data</h3>
+          <h3 style="margin-bottom:6px;color:var(--primary-dark);">Manage Data</h3>
           <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:20px;">Select specific data types to delete, or delete everything at once.</p>
 
-          <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;" id="dataCheckboxes">
-            ${Admin.renderDataCheckboxes()}
+          <div style="border:1px solid rgba(45,106,79,0.1);border-radius:12px;overflow:hidden;margin-bottom:20px;">
+            <label style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:rgba(45,106,79,0.04);border-bottom:1px solid rgba(45,106,79,0.1);cursor:pointer;user-select:none;" onmouseover="this.style.background='rgba(45,106,79,0.08)'" onmouseout="this.style.background='rgba(45,106,79,0.04)'">
+              <input type="checkbox" id="selectAllData" style="width:18px;height:18px;accent-color:var(--primary);" onchange="Admin.toggleSelectAll(this.checked)">
+              <span style="font-weight:700;font-size:0.9rem;">Select All</span>
+            </label>
+            <div id="dataCheckboxes" style="display:flex;flex-direction:column;">
+              ${Admin.renderDataCheckboxes()}
+            </div>
           </div>
 
-          <div style="display:flex;gap:10px;margin-bottom:16px;">
-            <button class="btn btn-secondary btn-sm" onclick="Admin.deleteSelectedData()" id="deleteSelectedBtn">🗑️ Delete Selected</button>
-            <button class="btn btn-danger btn-sm" onclick="Admin.deleteAllData()" style="background:var(--danger);color:white;" id="deleteAllBtn">💥 Delete ALL Data</button>
+          <div style="display:flex;gap:10px;margin-bottom:20px;">
+            <button class="btn btn-secondary" onclick="Admin.deleteSelectedData()" id="deleteSelectedBtn" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 16px;">
+              🗑️ Delete Selected
+            </button>
+            <button class="btn" onclick="Admin.deleteAllData()" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 16px;background:rgba(230,57,70,0.1);color:var(--danger);font-weight:700;border-radius:var(--border-radius);border:none;cursor:pointer;font-family:var(--font);font-size:0.88rem;transition:var(--transition);" onmouseover="this.style.background='rgba(230,57,70,0.2)'" onmouseout="this.style.background='rgba(230,57,70,0.1)'">
+              💥 Delete ALL Data
+            </button>
           </div>
 
-          <div style="padding:14px;background:rgba(230,57,70,0.06);border-radius:10px;border:1px dashed rgba(230,57,70,0.3);">
-            <p style="font-size:0.78rem;color:var(--text-muted);margin:0;">
-              <strong style="color:var(--danger);">Warning:</strong> "Delete Selected" removes only checked items. "Delete ALL Data" removes everything except admin account. This action cannot be undone. Export your data first as backup.
+          <div style="padding:14px;background:rgba(244,140,6,0.06);border-radius:10px;border:1px solid rgba(244,140,6,0.15);">
+            <p style="font-size:0.8rem;color:var(--text);margin:0;line-height:1.5;">
+              ⚠️ <strong>Delete Selected</strong> removes only checked items. <strong>Delete ALL</strong> wipes everything except admin account. Export your data first as backup. This action cannot be undone.
             </p>
           </div>
         </div>
@@ -1141,22 +1169,36 @@ const Admin = {
 
   renderDataCheckboxes() {
     const tables = [
-      { key: 'orders', label: 'Orders', icon: '🛒' },
-      { key: 'users', label: 'Users', icon: '👥' },
-      { key: 'products', label: 'Products', icon: '📦' },
-      { key: 'banners', label: 'Banners', icon: '🖼️' },
-      { key: 'catalogs', label: 'Catalogs', icon: '📂' },
-      { key: 'stock_logs', label: 'Stock Logs', icon: '📋' }
+      { key: 'orders', label: 'Orders', icon: '🛒', color: 'var(--accent)' },
+      { key: 'users', label: 'Users', icon: '👥', color: 'var(--primary)' },
+      { key: 'products', label: 'Products', icon: '📦', color: 'var(--secondary)' },
+      { key: 'banners', label: 'Banners', icon: '🖼️', color: '#0077b6' },
+      { key: 'catalogs', label: 'Catalogs', icon: '📂', color: '#9b5de5' },
+      { key: 'stock_logs', label: 'Stock Logs', icon: '📋', color: '#8d99ae' }
     ];
-    return tables.map(t => {
+    return tables.map((t, i) => {
       const count = DB.getAll(t.key).length;
-      return `<label style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(45,106,79,0.03);border-radius:10px;cursor:pointer;border:1px solid rgba(45,106,79,0.08);transition:background 0.2s;" onmouseover="this.style.background='rgba(45,106,79,0.08)'" onmouseout="this.style.background='rgba(45,106,79,0.03)'">
-        <input type="checkbox" class="data-checkbox" value="${t.key}" style="width:18px;height:18px;accent-color:var(--primary);">
-        <span style="font-size:1.2rem;">${t.icon}</span>
-        <span style="font-weight:600;flex:1;">${t.label}</span>
-        <span style="font-size:0.78rem;color:var(--text-muted);background:rgba(45,106,79,0.08);padding:2px 10px;border-radius:12px;">${count} items</span>
+      const isLast = i === tables.length - 1;
+      return `<label class="data-row" style="display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;user-select:none;transition:background 0.15s;${!isLast ? 'border-bottom:1px solid rgba(45,106,79,0.06);' : ''}" onmouseover="this.style.background='rgba(45,106,79,0.04)'" onmouseout="this.style.background='transparent'">
+        <input type="checkbox" class="data-checkbox" value="${t.key}" style="width:18px;height:18px;accent-color:var(--primary);" onchange="Admin.onCheckboxChange()">
+        <span style="font-size:1.1rem;width:28px;text-align:center;">${t.icon}</span>
+        <span style="font-weight:600;font-size:0.88rem;flex:1;">${t.label}</span>
+        <span style="font-size:0.75rem;color:white;padding:2px 10px;border-radius:20px;background:${t.color};font-weight:600;">${count}</span>
       </label>`;
     }).join('');
+  },
+
+  toggleSelectAll(checked) {
+    document.querySelectorAll('.data-checkbox').forEach(cb => {
+      cb.checked = checked;
+    });
+  },
+
+  onCheckboxChange() {
+    const checkboxes = document.querySelectorAll('.data-checkbox');
+    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+    const selectAll = document.getElementById('selectAllData');
+    if (selectAll) selectAll.checked = allChecked;
   },
 
   deleteSelectedData() {
