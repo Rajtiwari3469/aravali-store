@@ -1,0 +1,119 @@
+const DB = {
+  _prefix: 'aravali_',
+
+  _key(table) {
+    return this._prefix + table;
+  },
+
+  getAll(table) {
+    try {
+      const data = localStorage.getItem(this._key(table));
+      return data ? JSON.parse(data) : [];
+    } catch {
+      return [];
+    }
+  },
+
+  getById(table, id) {
+    const items = this.getAll(table);
+    return items.find(item => item.id === id) || null;
+  },
+
+  insert(table, record) {
+    const items = this.getAll(table);
+    if (!record.id) {
+      record.id = Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+    }
+    record.createdAt = record.createdAt || new Date().toISOString();
+    items.push(record);
+    localStorage.setItem(this._key(table), JSON.stringify(items));
+    return record;
+  },
+
+  update(table, id, data) {
+    const items = this.getAll(table);
+    const index = items.findIndex(item => item.id === id);
+    if (index === -1) return null;
+    items[index] = { ...items[index], ...data, updatedAt: new Date().toISOString() };
+    localStorage.setItem(this._key(table), JSON.stringify(items));
+    return items[index];
+  },
+
+  delete(table, id) {
+    const items = this.getAll(table);
+    const filtered = items.filter(item => item.id !== id);
+    if (filtered.length === items.length) return false;
+    localStorage.setItem(this._key(table), JSON.stringify(filtered));
+    return true;
+  },
+
+  query(table, filterFn) {
+    const items = this.getAll(table);
+    return items.filter(filterFn);
+  },
+
+  count(table) {
+    return this.getAll(table).length;
+  },
+
+  clear(table) {
+    localStorage.removeItem(this._key(table));
+  },
+
+  seed(table, data) {
+    if (this.getAll(table).length === 0) {
+      localStorage.setItem(this._key(table), JSON.stringify(data));
+      return true;
+    }
+    return false;
+  },
+
+  search(table, searchTerm, fields) {
+    const items = this.getAll(table);
+    const term = searchTerm.toLowerCase();
+    return items.filter(item =>
+      fields.some(field =>
+        item[field] && item[field].toString().toLowerCase().includes(term)
+      )
+    );
+  },
+
+  paginate(table, page, perPage, filterFn) {
+    let items = this.getAll(table);
+    if (filterFn) items = items.filter(filterFn);
+    const total = items.length;
+    const totalPages = Math.ceil(total / perPage);
+    const start = (page - 1) * perPage;
+    const paginatedItems = items.slice(start, start + perPage);
+    return { items: paginatedItems, total, totalPages, page, perPage };
+  }
+};
+
+function initDB() {
+  if (typeof SEED_DATA !== 'undefined') {
+    DB.seed('products', SEED_DATA.products);
+  }
+
+  const adminExists = DB.getAll('admins').length > 0;
+  if (!adminExists) {
+    DB.insert('admins', {
+      id: 'admin_001',
+      email: 'admin@gmail.com',
+      password: 'gateout@123#',
+      name: 'Admin',
+      role: 'superadmin'
+    });
+  }
+
+  if (DB.getAll('orders').length === 0) {
+    DB.seed('orders', []);
+  }
+
+  if (DB.getAll('users').length === 0) {
+    DB.seed('users', []);
+  }
+}
+
+if (typeof window !== 'undefined') {
+  document.addEventListener('DOMContentLoaded', initDB);
+}

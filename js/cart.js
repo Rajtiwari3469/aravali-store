@@ -1,0 +1,186 @@
+const Cart = {
+  init() {
+    this.renderCart();
+  },
+
+  renderCart() {
+    const container = document.querySelector('.cart-items');
+    const summaryContainer = document.querySelector('.cart-summary-content');
+    if (!container) return;
+
+    const items = App.getCartItems();
+
+    if (items.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">🛒</div>
+          <h3>Your cart is empty</h3>
+          <p>Add some fresh groceries to get started!</p>
+          <a href="shop.html" class="btn btn-primary">Browse Products</a>
+        </div>`;
+      if (summaryContainer) summaryContainer.innerHTML = '';
+      return;
+    }
+
+    container.innerHTML = items.map(item => `
+      <div class="cart-item" data-id="${item.productId}">
+        <div class="item-emoji">${App.getProductEmoji(item.product.category)}</div>
+        <div class="item-details">
+          <div class="item-name">${item.product.name}</div>
+          <div class="item-unit">${item.product.unit}</div>
+        </div>
+        <div class="qty-control">
+          <button onclick="Cart.changeQty('${item.productId}', -1)">−</button>
+          <span class="qty-val">${item.qty}</span>
+          <button onclick="Cart.changeQty('${item.productId}', 1)">+</button>
+        </div>
+        <div class="item-price">${App.formatCurrency(item.product.price * item.qty)}</div>
+        <button class="remove-btn" onclick="Cart.removeItem('${item.productId}')">✕</button>
+      </div>
+    `).join('');
+
+    this.renderSummary();
+  },
+
+  renderSummary() {
+    const summaryContainer = document.querySelector('.cart-summary-content');
+    if (!summaryContainer) return;
+
+    const subtotal = App.getCartTotal();
+    const delivery = subtotal > 200 ? 0 : 30;
+    const total = subtotal + delivery;
+
+    summaryContainer.innerHTML = `
+      <div class="summary-row">
+        <span>Subtotal</span>
+        <span>${App.formatCurrency(subtotal)}</span>
+      </div>
+      <div class="summary-row">
+        <span>Delivery ${subtotal > 200 ? '(Free above ₹200)' : ''}</span>
+        <span>${delivery === 0 ? 'FREE' : App.formatCurrency(delivery)}</span>
+      </div>
+      <div class="summary-row total">
+        <span>Total</span>
+        <span>${App.formatCurrency(total)}</span>
+      </div>
+      <a href="checkout.html" class="btn btn-primary btn-lg" style="width:100%;justify-content:center;margin-top:16px;">
+        Proceed to Checkout →
+      </a>
+    `;
+  },
+
+  changeQty(productId, delta) {
+    const cart = App.getCart();
+    const item = cart.find(c => c.productId === productId);
+    if (item) {
+      const newQty = item.qty + delta;
+      if (newQty <= 0) {
+        App.removeFromCart(productId);
+      } else {
+        App.updateCartQty(productId, newQty);
+      }
+      this.renderCart();
+    }
+  },
+
+  removeItem(productId) {
+    App.removeFromCart(productId);
+    this.renderCart();
+    App.showToast('Item removed from cart', 'info');
+  }
+};
+
+const Checkout = {
+  init() {
+    if (!App.requireAuth()) return;
+    this.renderOrderSummary();
+    this.initPayment();
+    this.initForm();
+  },
+
+  renderOrderSummary() {
+    const container = document.querySelector('.checkout-items');
+    if (!container) return;
+
+    const items = App.getCartItems();
+
+    if (items.length === 0) {
+      window.location.href = 'cart.html';
+      return;
+    }
+
+    container.innerHTML = items.map(item => `
+      <div class="order-item">
+        <div>
+          <span>${App.getProductEmoji(item.product.category)} </span>
+          <span>${item.product.name}</span>
+          <span style="color:var(--text-muted);font-size:0.8rem;"> × ${item.qty}</span>
+        </div>
+        <span style="font-weight:600;">${App.formatCurrency(item.product.price * item.qty)}</span>
+      </div>
+    `).join('');
+
+    const subtotal = App.getCartTotal();
+    const delivery = subtotal > 200 ? 0 : 30;
+    const total = subtotal + delivery;
+
+    container.innerHTML += `
+      <div style="margin-top:16px;padding-top:12px;border-top:1px solid rgba(45,106,79,0.1);">
+        <div class="order-item">
+          <span>Subtotal</span><span>${App.formatCurrency(subtotal)}</span>
+        </div>
+        <div class="order-item">
+          <span>Delivery</span><span>${delivery === 0 ? 'FREE' : App.formatCurrency(delivery)}</span>
+        </div>
+        <div class="order-item" style="font-weight:700;font-size:1.05rem;color:var(--primary-dark);">
+          <span>Total</span><span>${App.formatCurrency(total)}</span>
+        </div>
+      </div>
+    `;
+  },
+
+  initPayment() {
+    document.querySelectorAll('.payment-option').forEach(opt => {
+      opt.addEventListener('click', () => {
+        document.querySelectorAll('.payment-option').forEach(o => o.classList.remove('selected'));
+        opt.classList.add('selected');
+        opt.querySelector('input[type="radio"]').checked = true;
+      });
+    });
+  },
+
+  initForm() {
+    const form = document.getElementById('checkoutForm');
+    if (form) {
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        this.placeOrder();
+      });
+    }
+  },
+
+  placeOrder() {
+    const name = document.getElementById('checkoutName').value.trim();
+    const address = document.getElementById('checkoutAddress').value.trim();
+    const phone = document.getElementById('checkoutPhone').value.trim();
+    const payment = document.querySelector('input[name="payment"]:checked');
+
+    if (!name || !address || !phone) {
+      App.showToast('Please fill all required fields', 'error');
+      return;
+    }
+
+    if (!payment) {
+      App.showToast('Please select a payment method', 'error');
+      return;
+    }
+
+    const order = App.placeOrder(address + ' - Phone: ' + phone + ' - ' + name, payment.value);
+
+    if (order) {
+      window.location.href = 'order-success.html?id=' + order.id;
+    } else {
+      App.showToast('Failed to place order', 'error');
+    }
+  }
+};

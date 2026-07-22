@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Orders - Aravali Store Admin</title>
+  <link rel="icon" type="image/svg+xml" href="../assets/logo.svg">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/admin.css">
+  <link rel="stylesheet" href="../css/responsive.css">
+</head>
+<body>
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <div class="sidebar-header">
+        <img src="../assets/logo.svg" alt="Aravali Store">
+        <h3>Admin Panel</h3>
+        <p class="admin-info">admin</p>
+      </div>
+      <ul class="admin-nav">
+        <li><a href="index.html" data-page="dashboard"><span class="nav-icon">📊</span> Dashboard</a></li>
+        <li><a href="products.html" data-page="products"><span class="nav-icon">📦</span> Products</a></li>
+        <li><a href="orders.html" data-page="orders"><span class="nav-icon">🛒</span> Orders</a></li>
+        <li><a href="users.html" data-page="users"><span class="nav-icon">👥</span> Users</a></li>
+        <li><a href="settings.html" data-page="settings"><span class="nav-icon">⚙️</span> Settings</a></li>
+        <li style="margin-top:20px;"><a href="../index.html"><span class="nav-icon">🏪</span> View Store</a></li>
+        <li><a href="#" onclick="App.logout()"><span class="nav-icon">🚪</span> Logout</a></li>
+      </ul>
+    </aside>
+
+    <main class="admin-main">
+      <div class="admin-topbar">
+        <h1>Orders</h1>
+      </div>
+      <div class="admin-content"></div>
+    </main>
+  </div>
+
+  <button class="admin-sidebar-toggle" onclick="Admin.toggleSidebar()">☰</button>
+
+  <div id="productModal" class="modal-overlay" onclick="if(event.target===this)this.classList.remove('active')">
+    <div class="modal" id="productModalContent"></div>
+  </div>
+
+  <script src="../DBMS/data.js"></script>
+  <script src="../DBMS/database.js"></script>
+  <script src="../js/app.js"></script>
+  <script src="../js/admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Aravali Store</title>
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+  <div class="bg-animation">
+    <div class="bubble"></div><div class="bubble"></div><div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
+  </div>
+
+  <nav class="navbar">
+    <a href="index.html" class="logo"><img src="assets/logo.svg" alt="Aravali Store"></a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="shop.html">Shop</a></li>
+      <li><a href="about.html">About</a></li>
+    </ul>
+    <div class="nav-actions">
+      <div class="nav-user-section"></div>
+      <button class="hamburger" onclick="document.querySelector('.nav-links').classList.toggle('open')"><span></span><span></span><span></span></button>
+    </div>
+  </nav>
+
+  <div class="auth-container">
+    <div class="auth-card">
+      <img src="assets/logo.svg" alt="Aravali Store" style="height:45px;margin:0 auto 16px;display:block;">
+      <h2>Welcome Back</h2>
+      <p class="subtitle">Login to your Aravali Store account</p>
+
+      <div id="loginError" style="display:none;background:rgba(230,57,70,0.1);color:var(--danger);padding:10px 14px;border-radius:8px;font-size:0.85rem;margin-bottom:16px;"></div>
+
+      <form id="loginForm">
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="loginEmail" placeholder="Enter your email" required>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="loginPassword" placeholder="Enter your password" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-lg">Login</button>
+      </form>
+      <p class="auth-link">Don't have an account? <a href="register.html">Register here</a></p>
+      <p class="auth-link" style="margin-top:8px;font-size:0.8rem;">
+        <a href="admin/login.html" style="color:var(--accent);">Admin Login →</a>
+      </p>
+    </div>
+  </div>
+
+  <script src="DBMS/data.js"></script>
+  <script src="DBMS/database.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      if (App.isLoggedIn()) {
+        window.location.href = 'index.html';
+        return;
+      }
+
+      document.getElementById('loginForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const email = document.getElementById('loginEmail').value.trim();
+        const password = document.getElementById('loginPassword').value;
+
+        const result = App.login(email, password);
+        if (result.success) {
+          App.showToast('Login successful!', 'success');
+          setTimeout(() => { window.location.href = 'index.html'; }, 500);
+        } else {
+          const errorEl = document.getElementById('loginError');
+          errorEl.textContent = result.message;
+          errorEl.style.display = 'block';
+        }
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Orders - Aravali Store</title>
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+  <div class="bg-animation">
+    <div class="bubble"></div><div class="bubble"></div><div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
+  </div>
+
+  <nav class="navbar">
+    <a href="index.html" class="logo"><img src="assets/logo.svg" alt="Aravali Store"></a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="shop.html">Shop</a></li>
+      <li><a href="about.html">About</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="wishlist.html" class="nav-icon-btn"><span>❤️</span><span class="badge wishlist-count" style="display:none;">0</span></a>
+      <a href="cart.html" class="nav-icon-btn"><span>🛒</span><span class="badge cart-count" style="display:none;">0</span></a>
+      <div class="nav-user-section"></div>
+      <button class="hamburger" onclick="document.querySelector('.nav-links').classList.toggle('open')"><span></span><span></span><span></span></button>
+    </div>
+  </nav>
+
+  <div class="page-header">
+    <div class="breadcrumb"><a href="index.html">Home</a> <span>/</span> <span>My Orders</span></div>
+    <h1>My Orders</h1>
+  </div>
+
+  <div class="orders-page" id="ordersContainer"></div>
+
+  <footer class="footer">
+    <div class="footer-bottom" style="border-top:none;padding-top:0;max-width:1300px;margin:0 auto;">
+      <span>© 2026 Aravali Store. All rights reserved.</span>
+    </div>
+  </footer>
+
+  <script src="DBMS/data.js"></script>
+  <script src="DBMS/database.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/shop.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!App.requireAuth()) return;
+
+      const container = document.getElementById('ordersContainer');
+      const orders = DB.query('orders', o => o.userId === App.currentUser.id).reverse();
+
+      if (orders.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">📦</div>
+            <h3>No orders yet</h3>
+            <p>Start shopping to place your first order!</p>
+            <a href="shop.html" class="btn btn-primary">Browse Products</a>
+          </div>`;
+        return;
+      }
+
+      container.innerHTML = orders.map(order => `
+        <div class="order-card">
+          <div class="order-header">
+            <div>
+              <span class="order-id">Order #${order.id.slice(-6).toUpperCase()}</span>
+              <span style="color:var(--text-muted);font-size:0.82rem;margin-left:12px;">${App.formatDate(order.orderDate || order.createdAt)}</span>
+            </div>
+            <span class="order-status ${order.status}">${order.status}</span>
+          </div>
+          <div>
+            ${(order.items || []).map(item => `
+              <div style="display:flex;justify-content:space-between;padding:6px 0;font-size:0.88rem;">
+                <span>${item.name} × ${item.qty}</span>
+                <span style="font-weight:600;">${App.formatCurrency(item.price * item.qty)}</span>
+              </div>
+            `).join('')}
+          </div>
+          <div style="display:flex;justify-content:space-between;padding-top:12px;margin-top:8px;border-top:1px solid rgba(45,106,79,0.08);font-weight:700;color:var(--primary-dark);">
+            <span>Total</span>
+            <span>${App.formatCurrency(order.total || 0)}</span>
+          </div>
+          <div style="font-size:0.82rem;color:var(--text-muted);margin-top:8px;">
+            <strong>Address:</strong> ${order.address || 'N/A'} | <strong>Payment:</strong> ${order.paymentMethod || 'N/A'}
+          </div>
+        </div>
+      `).join('');
+    });
+  </script>
+</body>
+</html>
