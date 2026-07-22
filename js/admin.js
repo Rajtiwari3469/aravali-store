@@ -99,6 +99,9 @@ const Admin = {
     const users = DB.getAll('users');
     const totalRevenue = orders.reduce((sum, o) => sum + (o.total || 0), 0);
     const pendingOrders = orders.filter(o => o.status === 'pending').length;
+    const stockSummary = DB.getStockSummary();
+    const outOfStockProducts = DB.getOutOfStockProducts();
+    const lowStockProducts = DB.getLowStockProducts(5);
 
     const statCards = document.querySelector('.stat-cards');
     if (statCards) {
@@ -118,7 +121,53 @@ const Admin = {
         <div class="stat-card">
           <div class="stat-icon">💰</div>
           <div class="stat-info"><h3>${App.formatCurrency(totalRevenue)}</h3><p>Revenue</p></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(230,57,70,0.15);">⚠️</div>
+          <div class="stat-info"><h3>${outOfStockProducts.length}</h3><p>Out of Stock</p></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(244,140,6,0.15);">📉</div>
+          <div class="stat-info"><h3>${lowStockProducts.length}</h3><p>Low Stock (≤5)</p></div>
         </div>`;
+    }
+
+    // Stock Alert Banner
+    if (outOfStockProducts.length > 0 || lowStockProducts.length > 0) {
+      const alertHtml = `
+        <div class="stock-alert-banner" style="background:rgba(230,57,70,0.08);border:1px solid rgba(230,57,70,0.2);border-radius:var(--border-radius);padding:20px;margin-bottom:28px;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <span style="font-size:1.5rem;">⚠️</span>
+            <h3 style="color:var(--danger);font-size:1.05rem;">Stock Alerts</h3>
+          </div>
+          ${outOfStockProducts.length > 0 ? `
+            <div style="margin-bottom:10px;">
+              <p style="font-weight:600;color:var(--danger);font-size:0.88rem;margin-bottom:8px;">Out of Stock (${outOfStockProducts.length} products):</p>
+              <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                ${outOfStockProducts.map(p => `
+                  <span style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:rgba(230,57,70,0.1);border-radius:20px;font-size:0.78rem;">
+                    ${p.name}
+                    <button onclick="Admin.quickRestock('${p.id}')" style="border:none;background:var(--primary);color:white;border-radius:50%;width:18px;height:18px;font-size:0.7rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">+</button>
+                  </span>
+                `).join('')}
+              </div>
+            </div>
+          ` : ''}
+          ${lowStockProducts.length > 0 ? `
+            <div>
+              <p style="font-weight:600;color:var(--accent);font-size:0.88rem;margin-bottom:8px;">Low Stock (${lowStockProducts.length} products):</p>
+              <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                ${lowStockProducts.map(p => `
+                  <span style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:rgba(244,140,6,0.1);border-radius:20px;font-size:0.78rem;">
+                    ${p.name} (${p.stock} left)
+                    <button onclick="Admin.quickRestock('${p.id}')" style="border:none;background:var(--primary);color:white;border-radius:50%;width:18px;height:18px;font-size:0.7rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">+</button>
+                  </span>
+                `).join('')}
+              </div>
+            </div>
+          ` : ''}
+        </div>`;
+      main.insertAdjacentHTML('afterbegin', alertHtml);
     }
 
     // Sales chart
@@ -175,6 +224,7 @@ const Admin = {
           <h3>All Products (${products.length})</h3>
           <div style="display:flex;gap:10px;align-items:center;">
             <input type="text" class="search-input" placeholder="Search products..." oninput="Admin.filterProducts(this.value)">
+            <button class="btn btn-secondary btn-sm" onclick="Admin.showStockHistory()">📋 Stock Log</button>
             <button class="btn btn-primary btn-sm" onclick="Admin.showAddProduct()">+ Add Product</button>
           </div>
         </div>
@@ -185,6 +235,7 @@ const Admin = {
               <th>Category</th>
               <th>Price</th>
               <th>Stock</th>
+              <th>Stock Control</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -200,10 +251,24 @@ const Admin = {
 
   renderProductRows(products) {
     if (products.length === 0) {
-      return '<tr><td colspan="5" style="text-align:center;padding:40px;">No products found.</td></tr>';
+      return '<tr><td colspan="6" style="text-align:center;padding:40px;">No products found.</td></tr>';
     }
-    return products.map(p => `
-      <tr>
+    return products.map(p => {
+      const stock = p.stock || 0;
+      let stockBadge = '';
+      let stockColor = '';
+      if (stock <= 0) {
+        stockBadge = 'Out of Stock';
+        stockColor = 'var(--danger)';
+      } else if (stock <= 5) {
+        stockBadge = 'Low';
+        stockColor = 'var(--accent)';
+      } else {
+        stockBadge = 'In Stock';
+        stockColor = 'var(--success)';
+      }
+      return `
+      <tr style="${stock <= 0 ? 'background:rgba(230,57,70,0.03);' : stock <= 5 ? 'background:rgba(244,140,6,0.03);' : ''}">
         <td>
           <div style="display:flex;align-items:center;gap:10px;">
             ${p.image
@@ -216,17 +281,29 @@ const Admin = {
             </div>
           </div>
         </td>
-        <td>${p.category}</td>
+        <td style="font-size:0.82rem;">${p.category}</td>
         <td style="font-weight:600;color:var(--primary);">${App.formatCurrency(p.price)}</td>
-        <td>${p.stock}</td>
+        <td>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.75rem;font-weight:600;color:white;background:${stockColor};">${stockBadge}</span>
+            <span style="font-size:0.82rem;color:var(--text-muted);">(${stock})</span>
+          </div>
+        </td>
+        <td>
+          <div style="display:flex;align-items:center;gap:4px;">
+            <button onclick="Admin.adjustStock('${p.id}', -1)" style="width:24px;height:24px;border:1px solid rgba(45,106,79,0.15);border-radius:4px;background:white;cursor:pointer;font-size:0.8rem;display:flex;align-items:center;justify-content:center;" title="Decrease stock">−</button>
+            <input type="number" value="${stock}" min="0" style="width:50px;text-align:center;border:1px solid rgba(45,106,79,0.15);border-radius:4px;padding:2px;font-size:0.82rem;font-family:var(--font);" onchange="Admin.setStock('${p.id}', this.value)">
+            <button onclick="Admin.adjustStock('${p.id}', 1)" style="width:24px;height:24px;border:1px solid rgba(45,106,79,0.15);border-radius:4px;background:white;cursor:pointer;font-size:0.8rem;display:flex;align-items:center;justify-content:center;" title="Increase stock">+</button>
+          </div>
+        </td>
         <td>
           <div class="action-btns">
             <button class="action-btn edit" onclick="Admin.editProduct('${p.id}')">Edit</button>
             <button class="action-btn delete" onclick="Admin.deleteProduct('${p.id}')">Delete</button>
           </div>
         </td>
-      </tr>
-    `).join('');
+      </tr>`;
+    }).join('');
   },
 
   filterProducts(term) {
@@ -934,6 +1011,86 @@ const Admin = {
       App.showToast('Catalog deleted', 'info');
       this.renderCatalogs();
     }
+  },
+
+  // Stock Management
+  adjustStock(productId, delta) {
+    const product = DB.getById('products', productId);
+    if (!product) return;
+    const newStock = Math.max(0, (product.stock || 0) + delta);
+    DB.update('products', productId, { stock: newStock });
+    DB.logStockChange(productId, product.name, delta, delta > 0 ? 'Admin restock' : 'Admin adjustment');
+    App.showToast(`${product.name}: stock ${delta > 0 ? 'increased' : 'decreased'} to ${newStock}`, delta > 0 ? 'success' : 'info');
+    if (this.currentPage === 'products') {
+      this.renderProducts();
+    } else if (this.currentPage === 'dashboard') {
+      this.renderDashboard();
+    }
+  },
+
+  setStock(productId, newStockVal) {
+    const product = DB.getById('products', productId);
+    if (!product) return;
+    const newStock = Math.max(0, parseInt(newStockVal) || 0);
+    const oldStock = product.stock || 0;
+    const change = newStock - oldStock;
+    DB.update('products', productId, { stock: newStock });
+    if (change !== 0) {
+      DB.logStockChange(productId, product.name, change, 'Admin manual set');
+    }
+    App.showToast(`${product.name}: stock set to ${newStock}`, 'success');
+    if (this.currentPage === 'products') {
+      this.renderProducts();
+    } else if (this.currentPage === 'dashboard') {
+      this.renderDashboard();
+    }
+  },
+
+  quickRestock(productId) {
+    const product = DB.getById('products', productId);
+    if (!product) return;
+    const qty = prompt(`Restock "${product.name}"\nCurrent stock: ${product.stock}\nEnter quantity to add:`, '10');
+    if (qty === null || qty === '') return;
+    const num = parseInt(qty);
+    if (isNaN(num) || num <= 0) {
+      App.showToast('Invalid quantity', 'error');
+      return;
+    }
+    DB.updateStock(productId, num);
+    DB.logStockChange(productId, product.name, num, 'Quick restock');
+    App.showToast(`${product.name}: +${num} units added (now ${(product.stock || 0) + num})`, 'success');
+    if (this.currentPage === 'products') {
+      this.renderProducts();
+    } else {
+      this.renderDashboard();
+    }
+  },
+
+  showStockHistory() {
+    const modal = document.getElementById('productModal');
+    const content = document.getElementById('productModalContent');
+    const logs = DB.getAll('stock_logs').slice(0, 50);
+
+    content.innerHTML = `
+      <button class="modal-close" onclick="Admin.closeModal()">✕</button>
+      <h2>Stock Change History</h2>
+      ${logs.length === 0
+        ? '<p style="color:var(--text-muted);padding:20px 0;">No stock changes recorded yet.</p>'
+        : `<div style="max-height:400px;overflow-y:auto;">
+            ${logs.map(log => `
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(45,106,79,0.06);">
+                <div>
+                  <div style="font-weight:600;font-size:0.88rem;">${log.productName}</div>
+                  <div style="font-size:0.75rem;color:var(--text-muted);">${log.reason} • ${App.formatDate(log.timestamp)}</div>
+                </div>
+                <span style="font-weight:700;font-size:0.9rem;color:${log.change > 0 ? 'var(--success)' : 'var(--danger)'};">
+                  ${log.change > 0 ? '+' : ''}${log.change}
+                </span>
+              </div>
+            `).join('')}
+          </div>`
+      }`;
+    modal.classList.add('active');
   },
 
   closeModal() {

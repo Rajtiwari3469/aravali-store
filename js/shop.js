@@ -160,29 +160,35 @@ const Shop = {
     const inWishlist = App.isInWishlist(p.id);
     const cart = App.getCart();
     const inCart = cart.find(c => c.productId === p.id);
+    const isOutOfStock = (p.stock || 0) <= 0;
+    const isLowStock = (p.stock || 0) > 0 && (p.stock || 0) <= 5;
 
     return `
-      <div class="product-card" data-id="${p.id}" onclick="window.location.href='product.html?id=${p.id}'" style="cursor:pointer;">
-        ${p.badge ? `<span class="product-badge">${p.badge}</span>` : ''}
+      <div class="product-card" data-id="${p.id}" onclick="${isOutOfStock ? '' : `window.location.href='product.html?id=${p.id}'`}" style="cursor:${isOutOfStock ? 'default' : 'pointer'}; ${isOutOfStock ? 'opacity:0.7;' : ''}">
+        ${isOutOfStock ? '<span class="product-badge" style="background:var(--danger);">Out of Stock</span>' : (p.badge ? `<span class="product-badge">${p.badge}</span>` : '')}
+        ${isLowStock && !isOutOfStock ? '<span class="product-badge" style="left:auto;right:8px;background:var(--accent);">Low Stock</span>' : ''}
         <button class="wishlist-btn ${inWishlist ? 'active' : ''}" data-wishlist="${p.id}" onclick="event.stopPropagation();">
           ${inWishlist ? '❤️' : '🤍'}
         </button>
-        <div class="product-image">
+        <div class="product-image" style="position:relative;">
           ${p.image ? `<img src="${p.image}" style="width:100%;height:100%;object-fit:cover;border-radius:var(--border-radius-sm);">` : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(45,106,79,0.06),rgba(82,183,136,0.1));border-radius:var(--border-radius-sm);color:var(--text-muted);font-size:0.75rem;text-align:center;padding:8px;">No Image</div>`}
+          ${isOutOfStock ? '<div style="position:absolute;inset:0;background:rgba(0,0,0,0.4);border-radius:var(--border-radius-sm);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:0.85rem;">OUT OF STOCK</div>' : ''}
         </div>
         <div class="product-info">
           <div class="product-category">${p.category}</div>
           <div class="product-name">${p.name}</div>
-          <div class="product-unit">${p.unit}</div>
+          <div class="product-unit">${p.unit}${!isOutOfStock && isLowStock ? ` • <span style="color:var(--accent);font-weight:600;">${p.stock} left</span>` : ''}</div>
           <div class="product-bottom">
             <div class="product-price">${App.formatCurrency(p.price)} <small>/${p.unit}</small></div>
-            ${inCart
-              ? `<div class="qty-control" onclick="event.stopPropagation();">
-                   <button onclick="event.stopPropagation();Shop.changeQty('${p.id}', -1)">−</button>
-                   <span class="qty-val">${inCart.qty}</span>
-                   <button onclick="event.stopPropagation();Shop.changeQty('${p.id}', 1)">+</button>
-                 </div>`
-              : `<button class="btn-add-cart" onclick="event.stopPropagation();Shop.addToCart('${p.id}')">Add +</button>`
+            ${isOutOfStock
+              ? `<button class="btn-add-cart" disabled style="opacity:0.5;cursor:not-allowed;background:var(--text-muted);">Sold Out</button>`
+              : inCart
+                ? `<div class="qty-control" onclick="event.stopPropagation();">
+                     <button onclick="event.stopPropagation();Shop.changeQty('${p.id}', -1)">−</button>
+                     <span class="qty-val">${inCart.qty}</span>
+                     <button onclick="event.stopPropagation();Shop.changeQty('${p.id}', 1)">+</button>
+                   </div>`
+                : `<button class="btn-add-cart" onclick="event.stopPropagation();Shop.addToCart('${p.id}')">Add +</button>`
             }
           </div>
         </div>

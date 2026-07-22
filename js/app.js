@@ -128,8 +128,24 @@ const App = {
   },
 
   addToCart(productId, qty = 1) {
+    const product = DB.getById('products', productId);
+    if (!product) return;
+
+    // Check stock
     const cart = this.getCart();
     const existing = cart.find(c => c.productId === productId);
+    const currentQty = existing ? existing.qty : 0;
+    const requestedQty = currentQty + qty;
+
+    if ((product.stock || 0) <= 0) {
+      this.showToast(`${product.name} is out of stock`, 'error');
+      return;
+    }
+    if (requestedQty > product.stock) {
+      this.showToast(`Only ${product.stock} units available for ${product.name}`, 'error');
+      return;
+    }
+
     if (existing) {
       existing.qty += qty;
     } else {
@@ -152,6 +168,15 @@ const App = {
       if (qty <= 0) {
         this.removeFromCart(productId);
       } else {
+        const product = DB.getById('products', productId);
+        if (product && qty > (product.stock || 0)) {
+          this.showToast(`Only ${product.stock} units available for ${product.name}`, 'error');
+          qty = product.stock || 0;
+          if (qty <= 0) {
+            this.removeFromCart(productId);
+            return;
+          }
+        }
         item.qty = qty;
         this.saveCart(cart);
       }
@@ -234,6 +259,14 @@ const App = {
     const cartItems = this.getCartItems();
     if (cartItems.length === 0) return null;
 
+    // Check stock for all items
+    for (const item of cartItems) {
+      if ((item.product.stock || 0) < item.qty) {
+        App.showToast(`${item.product.name} is out of stock (only ${item.product.stock} left)`, 'error');
+        return null;
+      }
+    }
+
     const subtotal = this.getCartTotal();
     const delivery = subtotal > 200 ? 0 : 30;
     const total = subtotal + delivery;
@@ -256,6 +289,12 @@ const App = {
       status: 'pending',
       orderDate: new Date().toISOString()
     });
+
+    // Deduct stock for each product
+    for (const item of cartItems) {
+      DB.updateStock(item.productId, -(item.qty));
+      DB.logStockChange(item.productId, item.product.name, -(item.qty), `Order #${order.id.slice(-6).toUpperCase()}`);
+    }
 
     this.clearCart();
     return order;

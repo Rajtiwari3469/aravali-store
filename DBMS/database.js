@@ -101,6 +101,53 @@ const DB = {
     const settings = this.getSettings();
     settings[key] = value;
     localStorage.setItem(this._prefix + 'settings', JSON.stringify(settings));
+  },
+
+  // Stock Management
+  updateStock(productId, qtyChange) {
+    const product = this.getById('products', productId);
+    if (!product) return false;
+    const newStock = Math.max(0, (product.stock || 0) + qtyChange);
+    this.update('products', productId, { stock: newStock });
+    return true;
+  },
+
+  setStock(productId, newStock) {
+    const product = this.getById('products', productId);
+    if (!product) return false;
+    this.update('products', productId, { stock: Math.max(0, parseInt(newStock) || 0) });
+    return true;
+  },
+
+  getOutOfStockProducts() {
+    return this.getAll('products').filter(p => (p.stock || 0) <= 0);
+  },
+
+  getLowStockProducts(threshold = 5) {
+    return this.getAll('products').filter(p => (p.stock || 0) > 0 && (p.stock || 0) <= threshold);
+  },
+
+  getStockSummary() {
+    const products = this.getAll('products');
+    const total = products.length;
+    const outOfStock = products.filter(p => (p.stock || 0) <= 0).length;
+    const lowStock = products.filter(p => (p.stock || 0) > 0 && (p.stock || 0) <= 5).length;
+    const inStock = total - outOfStock;
+    return { total, outOfStock, lowStock, inStock };
+  },
+
+  logStockChange(productId, productName, change, reason) {
+    const logs = this.getAll('stock_logs');
+    logs.unshift({
+      id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5),
+      productId,
+      productName,
+      change,
+      reason,
+      timestamp: new Date().toISOString()
+    });
+    if (logs.length > 200) logs.length = 200;
+    localStorage.setItem(this._key('stock_logs'), JSON.stringify(logs));
   }
 };
 
@@ -128,6 +175,10 @@ function initDB() {
 
   if (DB.getAll('users').length === 0) {
     DB.seed('users', []);
+  }
+
+  if (DB.getAll('stock_logs').length === 0) {
+    DB.seed('stock_logs', []);
   }
 }
 

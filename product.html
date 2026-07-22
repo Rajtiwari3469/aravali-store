@@ -156,6 +156,7 @@
       const cart = App.getCart();
       const cartItem = cart.find(c => c.productId === product.id);
       const qty = cartItem ? cartItem.qty : 0;
+      const isOutOfStock = (product.stock || 0) <= 0;
 
       // Similar products (same category, exclude current)
       const allProducts = DB.getAll('products');
@@ -225,15 +226,17 @@
             ${App.formatCurrency(product.price)}
             <small>/ ${product.unit}</small>
           </div>
-          ${qty > 0
-            ? `<div class="qty-control" style="height:42px;">
-                <button onclick="updateQty(-1)" style="font-size:1.2rem;">−</button>
-                <span class="qty-val" style="font-size:1rem;" id="pdQty">${qty}</span>
-                <button onclick="updateQty(1)" style="font-size:1.2rem;">+</button>
-              </div>`
-            : `<button class="btn btn-primary btn-lg" onclick="addToCart()" id="pdAddBtn" style="justify-content:center;">
-                🛒 Add to Cart
-              </button>`
+          ${isOutOfStock
+            ? `<button class="btn btn-lg" disabled style="flex:1;justify-content:center;opacity:0.5;cursor:not-allowed;background:var(--text-muted);color:white;">Out of Stock</button>`
+            : qty > 0
+              ? `<div class="qty-control" style="height:42px;">
+                  <button onclick="updateQty(-1)" style="font-size:1.2rem;">−</button>
+                  <span class="qty-val" style="font-size:1rem;" id="pdQty">${qty}</span>
+                  <button onclick="updateQty(1)" style="font-size:1.2rem;">+</button>
+                </div>`
+              : `<button class="btn btn-primary btn-lg" onclick="addToCart()" id="pdAddBtn" style="justify-content:center;">
+                  🛒 Add to Cart
+                </button>`
           }
         </div>
       `);

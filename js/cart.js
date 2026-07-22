@@ -22,14 +22,17 @@ const Cart = {
       return;
     }
 
-    container.innerHTML = items.map(item => `
-      <div class="cart-item" data-id="${item.productId}">
+    container.innerHTML = items.map(item => {
+      const isOutOfStock = (item.product.stock || 0) <= 0;
+      const exceedsStock = item.qty > (item.product.stock || 0);
+      return `
+      <div class="cart-item" data-id="${item.productId}" style="${isOutOfStock || exceedsStock ? 'border-left:3px solid var(--danger);' : ''}">
         <div class="item-emoji" style="display:flex;align-items:center;justify-content:center;overflow:hidden;">
           ${item.product.image ? `<img src="${item.product.image}" style="width:100%;height:100%;object-fit:cover;">` : `<span style="color:var(--text-muted);font-size:0.7rem;">No Image</span>`}
         </div>
         <div class="item-details">
           <div class="item-name">${item.product.name}</div>
-          <div class="item-unit">${item.product.unit}</div>
+          <div class="item-unit">${item.product.unit}${isOutOfStock ? ` <span style="color:var(--danger);font-weight:600;">• Out of Stock</span>` : exceedsStock ? ` <span style="color:var(--danger);font-weight:600;">• Only ${item.product.stock} available</span>` : ''}</div>
         </div>
         <div class="qty-control">
           <button onclick="Cart.changeQty('${item.productId}', -1)">−</button>
@@ -38,8 +41,8 @@ const Cart = {
         </div>
         <div class="item-price">${App.formatCurrency(item.product.price * item.qty)}</div>
         <button class="remove-btn" onclick="Cart.removeItem('${item.productId}')">✕</button>
-      </div>
-    `).join('');
+      </div>`;
+    }).join('');
 
     this.renderSummary();
   },
@@ -174,6 +177,14 @@ const Checkout = {
 
     if (!payment) {
       App.showToast('Please select a payment method', 'error');
+      return;
+    }
+
+    // Check for out-of-stock items in cart
+    const cartItems = App.getCartItems();
+    const outOfStockItems = cartItems.filter(c => (c.product.stock || 0) <= 0);
+    if (outOfStockItems.length > 0) {
+      App.showToast(`${outOfStockItems[0].product.name} is out of stock. Please remove it from cart.`, 'error');
       return;
     }
 
