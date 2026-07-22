@@ -1667,9 +1667,13 @@ const Admin = {
       <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:20px;">Select products and assign them to an offer category in one go.</p>
 
       <div style="margin-bottom:16px;">
-        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
-          <input type="text" id="bulkOfferSearch" class="search-input" placeholder="Search products..." oninput="Admin.filterBulkProducts(this.value)" style="flex:1;">
-          <select id="bulkOfferCategory" style="padding:9px 14px;border:1px solid rgba(45,106,79,0.15);border-radius:10px;font-family:var(--font);font-size:0.85rem;">
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;">
+          <div class="modal-search-bar">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="bulkOfferSearch" placeholder="Search by name or category..." oninput="Admin.filterBulkProducts(this.value)">
+            <button class="search-clear" onclick="document.getElementById('bulkOfferSearch').value='';Admin.filterBulkProducts('');" title="Clear search" style="display:none;" id="bulkSearchClear">✕</button>
+          </div>
+          <select id="bulkOfferCategory" class="modal-select">
             <option value="">Select offer category...</option>
             ${categories.map(c => `<option value="${c.offerTag}">${c.label}</option>`).join('')}
           </select>
@@ -1714,6 +1718,8 @@ const Admin = {
     const t = term.toLowerCase();
     const filtered = t ? products.filter(p => p.name.toLowerCase().includes(t) || p.category.toLowerCase().includes(t)) : products;
     document.getElementById('bulkProductList').innerHTML = this.renderBulkProductRows(filtered);
+    const clearBtn = document.getElementById('bulkSearchClear');
+    if (clearBtn) clearBtn.style.display = term ? 'flex' : 'none';
   },
 
   toggleBulkSelectAll(checked) {

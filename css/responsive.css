@@ -66,6 +66,9 @@
   .admin-table { font-size: 0.82rem; }
   .admin-table th, .admin-table td { padding: 10px 12px; }
 
+  .modal-search-bar { min-width: 0; }
+  .modal-select { min-width: 160px; font-size: 0.8rem; }
+
   .stat-cards { grid-template-columns: 1fr 1fr; gap: 12px; }
   .stat-card { padding: 14px; }
 
@@ -83,6 +86,8 @@
   .product-card .product-price { font-size: 0.95rem; }
 
   .stat-cards { grid-template-columns: 1fr; }
+
+  .modal-select { min-width: 100%; }
 
   .search-bar .search-btn { padding: 8px 16px; font-size: 0.82rem; }
   .hero-content h1 { font-size: 1.5rem; }
