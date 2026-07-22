@@ -67,6 +67,11 @@
   color: white;
 }
 
+.admin-nav a[onclick*="logout"]:hover {
+  background: rgba(255, 100, 100, 0.15);
+  color: #ff6b6b;
+}
+
 .admin-nav a .nav-icon {
   font-size: 1.1rem;
   width: 24px;
