@@ -7,6 +7,15 @@ const App = {
     this.initSearchCycle();
     this.initHamburger();
     this.initToast();
+    document.addEventListener('click', (e) => {
+      const dd = document.getElementById('userDropdown');
+      if (dd && dd.classList.contains('active')) {
+        const btn = dd.previousElementSibling;
+        if (!dd.contains(e.target) && btn && !btn.contains(e.target)) {
+          dd.classList.remove('active');
+        }
+      }
+    });
   },
 
   updateNav() {
@@ -29,7 +38,6 @@ const App = {
               <a href="wishlist.html">❤️ Wishlist</a>
               <a href="dashboard.html?section=addresses">📍 Addresses</a>
               <a href="dashboard.html?section=settings">⚙️ Settings</a>
-              <button onclick="App.switchAccount()">🔄 Switch Account</button>
               <button onclick="App.logout()" style="color:var(--danger);">🚪 Logout</button>
             </div>
           </div>`;
@@ -93,12 +101,6 @@ const App = {
     } else {
       window.location.href = 'index.html';
     }
-  },
-
-  switchAccount() {
-    this.currentUser = null;
-    localStorage.removeItem('aravali_currentUser');
-    window.location.href = 'login.html';
   },
 
   isLoggedIn() {
