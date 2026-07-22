@@ -285,7 +285,7 @@ const Admin = {
         </div>
         <div class="form-group">
           <label>Badge (optional)</label>
-          <input type="text" id="pBadge" placeholder="e.g. Bestseller, New">
+          <input type="text" id="pBadge" placeholder="e.g. Top Rated, New">
         </div>
         <input type="hidden" id="pEditId" value="">
         <input type="hidden" id="pExistingImage" value="">

@@ -85,7 +85,7 @@
 
   <section class="section">
     <div class="section-header">
-      <h2>Bestsellers</h2>
+      <h2>Top Rated</h2>
       <a href="shop.html">View All →</a>
     </div>
     <div class="product-grid" id="bestsellerGrid"></div>
@@ -319,8 +319,8 @@
         tGrid.innerHTML = trending.map(p => Shop.renderProductCard(p)).join('');
       }
 
-      // Deals & Combos (Bestseller + New badges)
-      const deals = products.filter(p => p.badge === 'Bestseller' || p.badge === 'New').slice(0, 8);
+      // Deals & Combos (Top Rated + New badges)
+      const deals = products.filter(p => p.badge === 'Top Rated' || p.badge === 'New').slice(0, 8);
       const dGrid = document.getElementById('dealsGrid');
       if (dGrid && deals.length > 0) {
         dGrid.innerHTML = deals.map(p => Shop.renderProductCard(p)).join('');
@@ -333,8 +333,8 @@
         sGrid.innerHTML = seasonal.map(p => Shop.renderProductCard(p)).join('');
       }
 
-      // Top Rated (Bestseller badge, then sorted by price desc)
-      const topRated = products.filter(p => p.badge === 'Bestseller').slice(0, 8);
+      // Top Rated (Top Rated badge, then sorted by price desc)
+      const topRated = products.filter(p => p.badge === 'Top Rated').slice(0, 8);
       const trGrid = document.getElementById('topRatedGrid');
       if (trGrid && topRated.length > 0) {
         trGrid.innerHTML = topRated.map(p => Shop.renderProductCard(p)).join('');

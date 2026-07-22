@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bestsellers - Aravali Store</title>
+  <title>Top Rated - Aravali Store</title>
   <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/responsive.css">
@@ -32,8 +32,8 @@
   </nav>
 
   <div class="page-header">
-    <div class="breadcrumb"><a href="index.html">Home</a> <span>/</span> <span>Bestsellers</span></div>
-    <h1>Our Bestsellers</h1>
+    <div class="breadcrumb"><a href="index.html">Home</a> <span>/</span> <span>Top Rated</span></div>
+    <h1>Our Top Rated Products</h1>
     <p>Top-rated products loved by our customers</p>
   </div>
 
@@ -80,7 +80,7 @@
 
       function getBaseProducts() {
         const all = DB.getAll('products');
-        const bestsellers = all.filter(p => p.badge === 'Bestseller');
+        const bestsellers = all.filter(p => p.badge === 'Top Rated');
         if (bestsellers.length > 0) return bestsellers;
         return all.sort((a, b) => (b.stock || 0) - (a.stock || 0));
       }
