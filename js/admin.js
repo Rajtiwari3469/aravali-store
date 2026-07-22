@@ -471,7 +471,10 @@ const Admin = {
       <div class="admin-table-wrapper">
         <div class="admin-table-header">
           <h3>All Orders (${orders.length})</h3>
-          <input type="text" class="search-input" placeholder="Search orders..." oninput="Admin.filterOrders(this.value)">
+          <div style="display:flex;gap:10px;align-items:center;">
+            <input type="text" class="search-input" placeholder="Search orders..." oninput="Admin.filterOrders(this.value)">
+            ${orders.length > 0 ? `<button class="btn btn-sm" onclick="Admin.deleteAllOrders()" style="background:rgba(230,57,70,0.1);color:var(--danger);font-weight:600;padding:6px 14px;border-radius:8px;border:none;cursor:pointer;font-family:var(--font);font-size:0.82rem;">🗑️ Clear All</button>` : ''}
+          </div>
         </div>
         <table class="admin-table">
           <thead>
@@ -512,7 +515,10 @@ const Admin = {
         </td>
         <td style="font-size:0.82rem;">${App.formatDate(o.orderDate || o.createdAt)}</td>
         <td>
-          <button class="action-btn view" onclick="Admin.viewOrder('${o.id}')">View</button>
+          <div class="action-btns">
+            <button class="action-btn view" onclick="Admin.viewOrder('${o.id}')">View</button>
+            <button class="action-btn delete" onclick="Admin.deleteOrder('${o.id}')">Delete</button>
+          </div>
         </td>
       </tr>
     `).join('');
@@ -534,6 +540,22 @@ const Admin = {
   updateOrderStatus(orderId, status) {
     DB.update('orders', orderId, { status });
     App.showToast(`Order status updated to ${status}`, 'success');
+  },
+
+  deleteOrder(orderId) {
+    if (!confirm('Delete this order? This cannot be undone.')) return;
+    DB.delete('orders', orderId);
+    App.showToast('Order deleted', 'info');
+    this.renderOrders();
+  },
+
+  deleteAllOrders() {
+    const count = DB.getAll('orders').length;
+    if (!confirm(`Delete ALL ${count} orders? This cannot be undone.`)) return;
+    if (!confirm('Are you absolutely sure? This is permanent.')) return;
+    DB.clearTable('orders');
+    App.showToast('All orders deleted', 'success');
+    this.renderOrders();
   },
 
   viewOrder(orderId) {
