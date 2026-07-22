@@ -162,9 +162,9 @@ const Shop = {
     const inCart = cart.find(c => c.productId === p.id);
 
     return `
-      <div class="product-card" data-id="${p.id}">
+      <div class="product-card" data-id="${p.id}" onclick="window.location.href='product.html?id=${p.id}'" style="cursor:pointer;">
         ${p.badge ? `<span class="product-badge">${p.badge}</span>` : ''}
-        <button class="wishlist-btn ${inWishlist ? 'active' : ''}" data-wishlist="${p.id}">
+        <button class="wishlist-btn ${inWishlist ? 'active' : ''}" data-wishlist="${p.id}" onclick="event.stopPropagation();">
           ${inWishlist ? '❤️' : '🤍'}
         </button>
         <div class="product-image">
@@ -177,12 +177,12 @@ const Shop = {
           <div class="product-bottom">
             <div class="product-price">${App.formatCurrency(p.price)} <small>/${p.unit}</small></div>
             ${inCart
-              ? `<div class="qty-control">
-                   <button onclick="Shop.changeQty('${p.id}', -1)">−</button>
+              ? `<div class="qty-control" onclick="event.stopPropagation();">
+                   <button onclick="event.stopPropagation();Shop.changeQty('${p.id}', -1)">−</button>
                    <span class="qty-val">${inCart.qty}</span>
-                   <button onclick="Shop.changeQty('${p.id}', 1)">+</button>
+                   <button onclick="event.stopPropagation();Shop.changeQty('${p.id}', 1)">+</button>
                  </div>`
-              : `<button class="btn-add-cart" onclick="Shop.addToCart('${p.id}')">Add +</button>`
+              : `<button class="btn-add-cart" onclick="event.stopPropagation();Shop.addToCart('${p.id}')">Add +</button>`
             }
           </div>
         </div>
