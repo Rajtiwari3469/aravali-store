@@ -493,7 +493,7 @@ const Admin = {
         <div class="admin-table-header">
           <h3>All Orders (${orders.length})</h3>
           <div style="display:flex;gap:10px;align-items:center;">
-            <input type="text" class="search-input" placeholder="Search orders..." oninput="Admin.filterOrders(this.value)">
+            <input type="text" class="search-input" placeholder="Search by ID, name, phone..." oninput="Admin.filterOrders(this.value)">
             ${orders.length > 0 ? `<button class="btn btn-sm" onclick="Admin.deleteAllOrders()" style="background:rgba(230,57,70,0.1);color:var(--danger);font-weight:600;padding:6px 14px;border-radius:8px;border:none;cursor:pointer;font-family:var(--font);font-size:0.82rem;">🗑️ Clear All</button>` : ''}
           </div>
         </div>
@@ -502,6 +502,8 @@ const Admin = {
             <tr>
               <th>Order ID</th>
               <th>Customer</th>
+              <th>Phone</th>
+              <th>Address</th>
               <th>Items</th>
               <th>Total</th>
               <th>Status</th>
@@ -516,14 +518,34 @@ const Admin = {
       </div>`;
   },
 
+  parseOrderAddress(order) {
+    const addr = order.address || '';
+    const phoneMatch = addr.match(/Phone:\s*([^\s-]+)/);
+    const phone = phoneMatch ? phoneMatch[1] : '';
+    const parts = addr.split(' - ').map(s => s.trim()).filter(Boolean);
+    let cleanAddress = addr;
+    let customerName = order.userName || 'Guest';
+    if (parts.length >= 3) {
+      cleanAddress = parts[0];
+      customerName = parts[parts.length - 1];
+    } else if (parts.length === 2) {
+      cleanAddress = parts[0];
+    }
+    return { phone, cleanAddress, customerName };
+  },
+
   renderOrderRows(orders) {
     if (orders.length === 0) {
-      return '<tr><td colspan="7" style="text-align:center;padding:40px;">No orders yet.</td></tr>';
+      return '<tr><td colspan="9" style="text-align:center;padding:40px;">No orders yet.</td></tr>';
     }
-    return orders.map(o => `
+    return orders.map(o => {
+      const parsed = this.parseOrderAddress(o);
+      return `
       <tr>
         <td style="font-weight:600;">#${o.id.slice(-6).toUpperCase()}</td>
-        <td>${o.userName || 'Guest'}</td>
+        <td style="font-weight:600;">${parsed.customerName}</td>
+        <td style="font-size:0.82rem;">${parsed.phone || 'N/A'}</td>
+        <td style="font-size:0.78rem;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${parsed.cleanAddress}">${parsed.cleanAddress || 'N/A'}</td>
         <td>${(o.items || []).length} items</td>
         <td style="font-weight:600;color:var(--primary);">${App.formatCurrency(o.total || 0)}</td>
         <td>
@@ -541,19 +563,23 @@ const Admin = {
             <button class="action-btn delete" onclick="Admin.deleteOrder('${o.id}')">Delete</button>
           </div>
         </td>
-      </tr>
-    `).join('');
+      </tr>`;
+    }).join('');
   },
 
   filterOrders(term) {
     let orders = DB.getAll('orders').reverse();
     if (term) {
       const t = term.toLowerCase();
-      orders = orders.filter(o =>
-        o.id.toLowerCase().includes(t) ||
-        (o.userName && o.userName.toLowerCase().includes(t)) ||
-        o.status.toLowerCase().includes(t)
-      );
+      orders = orders.filter(o => {
+        const parsed = this.parseOrderAddress(o);
+        return o.id.toLowerCase().includes(t) ||
+          (o.userName && o.userName.toLowerCase().includes(t)) ||
+          o.status.toLowerCase().includes(t) ||
+          parsed.phone.includes(t) ||
+          parsed.cleanAddress.toLowerCase().includes(t) ||
+          parsed.customerName.toLowerCase().includes(t);
+      });
     }
     document.getElementById('ordersTableBody').innerHTML = this.renderOrderRows(orders);
   },
@@ -586,27 +612,73 @@ const Admin = {
     const modal = document.getElementById('productModal');
     if (!modal) return;
     const content = document.getElementById('productModalContent');
+    const parsed = this.parseOrderAddress(order);
+
+    const user = DB.getById('users', order.userId);
+    const userPhone = user ? user.phone : parsed.phone;
+    const userName = user ? user.name : parsed.customerName;
+    const userEmail = user ? user.email : '';
 
     content.innerHTML = `
       <button class="modal-close" onclick="Admin.closeModal()">✕</button>
-      <h2>Order #${order.id.slice(-6).toUpperCase()}</h2>
-      <div style="margin-bottom:16px;">
-        <strong>Customer:</strong> ${order.userName || 'Guest'}<br>
-        <strong>Date:</strong> ${App.formatDate(order.orderDate || order.createdAt)}<br>
-        <strong>Status:</strong> <span class="order-status ${order.status}">${order.status}</span><br>
-        <strong>Address:</strong> ${order.address || 'N/A'}<br>
-        <strong>Payment:</strong> ${order.paymentMethod || 'N/A'}
+      <h2 style="margin-bottom:20px;">Order #${order.id.slice(-6).toUpperCase()}</h2>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;">
+        <div style="padding:12px;background:rgba(82,183,136,0.05);border-radius:10px;">
+          <p style="font-size:0.72rem;color:var(--text-muted);margin:0 0 3px;">Customer</p>
+          <p style="font-weight:700;margin:0;font-size:0.9rem;">${userName}</p>
+        </div>
+        <div style="padding:12px;background:rgba(82,183,136,0.05);border-radius:10px;">
+          <p style="font-size:0.72rem;color:var(--text-muted);margin:0 0 3px;">Phone</p>
+          <p style="font-weight:700;margin:0;font-size:0.9rem;">${userPhone || 'N/A'}</p>
+        </div>
+        ${userEmail ? `<div style="padding:12px;background:rgba(82,183,136,0.05);border-radius:10px;">
+          <p style="font-size:0.72rem;color:var(--text-muted);margin:0 0 3px;">Email</p>
+          <p style="font-weight:600;margin:0;font-size:0.82rem;">${userEmail}</p>
+        </div>` : ''}
+        <div style="padding:12px;background:rgba(82,183,136,0.05);border-radius:10px;">
+          <p style="font-size:0.72rem;color:var(--text-muted);margin:0 0 3px;">Date</p>
+          <p style="font-weight:600;margin:0;font-size:0.85rem;">${App.formatDate(order.orderDate || order.createdAt)}</p>
+        </div>
       </div>
-      <h3 style="font-size:0.95rem;margin-bottom:8px;">Items</h3>
+
+      <div style="padding:12px 14px;background:rgba(45,106,79,0.04);border-radius:10px;border-left:3px solid var(--primary);margin-bottom:16px;">
+        <p style="font-size:0.72rem;color:var(--text-muted);margin:0 0 3px;">📍 Delivery Address</p>
+        <p style="font-weight:600;margin:0;font-size:0.88rem;">${parsed.cleanAddress || order.address || 'N/A'}</p>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-bottom:16px;">
+        <div style="flex:1;padding:10px;text-align:center;background:rgba(82,183,136,0.06);border-radius:8px;">
+          <span class="order-status ${order.status}" style="font-size:0.78rem;">${order.status}</span>
+        </div>
+        <div style="flex:1;padding:10px;text-align:center;background:rgba(82,183,136,0.06);border-radius:8px;">
+          <span style="font-size:0.78rem;color:var(--text-muted);">Payment</span><br>
+          <span style="font-weight:600;font-size:0.85rem;">${order.paymentMethod === 'cod' ? '💵 COD' : '📱 UPI'}</span>
+        </div>
+      </div>
+
+      <h3 style="font-size:0.9rem;margin-bottom:10px;color:var(--text);">📦 Items Ordered</h3>
       ${(order.items || []).map(item => `
-        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(45,106,79,0.06);">
-          <span>${item.name} × ${item.qty}</span>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(45,106,79,0.06);">
+          <div>
+            <span style="font-weight:600;font-size:0.88rem;">${item.name}</span>
+            <span style="font-size:0.78rem;color:var(--text-muted);margin-left:6px;">× ${item.qty}</span>
+          </div>
           <span style="font-weight:600;">${App.formatCurrency(item.price * item.qty)}</span>
         </div>
       `).join('')}
-      <div style="display:flex;justify-content:space-between;padding:12px 0;font-weight:700;font-size:1.05rem;color:var(--primary-dark);">
-        <span>Total</span>
-        <span>${App.formatCurrency(order.total || 0)}</span>
+
+      <div style="padding:12px 0;display:flex;flex-direction:column;gap:4px;">
+        <div style="display:flex;justify-content:space-between;font-size:0.85rem;">
+          <span>Subtotal</span><span>${App.formatCurrency(order.subtotal || 0)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:0.85rem;">
+          <span>Delivery</span><span>${order.delivery === 0 ? 'FREE' : App.formatCurrency(order.delivery || 0)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding-top:8px;border-top:2px solid rgba(45,106,79,0.1);font-weight:700;font-size:1.05rem;color:var(--primary-dark);">
+          <span>Total</span>
+          <span>${App.formatCurrency(order.total || 0)}</span>
+        </div>
       </div>`;
 
     modal.classList.add('active');
