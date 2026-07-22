@@ -603,6 +603,7 @@ const Admin = {
       <div class="admin-table-wrapper">
         <div class="admin-table-header">
           <h3>All Users (${users.length})</h3>
+          <input type="text" class="search-input" placeholder="Search users..." oninput="Admin.filterUsers(this.value)">
         </div>
         <table class="admin-table">
           <thead>
@@ -611,31 +612,139 @@ const Admin = {
               <th>Email</th>
               <th>Phone</th>
               <th>Orders</th>
+              <th>Spent</th>
               <th>Joined</th>
               <th>Actions</th>
             </tr>
           </thead>
-          <tbody>
-            ${users.length === 0
-              ? '<tr><td colspan="6" style="text-align:center;padding:40px;">No users registered yet.</td></tr>'
-              : users.map(u => {
-                  const userOrders = orders.filter(o => o.userId === u.id);
-                  return `
-                    <tr>
-                      <td style="font-weight:600;">${u.name}</td>
-                      <td>${u.email}</td>
-                      <td>${u.phone || 'N/A'}</td>
-                      <td>${userOrders.length}</td>
-                      <td style="font-size:0.82rem;">${App.formatDate(u.createdAt)}</td>
-                      <td>
-                        <button class="action-btn delete" onclick="Admin.deleteUser('${u.id}')">Delete</button>
-                      </td>
-                    </tr>`;
-                }).join('')
-            }
+          <tbody id="usersTableBody">
+            ${this.renderUserRows(users, orders)}
           </tbody>
         </table>
+      </div>
+      <div id="productModal" class="modal-overlay" onclick="if(event.target===this)this.classList.remove('active')">
+        <div class="modal" id="productModalContent"></div>
       </div>`;
+  },
+
+  renderUserRows(users, orders) {
+    if (!orders) orders = DB.getAll('orders');
+    if (users.length === 0) {
+      return '<tr><td colspan="7" style="text-align:center;padding:40px;">No users registered yet.</td></tr>';
+    }
+    return users.map(u => {
+      const userOrders = orders.filter(o => o.userId === u.id);
+      const totalSpent = userOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+      return `
+        <tr>
+          <td style="font-weight:600;">${u.name}</td>
+          <td>${u.email}</td>
+          <td>${u.phone || 'N/A'}</td>
+          <td>${userOrders.length}</td>
+          <td style="font-weight:600;color:var(--primary);">${totalSpent > 0 ? App.formatCurrency(totalSpent) : '-'}</td>
+          <td style="font-size:0.82rem;">${App.formatDate(u.createdAt)}</td>
+          <td>
+            <div class="action-btns">
+              <button class="action-btn view" onclick="Admin.viewUser('${u.id}')">View</button>
+              <button class="action-btn delete" onclick="Admin.deleteUser('${u.id}')">Delete</button>
+            </div>
+          </td>
+        </tr>`;
+    }).join('');
+  },
+
+  filterUsers(term) {
+    let users = DB.getAll('users');
+    if (term) {
+      const t = term.toLowerCase();
+      users = users.filter(u =>
+        u.name.toLowerCase().includes(t) ||
+        u.email.toLowerCase().includes(t) ||
+        (u.phone && u.phone.includes(t))
+      );
+    }
+    document.getElementById('usersTableBody').innerHTML = this.renderUserRows(users);
+  },
+
+  viewUser(userId) {
+    const user = DB.getById('users', userId);
+    if (!user) return;
+    const modal = document.getElementById('productModal');
+    const content = document.getElementById('productModalContent');
+    const orders = DB.getAll('orders').filter(o => o.userId === userId).sort((a, b) => new Date(b.orderDate || b.createdAt) - new Date(a.orderDate || a.createdAt));
+    const totalSpent = orders.reduce((sum, o) => sum + (o.total || 0), 0);
+    const deliveredCount = orders.filter(o => o.status === 'delivered').length;
+    const pendingCount = orders.filter(o => o.status === 'pending').length;
+
+    const addresses = [...new Set(orders.map(o => o.address).filter(Boolean))];
+
+    content.innerHTML = `
+      <button class="modal-close" onclick="Admin.closeModal()">✕</button>
+      <h2 style="margin-bottom:20px;">${user.name}</h2>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;">
+        <div style="padding:14px;background:rgba(82,183,136,0.05);border-radius:10px;">
+          <p style="font-size:0.75rem;color:var(--text-muted);margin:0 0 4px;">Email</p>
+          <p style="font-weight:600;margin:0;font-size:0.88rem;">${user.email}</p>
+        </div>
+        <div style="padding:14px;background:rgba(82,183,136,0.05);border-radius:10px;">
+          <p style="font-size:0.75rem;color:var(--text-muted);margin:0 0 4px;">Phone</p>
+          <p style="font-weight:600;margin:0;font-size:0.88rem;">${user.phone || 'N/A'}</p>
+        </div>
+        <div style="padding:14px;background:rgba(82,183,136,0.05);border-radius:10px;">
+          <p style="font-size:0.75rem;color:var(--text-muted);margin:0 0 4px;">Joined</p>
+          <p style="font-weight:600;margin:0;font-size:0.88rem;">${App.formatDate(user.createdAt)}</p>
+        </div>
+        <div style="padding:14px;background:rgba(82,183,136,0.05);border-radius:10px;">
+          <p style="font-size:0.75rem;color:var(--text-muted);margin:0 0 4px;">Total Spent</p>
+          <p style="font-weight:700;margin:0;font-size:1rem;color:var(--primary);">${totalSpent > 0 ? App.formatCurrency(totalSpent) : '-'}</p>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:12px;margin-bottom:20px;">
+        <div style="flex:1;padding:12px;text-align:center;background:rgba(82,183,136,0.08);border-radius:10px;">
+          <div style="font-size:1.4rem;font-weight:700;color:var(--primary);">${orders.length}</div>
+          <div style="font-size:0.75rem;color:var(--text-muted);">Total Orders</div>
+        </div>
+        <div style="flex:1;padding:12px;text-align:center;background:rgba(82,183,136,0.08);border-radius:10px;">
+          <div style="font-size:1.4rem;font-weight:700;color:var(--success);">${deliveredCount}</div>
+          <div style="font-size:0.75rem;color:var(--text-muted);">Delivered</div>
+        </div>
+        <div style="flex:1;padding:12px;text-align:center;background:rgba(244,140,6,0.08);border-radius:10px;">
+          <div style="font-size:1.4rem;font-weight:700;color:var(--accent);">${pendingCount}</div>
+          <div style="font-size:0.75rem;color:var(--text-muted);">Pending</div>
+        </div>
+      </div>
+
+      ${addresses.length > 0 ? `
+        <div style="margin-bottom:20px;">
+          <h3 style="font-size:0.9rem;margin-bottom:10px;color:var(--text);">📍 Saved Addresses</h3>
+          ${addresses.map(a => `
+            <div style="padding:10px 14px;background:rgba(82,183,136,0.04);border-radius:8px;margin-bottom:6px;font-size:0.85rem;border-left:3px solid var(--primary);">
+              ${a}
+            </div>
+          `).join('')}
+        </div>
+      ` : ''}
+
+      ${orders.length > 0 ? `
+        <h3 style="font-size:0.9rem;margin-bottom:10px;color:var(--text);">📦 Order History</h3>
+        <div style="max-height:260px;overflow-y:auto;">
+          ${orders.slice(0, 10).map(o => `
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid rgba(45,106,79,0.06);gap:10px;">
+              <div style="flex:1;">
+                <span style="font-weight:600;font-size:0.85rem;">#${o.id.slice(-6).toUpperCase()}</span>
+                <span style="font-size:0.75rem;color:var(--text-muted);margin-left:8px;">${App.formatDate(o.orderDate || o.createdAt)}</span>
+                <div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px;">${(o.items || []).length} items</div>
+              </div>
+              <span class="order-status ${o.status}" style="font-size:0.72rem;">${o.status}</span>
+              <span style="font-weight:600;font-size:0.85rem;color:var(--primary);">${App.formatCurrency(o.total || 0)}</span>
+            </div>
+          `).join('')}
+        </div>
+      ` : '<p style="color:var(--text-muted);font-size:0.85rem;">No orders yet.</p>'}`;
+
+    modal.classList.add('active');
   },
 
   deleteUser(id) {
