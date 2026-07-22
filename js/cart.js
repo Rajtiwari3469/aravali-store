@@ -39,7 +39,10 @@ const Cart = {
           <span class="qty-val">${item.qty}</span>
           <button onclick="Cart.changeQty('${item.productId}', 1)">+</button>
         </div>
-        <div class="item-price">${App.formatCurrency(item.product.price * item.qty)}</div>
+        <div class="item-price">
+          ${App.formatCurrency(item.product.price * item.qty)}
+          ${item.product.mrp && item.product.mrp > item.product.price ? `<div style="text-decoration:line-through;color:var(--text-muted);font-size:0.7rem;font-weight:400;">${App.formatCurrency(item.product.mrp * item.qty)}</div>` : ''}
+        </div>
         <button class="remove-btn" onclick="Cart.removeItem('${item.productId}')">✕</button>
       </div>`;
     }).join('');
@@ -52,6 +55,9 @@ const Cart = {
     if (!summaryContainer) return;
 
     const subtotal = App.getCartTotal();
+    const cartItems = App.getCartItems();
+    const totalMrp = cartItems.reduce((sum, c) => sum + ((c.product.mrp && c.product.mrp > c.product.price ? c.product.mrp : c.product.price) * c.qty), 0);
+    const savings = totalMrp - subtotal;
     const delivery = subtotal > 200 ? 0 : 30;
     const total = subtotal + delivery;
 
@@ -60,6 +66,10 @@ const Cart = {
         <span>Subtotal</span>
         <span>${App.formatCurrency(subtotal)}</span>
       </div>
+      ${savings > 0 ? `<div class="summary-row" style="color:var(--success);font-weight:600;">
+        <span>You Save</span>
+        <span>- ${App.formatCurrency(savings)}</span>
+      </div>` : ''}
       <div class="summary-row">
         <span>Delivery ${subtotal > 200 ? '(Free above ₹200)' : ''}</span>
         <span>${delivery === 0 ? 'FREE' : App.formatCurrency(delivery)}</span>

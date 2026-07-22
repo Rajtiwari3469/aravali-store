@@ -283,7 +283,7 @@ const Admin = {
           </div>
         </td>
         <td style="font-size:0.82rem;">${p.category}</td>
-        <td style="font-weight:600;color:var(--primary);">${App.formatCurrency(p.price)}</td>
+        <td style="font-weight:600;color:var(--primary);">${App.formatCurrency(p.price)}${p.mrp && p.mrp > p.price ? ` <span style="text-decoration:line-through;color:var(--text-muted);font-weight:400;font-size:0.78rem;">${App.formatCurrency(p.mrp)}</span> <span style="font-size:0.72rem;color:var(--success);font-weight:600;">${Math.round((p.mrp - p.price) / p.mrp * 100)}% off</span>` : ''}</td>
         <td>
           <div style="display:flex;align-items:center;gap:8px;">
             <span style="display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.75rem;font-weight:600;color:white;background:${stockColor};">${stockBadge}</span>
@@ -346,8 +346,12 @@ const Admin = {
           </select>
         </div>
         <div class="form-group">
-          <label>Price (₹)</label>
+          <label>Selling Price (₹)</label>
           <input type="number" id="pPrice" required min="1">
+        </div>
+        <div class="form-group">
+          <label>MRP (₹) (optional)</label>
+          <input type="number" id="pMrp" min="0" placeholder="Must be ≥ selling price">
         </div>
         <div class="form-group">
           <label>Unit</label>
@@ -382,6 +386,7 @@ const Admin = {
     document.getElementById('pName').value = product.name;
     document.getElementById('pCategory').value = product.category;
     document.getElementById('pPrice').value = product.price;
+    document.getElementById('pMrp').value = product.mrp || '';
     document.getElementById('pUnit').value = product.unit;
     document.getElementById('pStock').value = product.stock;
     document.getElementById('pDesc').value = product.description || '';
@@ -402,10 +407,14 @@ const Admin = {
     const imageData = App.getImageData('pImage');
     const existingImage = document.getElementById('pExistingImage').value;
 
+    const mrpVal = parseFloat(document.getElementById('pMrp').value) || 0;
+    const priceVal = parseFloat(document.getElementById('pPrice').value);
+
     const data = {
       name: document.getElementById('pName').value.trim(),
       category: document.getElementById('pCategory').value,
-      price: parseFloat(document.getElementById('pPrice').value),
+      price: priceVal,
+      mrp: mrpVal > priceVal ? mrpVal : 0,
       unit: document.getElementById('pUnit').value.trim(),
       stock: parseInt(document.getElementById('pStock').value),
       description: document.getElementById('pDesc').value.trim(),

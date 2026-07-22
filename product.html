@@ -175,7 +175,12 @@
           ${product.badge ? `<span class="pd-badge">${product.badge}</span>` : ''}
           <h1>${product.name}</h1>
           <div class="pd-unit">${product.unit}</div>
-          <div class="pd-price">${App.formatCurrency(product.price)} <small>/ ${product.unit}</small></div>
+          <div class="pd-price">
+            ${App.formatCurrency(product.price)}
+            ${product.mrp && product.mrp > product.price ? `<span style="text-decoration:line-through;color:var(--text-muted);font-size:1rem;font-weight:400;margin-left:8px;">${App.formatCurrency(product.mrp)}</span> <span style="font-size:0.85rem;color:white;background:var(--success);padding:2px 8px;border-radius:12px;font-weight:700;margin-left:8px;">${Math.round((product.mrp - product.price) / product.mrp * 100)}% OFF</span>` : ''}
+            <small>/ ${product.unit}</small>
+          </div>
+          ${product.mrp && product.mrp > product.price ? `<p style="color:var(--success);font-size:0.88rem;font-weight:600;margin-bottom:12px;">You save ${App.formatCurrency(product.mrp - product.price)}</p>` : ''}
           <p class="pd-desc">${product.description || 'Fresh and high-quality product from Aravali Store.'}</p>
           <div class="pd-stock">
             ${product.stock > 0
@@ -223,6 +228,7 @@
         <div class="pd-bottom-bar">
           <div class="pd-price-mobile">
             ${App.formatCurrency(product.price)}
+            ${product.mrp && product.mrp > product.price ? `<span style="text-decoration:line-through;color:var(--text-muted);font-size:0.75rem;font-weight:400;margin-left:4px;">${App.formatCurrency(product.mrp)}</span>` : ''}
             <small>/ ${product.unit}</small>
           </div>
           ${isOutOfStock
