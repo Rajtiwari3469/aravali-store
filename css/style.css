@@ -68,6 +68,7 @@ img {
   height: 100%;
   z-index: -1;
   overflow: hidden;
+  pointer-events: none;
   background: linear-gradient(135deg, #e8f5e9 0%, #e0f2f1 50%, #e3f2fd 100%);
 }
 

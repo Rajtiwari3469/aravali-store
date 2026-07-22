@@ -7,15 +7,6 @@ const App = {
     this.initSearchCycle();
     this.initHamburger();
     this.initToast();
-    document.addEventListener('click', (e) => {
-      const dd = document.getElementById('userDropdown');
-      if (dd && dd.classList.contains('active')) {
-        const btn = dd.previousElementSibling;
-        if (!dd.contains(e.target) && btn && !btn.contains(e.target)) {
-          dd.classList.remove('active');
-        }
-      }
-    });
   },
 
   updateNav() {
@@ -490,7 +481,8 @@ const App = {
   togglePassword(inputId) {
     const input = document.getElementById(inputId);
     if (!input) return;
-    const toggle = input.parentElement.querySelector('.password-toggle');
+    const wrapper = input.closest('.password-wrapper') || input.parentElement;
+    const toggle = wrapper ? wrapper.querySelector('.password-toggle') : null;
     if (input.type === 'password') {
       input.type = 'text';
       if (toggle) toggle.textContent = '🙈';

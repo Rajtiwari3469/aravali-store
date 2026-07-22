@@ -68,20 +68,49 @@
         return;
       }
 
-      document.getElementById('loginForm').addEventListener('submit', (e) => {
-        e.preventDefault();
-        const email = document.getElementById('loginEmail').value.trim();
-        const password = document.getElementById('loginPassword').value;
-
-        const result = App.login(email, password);
-        if (result.success) {
-          App.showToast('Login successful!', 'success');
-          setTimeout(() => { window.location.href = 'index.html'; }, 500);
-        } else {
+      const form = document.getElementById('loginForm');
+      if (form) {
+        form.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const email = document.getElementById('loginEmail').value.trim();
+          const password = document.getElementById('loginPassword').value;
           const errorEl = document.getElementById('loginError');
-          errorEl.textContent = result.message;
-          errorEl.style.display = 'block';
-        }
+
+          if (!email || !password) {
+            if (errorEl) {
+              errorEl.textContent = 'Please fill in all fields';
+              errorEl.style.display = 'block';
+            }
+            return;
+          }
+
+          const result = App.login(email, password);
+          if (result.success) {
+            if (errorEl) errorEl.style.display = 'none';
+            App.showToast('Login successful!', 'success');
+            setTimeout(() => { window.location.href = 'index.html'; }, 500);
+          } else {
+            if (errorEl) {
+              errorEl.textContent = result.message;
+              errorEl.style.display = 'block';
+            }
+          }
+        });
+      }
+
+      document.querySelectorAll('.password-toggle').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const input = btn.closest('.password-wrapper').querySelector('input');
+          if (!input) return;
+          if (input.type === 'password') {
+            input.type = 'text';
+            btn.textContent = '🙈';
+          } else {
+            input.type = 'password';
+            btn.textContent = '👁️';
+          }
+        });
       });
     });
   </script>

@@ -73,22 +73,59 @@
         return;
       }
 
-      document.getElementById('registerForm').addEventListener('submit', (e) => {
-        e.preventDefault();
-        const name = document.getElementById('regName').value.trim();
-        const email = document.getElementById('regEmail').value.trim();
-        const phone = document.getElementById('regPhone').value.trim();
-        const password = document.getElementById('regPassword').value;
-
-        const result = App.register(name, email, password, phone);
-        if (result.success) {
-          App.showToast('Account created successfully!', 'success');
-          setTimeout(() => { window.location.href = 'index.html'; }, 500);
-        } else {
+      const form = document.getElementById('registerForm');
+      if (form) {
+        form.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const name = document.getElementById('regName').value.trim();
+          const email = document.getElementById('regEmail').value.trim();
+          const phone = document.getElementById('regPhone').value.trim();
+          const password = document.getElementById('regPassword').value;
           const errorEl = document.getElementById('registerError');
-          errorEl.textContent = result.message;
-          errorEl.style.display = 'block';
-        }
+
+          if (!name || !email || !password) {
+            if (errorEl) {
+              errorEl.textContent = 'Please fill in all required fields';
+              errorEl.style.display = 'block';
+            }
+            return;
+          }
+
+          if (password.length < 6) {
+            if (errorEl) {
+              errorEl.textContent = 'Password must be at least 6 characters';
+              errorEl.style.display = 'block';
+            }
+            return;
+          }
+
+          const result = App.register(name, email, password, phone);
+          if (result.success) {
+            if (errorEl) errorEl.style.display = 'none';
+            App.showToast('Account created successfully!', 'success');
+            setTimeout(() => { window.location.href = 'index.html'; }, 500);
+          } else {
+            if (errorEl) {
+              errorEl.textContent = result.message;
+              errorEl.style.display = 'block';
+            }
+          }
+        });
+      }
+
+      document.querySelectorAll('.password-toggle').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const input = btn.closest('.password-wrapper').querySelector('input');
+          if (!input) return;
+          if (input.type === 'password') {
+            input.type = 'text';
+            btn.textContent = '🙈';
+          } else {
+            input.type = 'password';
+            btn.textContent = '👁️';
+          }
+        });
       });
     });
   </script>
