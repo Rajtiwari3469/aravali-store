@@ -125,10 +125,9 @@ const App = {
   },
 
   requireAdmin() {
-    const admins = DB.getAll('admins');
     const user = JSON.parse(localStorage.getItem('aravali_currentUser') || 'null');
     if (!user || !user.isAdmin) {
-      window.location.href = 'login.html';
+      window.location.href = window.location.pathname.includes('/admin/') ? 'login.html' : '../admin/login.html';
       return false;
     }
     return true;

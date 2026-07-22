@@ -124,14 +124,6 @@
   </section>
 
   <section class="section">
-    <div class="section-header">
-      <h2>Top Rated</h2>
-      <a href="shop.html">View All →</a>
-    </div>
-    <div class="product-grid" id="topRatedGrid"></div>
-  </section>
-
-  <section class="section">
     <div class="section-header"><h2>Why Choose Us</h2></div>
     <div class="about-features">
       <div class="about-feature glass-card">
@@ -335,13 +327,11 @@
 
       // Top Rated (Top Rated badge, then sorted by price desc)
       const topRated = products.filter(p => p.badge === 'Top Rated').slice(0, 16);
-      const trGrid = document.getElementById('topRatedGrid');
+      const trGrid = document.getElementById('bestsellerGrid');
       if (trGrid && topRated.length > 0) {
         trGrid.innerHTML = topRated.map(p => Shop.renderProductCard(p)).join('');
       }
 
-      // Init search cycle for home page
-      App.initSearchCycle();
     });
   </script>
 </body>

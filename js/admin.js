@@ -62,12 +62,13 @@ const Admin = {
         const email = document.getElementById('adminEmail').value.trim();
         const password = document.getElementById('adminPassword').value.trim();
 
-        if (App.loginAdmin(email, password)) {
+        const result = App.loginAdmin(email, password);
+        if (result.success) {
           window.location.href = 'index.html';
         } else {
           const errorEl = document.getElementById('loginError');
           if (errorEl) {
-            errorEl.textContent = 'Invalid credentials. Use admin@gmail.com';
+            errorEl.textContent = result.message || 'Invalid credentials. Use admin@gmail.com';
             errorEl.style.display = 'block';
           }
         }

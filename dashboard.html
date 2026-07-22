@@ -324,9 +324,9 @@
   <script src="DBMS/database.js"></script>
   <script src="js/app.js"></script>
   <script>
-    if (!App.requireAuth()) {
-      // redirect handled
-    } else {
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!App.requireAuth()) return;
+
       const Dash = {
         currentSection: 'profile',
         editingAddrId: null,
@@ -680,8 +680,8 @@
         }
       };
 
-      document.addEventListener('DOMContentLoaded', () => Dash.init());
-    }
+      Dash.init();
+    });
   </script>
 </body>
 </html>
