@@ -57,7 +57,7 @@
 
   <button class="admin-sidebar-toggle" onclick="Admin.toggleSidebar()">☰</button>
 
-  <div id="productModal" class="modal-overlay" onclick="if(event.target===this)this.classList.remove('active')">
+  <div id="productModal" class="modal-overlay" onclick="if(event.target===this){this.classList.remove('active');document.body.classList.remove('modal-open');}">
     <div class="modal" id="productModalContent"></div>
   </div>
 

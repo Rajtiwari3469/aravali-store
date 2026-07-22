@@ -1662,12 +1662,16 @@ const Admin = {
     if (!modal || !content) return;
 
     content.innerHTML = `
-      <button class="modal-close" onclick="Admin.closeModal()">✕</button>
-      <h2 style="margin-bottom:6px;">📦 Bulk Assign Products to Offers</h2>
-      <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:20px;">Select products and assign them to an offer category in one go.</p>
+      <div class="bulk-assign-modal">
+        <div class="bulk-assign-header">
+          <div>
+            <h2>Bulk Assign Products to Offers</h2>
+            <p>Select products and assign them to an offer category in one go.</p>
+          </div>
+          <button class="modal-close" onclick="Admin.closeModal()">✕</button>
+        </div>
 
-      <div style="margin-bottom:16px;">
-        <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;">
+        <div class="bulk-assign-controls">
           <div class="modal-search-bar">
             <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             <input type="text" id="bulkOfferSearch" placeholder="Search by name or category..." oninput="Admin.filterBulkProducts(this.value)">
@@ -1678,37 +1682,44 @@ const Admin = {
             ${categories.map(c => `<option value="${c.offerTag}">${c.label}</option>`).join('')}
           </select>
         </div>
-        <label style="display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;font-size:0.85rem;font-weight:600;color:var(--text);">
-          <input type="checkbox" id="bulkSelectAll" onchange="Admin.toggleBulkSelectAll(this.checked)" style="width:18px;height:18px;accent-color:var(--primary);">
-          Select All (${products.length})
-        </label>
-      </div>
 
-      <div id="bulkProductList" style="max-height:350px;overflow-y:auto;border:1px solid rgba(45,106,79,0.08);border-radius:10px;">
-        ${this.renderBulkProductRows(products)}
-      </div>
+        <div class="bulk-assign-selectall">
+          <input type="checkbox" id="bulkSelectAll" onchange="Admin.toggleBulkSelectAll(this.checked)">
+          <span>Select All (${products.length} products)</span>
+        </div>
 
-      <div style="margin-top:16px;display:flex;gap:10px;">
-        <button class="btn btn-primary" style="flex:1;" onclick="Admin.applyBulkOffer()">✅ Assign Selected</button>
-        <button class="btn" style="flex:1;background:rgba(45,106,79,0.06);color:var(--text);" onclick="Admin.closeModal()">Cancel</button>
+        <div class="bulk-assign-divider"></div>
+
+        <div id="bulkProductList" class="bulk-assign-list">
+          ${this.renderBulkProductRows(products)}
+        </div>
+
+        <div class="bulk-assign-divider"></div>
+
+        <div class="bulk-assign-footer">
+          <button class="btn" onclick="Admin.closeModal()">Cancel</button>
+          <button class="btn btn-primary" onclick="Admin.applyBulkOffer()">✅ Assign Selected</button>
+        </div>
       </div>`;
 
     modal.classList.add('active');
+    const modalBox = modal.querySelector('.modal');
+    if (modalBox) modalBox.classList.add('bulk-assign');
+    document.body.classList.add('modal-open');
   },
 
   renderBulkProductRows(products) {
     return products.map(p => `
-      <label style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;transition:background 0.12s;border-bottom:1px solid rgba(45,106,79,0.04);"
-        onmouseover="this.style.background='rgba(45,106,79,0.03)'" onmouseout="this.style.background='transparent'">
-        <input type="checkbox" class="bulk-product-cb" value="${p.id}" style="width:18px;height:18px;accent-color:var(--primary);">
-        <div style="width:34px;height:34px;border-radius:8px;overflow:hidden;background:rgba(45,106,79,0.06);flex-shrink:0;">
-          ${p.image ? `<img src="${p.image}" style="width:100%;height:100%;object-fit:cover;">` : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:0.65rem;">📦</div>`}
+      <label class="bulk-product-row">
+        <input type="checkbox" class="bulk-product-cb" value="${p.id}">
+        <div class="bulk-product-thumb">
+          ${p.image ? `<img src="${p.image}">` : `<span>📦</span>`}
         </div>
-        <div style="flex:1;min-width:0;">
-          <div style="font-weight:600;font-size:0.84rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.name}</div>
-          <div style="font-size:0.73rem;color:var(--text-muted);">${p.category} • ₹${p.price}</div>
+        <div class="bulk-product-info">
+          <div class="bulk-product-name">${p.name}</div>
+          <div class="bulk-product-meta">${p.category} • ₹${p.price}</div>
         </div>
-        ${p.offer ? `<span style="font-size:0.65rem;padding:2px 8px;border-radius:8px;background:rgba(230,57,70,0.08);color:var(--danger);font-weight:600;white-space:nowrap;">${p.offer.split(' ').slice(1).join(' ')}</span>` : ''}
+        ${p.offer ? `<span class="bulk-product-badge">${p.offer.split(' ').slice(1).join(' ')}</span>` : ''}
       </label>
     `).join('');
   },
@@ -1968,7 +1979,12 @@ const Admin = {
 
   closeModal() {
     const modal = document.getElementById('productModal');
-    if (modal) modal.classList.remove('active');
+    if (modal) {
+      modal.classList.remove('active');
+      const modalBox = modal.querySelector('.modal');
+      if (modalBox) modalBox.classList.remove('bulk-assign');
+    }
+    document.body.classList.remove('modal-open');
   },
 
   toggleSidebar() {
