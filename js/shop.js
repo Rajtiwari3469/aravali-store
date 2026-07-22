@@ -14,17 +14,35 @@ const Shop = {
   },
 
   renderCategories() {
-    const products = DB.getAll('products');
-    const categories = ['All', ...new Set(products.map(p => p.category))];
     const container = document.querySelector('.categories-scroll');
     if (!container) return;
 
-    container.innerHTML = categories.map(cat => `
-      <button class="category-chip ${cat === this.currentCategory ? 'active' : ''}" data-category="${cat}">
-        <span class="emoji">${CATEGORY_EMOJIS[cat] || '📦'}</span>
-        ${cat}
-      </button>
-    `).join('');
+    const catalogs = DB.getAll('catalogs').filter(c => c.active).sort((a, b) => (a.order || 0) - (b.order || 0));
+
+    if (catalogs.length > 0) {
+      const allActive = !this.currentCategory || this.currentCategory === 'All';
+      container.innerHTML = `
+        <button class="category-chip ${allActive ? 'active' : ''}" data-category="All">
+          <span class="emoji">🏪</span>
+          All
+        </button>
+        ${catalogs.map(cat => `
+          <button class="category-chip ${cat.name === this.currentCategory ? 'active' : ''}" data-category="${cat.name}">
+            ${cat.image ? `<img src="${cat.image}" style="width:20px;height:20px;border-radius:50%;object-fit:cover;">` : `<span class="emoji">${cat.emoji || CATEGORY_EMOJIS[cat.name] || '📦'}</span>`}
+            ${cat.name}
+          </button>
+        `).join('')}
+      `;
+    } else {
+      const products = DB.getAll('products');
+      const categories = ['All', ...new Set(products.map(p => p.category))];
+      container.innerHTML = categories.map(cat => `
+        <button class="category-chip ${cat === this.currentCategory ? 'active' : ''}" data-category="${cat}">
+          <span class="emoji">${CATEGORY_EMOJIS[cat] || '📦'}</span>
+          ${cat}
+        </button>
+      `).join('');
+    }
   },
 
   initCategoryChips() {
@@ -150,7 +168,7 @@ const Shop = {
           ${inWishlist ? '❤️' : '🤍'}
         </button>
         <div class="product-image">
-          ${App.getProductEmoji(p.category)}
+          ${p.image ? `<img src="${p.image}" style="width:100%;height:100%;object-fit:cover;border-radius:var(--border-radius-sm);">` : App.getProductEmoji(p.category)}
         </div>
         <div class="product-info">
           <div class="product-category">${p.category}</div>

@@ -24,6 +24,12 @@ const Admin = {
     } else if (path.includes('users')) {
       this.currentPage = 'users';
       this.renderUsers();
+    } else if (path.includes('banners')) {
+      this.currentPage = 'banners';
+      this.renderBanners();
+    } else if (path.includes('catalogs')) {
+      this.currentPage = 'catalogs';
+      this.renderCatalogs();
     } else if (path.includes('settings')) {
       this.currentPage = 'settings';
       this.initSettings();
@@ -200,7 +206,10 @@ const Admin = {
       <tr>
         <td>
           <div style="display:flex;align-items:center;gap:10px;">
-            <span style="font-size:1.5rem;">${App.getProductEmoji(p.category)}</span>
+            ${p.image
+              ? `<img src="${p.image}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;">`
+              : `<span style="font-size:1.5rem;">${App.getProductEmoji(p.category)}</span>`
+            }
             <div>
               <div style="font-weight:600;">${p.name}</div>
               <div style="font-size:0.75rem;color:var(--text-muted);">${p.unit}</div>
@@ -235,10 +244,19 @@ const Admin = {
   showAddProduct() {
     const modal = document.getElementById('productModal');
     const content = document.getElementById('productModalContent');
+    const categories = DB.getAll('catalogs').filter(c => c.active).map(c => c.name);
+    if (categories.length === 0) {
+      categories.push('Dairy','Fruits','Vegetables','Snacks','Beverages','Grains','Bakery','Frozen');
+    }
     content.innerHTML = `
       <button class="modal-close" onclick="Admin.closeModal()">✕</button>
       <h2>Add New Product</h2>
       <form id="productForm" onsubmit="Admin.saveProduct(event)">
+        <div class="form-group">
+          <label>Product Image</label>
+          <input type="file" id="pImage" accept="image/*" style="margin-bottom:8px;">
+          <img id="pImagePreview" src="" alt="" style="max-height:80px;border-radius:8px;display:none;">
+        </div>
         <div class="form-group">
           <label>Product Name</label>
           <input type="text" id="pName" required>
@@ -246,14 +264,7 @@ const Admin = {
         <div class="form-group">
           <label>Category</label>
           <select id="pCategory" required>
-            <option value="Dairy">Dairy</option>
-            <option value="Fruits">Fruits</option>
-            <option value="Vegetables">Vegetables</option>
-            <option value="Snacks">Snacks</option>
-            <option value="Beverages">Beverages</option>
-            <option value="Grains">Grains</option>
-            <option value="Bakery">Bakery</option>
-            <option value="Frozen">Frozen</option>
+            ${categories.map(c => `<option value="${c}">${c}</option>`).join('')}
           </select>
         </div>
         <div class="form-group">
@@ -277,9 +288,11 @@ const Admin = {
           <input type="text" id="pBadge" placeholder="e.g. Bestseller, New">
         </div>
         <input type="hidden" id="pEditId" value="">
+        <input type="hidden" id="pExistingImage" value="">
         <button type="submit" class="btn btn-primary btn-lg" style="width:100%;justify-content:center;">Save Product</button>
       </form>`;
     modal.classList.add('active');
+    App.handleImageUpload('pImage', 'pImagePreview', 300);
   },
 
   editProduct(id) {
@@ -296,11 +309,21 @@ const Admin = {
     document.getElementById('pDesc').value = product.description || '';
     document.getElementById('pBadge').value = product.badge || '';
     document.getElementById('pEditId').value = id;
+    document.getElementById('pExistingImage').value = product.image || '';
+
+    if (product.image) {
+      const preview = document.getElementById('pImagePreview');
+      preview.src = product.image;
+      preview.style.display = 'block';
+    }
   },
 
   saveProduct(e) {
     e.preventDefault();
     const editId = document.getElementById('pEditId').value;
+    const imageData = App.getImageData('pImage');
+    const existingImage = document.getElementById('pExistingImage').value;
+
     const data = {
       name: document.getElementById('pName').value.trim(),
       category: document.getElementById('pCategory').value,
@@ -309,7 +332,7 @@ const Admin = {
       stock: parseInt(document.getElementById('pStock').value),
       description: document.getElementById('pDesc').value.trim(),
       badge: document.getElementById('pBadge').value.trim(),
-      image: ''
+      image: imageData || existingImage || ''
     };
 
     if (editId) {
@@ -591,6 +614,297 @@ const Admin = {
       }
     };
     reader.readAsText(file);
+  },
+
+  // Banners
+  renderBanners() {
+    const main = document.querySelector('.admin-content');
+    if (!main) return;
+    const banners = DB.getAll('banners').sort((a, b) => (a.order || 0) - (b.order || 0));
+
+    main.innerHTML = `
+      <div class="admin-table-wrapper">
+        <div class="admin-table-header">
+          <h3>Banners & Promotions (${banners.length})</h3>
+          <button class="btn btn-primary btn-sm" onclick="Admin.showAddBanner()">+ Add Banner</button>
+        </div>
+        <table class="admin-table">
+          <thead>
+            <tr><th>Preview</th><th>Title</th><th>Subtitle</th><th>Link</th><th>Status</th><th>Order</th><th>Actions</th></tr>
+          </thead>
+          <tbody>
+            ${banners.length === 0
+              ? '<tr><td colspan="7" style="text-align:center;padding:40px;">No banners yet.</td></tr>'
+              : banners.map(b => `
+                <tr>
+                  <td>
+                    <div style="width:120px;height:60px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:0.75rem;background:${b.gradient};overflow:hidden;">
+                      ${b.image ? `<img src="${b.image}" style="width:100%;height:100%;object-fit:cover;">` : b.title}
+                    </div>
+                  </td>
+                  <td style="font-weight:600;">${b.title}</td>
+                  <td style="font-size:0.82rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${b.subtitle}</td>
+                  <td style="font-size:0.82rem;">${b.link}</td>
+                  <td><span style="color:${b.active ? 'var(--success)' : 'var(--danger)'};font-weight:600;">${b.active ? 'Active' : 'Hidden'}</span></td>
+                  <td>${b.order || '-'}</td>
+                  <td>
+                    <div class="action-btns">
+                      <button class="action-btn edit" onclick="Admin.editBanner('${b.id}')">Edit</button>
+                      <button class="action-btn delete" onclick="Admin.deleteBanner('${b.id}')">Delete</button>
+                    </div>
+                  </td>
+                </tr>
+              `).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div id="productModal" class="modal-overlay" onclick="if(event.target===this)this.classList.remove('active')">
+        <div class="modal" id="productModalContent"></div>
+      </div>`;
+  },
+
+  showAddBanner() {
+    const modal = document.getElementById('productModal');
+    const content = document.getElementById('productModalContent');
+    content.innerHTML = `
+      <button class="modal-close" onclick="Admin.closeModal()">✕</button>
+      <h2>Add Banner</h2>
+      <form onsubmit="Admin.saveBanner(event)">
+        <div class="form-group">
+          <label>Banner Image (optional, overrides gradient)</label>
+          <input type="file" id="bImage" accept="image/*" style="margin-bottom:8px;">
+          <img id="bImagePreview" src="" style="max-height:80px;border-radius:8px;display:none;">
+        </div>
+        <div class="form-group">
+          <label>Title</label>
+          <input type="text" id="bTitle" required placeholder="e.g. Fresh Fruits">
+        </div>
+        <div class="form-group">
+          <label>Subtitle</label>
+          <input type="text" id="bSubtitle" required placeholder="e.g. 20% off on all fruits">
+        </div>
+        <div class="form-group">
+          <label>Link</label>
+          <input type="text" id="bLink" placeholder="e.g. shop.html?cat=Fruits" required>
+        </div>
+        <div class="form-group">
+          <label>Gradient</label>
+          <select id="bGradient">
+            <option value="linear-gradient(135deg, #2d6a4f, #40916c)">Green</option>
+            <option value="linear-gradient(135deg, #f48c06, #f4a261)">Orange</option>
+            <option value="linear-gradient(135deg, #40916c, #74c69d)">Light Green</option>
+            <option value="linear-gradient(135deg, #1b4332, #2d6a4f)">Dark Green</option>
+            <option value="linear-gradient(135deg, #0077b6, #00b4d8)">Blue</option>
+            <option value="linear-gradient(135deg, #e63946, #f4a261)">Red-Orange</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Display Order</label>
+          <input type="number" id="bOrder" min="1" value="1">
+        </div>
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="bActive" checked> Active (visible on site)
+          </label>
+        </div>
+        <input type="hidden" id="bEditId" value="">
+        <input type="hidden" id="bExistingImage" value="">
+        <button type="submit" class="btn btn-primary btn-lg" style="width:100%;justify-content:center;">Save Banner</button>
+      </form>`;
+    modal.classList.add('active');
+    App.handleImageUpload('bImage', 'bImagePreview', 500);
+  },
+
+  editBanner(id) {
+    const banner = DB.getById('banners', id);
+    if (!banner) return;
+    this.showAddBanner();
+    document.getElementById('productModalContent').querySelector('h2').textContent = 'Edit Banner';
+    document.getElementById('bTitle').value = banner.title;
+    document.getElementById('bSubtitle').value = banner.subtitle;
+    document.getElementById('bLink').value = banner.link;
+    document.getElementById('bGradient').value = banner.gradient;
+    document.getElementById('bOrder').value = banner.order || 1;
+    document.getElementById('bActive').checked = banner.active;
+    document.getElementById('bEditId').value = id;
+    document.getElementById('bExistingImage').value = banner.image || '';
+    if (banner.image) {
+      const preview = document.getElementById('bImagePreview');
+      preview.src = banner.image;
+      preview.style.display = 'block';
+    }
+  },
+
+  saveBanner(e) {
+    e.preventDefault();
+    const editId = document.getElementById('bEditId').value;
+    const imageData = App.getImageData('bImage');
+    const existingImage = document.getElementById('bExistingImage').value;
+    const data = {
+      title: document.getElementById('bTitle').value.trim(),
+      subtitle: document.getElementById('bSubtitle').value.trim(),
+      link: document.getElementById('bLink').value.trim(),
+      gradient: document.getElementById('bGradient').value,
+      order: parseInt(document.getElementById('bOrder').value) || 1,
+      active: document.getElementById('bActive').checked,
+      image: imageData || existingImage || ''
+    };
+    if (editId) {
+      DB.update('banners', editId, data);
+      App.showToast('Banner updated!', 'success');
+    } else {
+      DB.insert('banners', data);
+      App.showToast('Banner added!', 'success');
+    }
+    this.closeModal();
+    this.renderBanners();
+  },
+
+  deleteBanner(id) {
+    if (confirm('Delete this banner?')) {
+      DB.delete('banners', id);
+      App.showToast('Banner deleted', 'info');
+      this.renderBanners();
+    }
+  },
+
+  // Catalogs
+  renderCatalogs() {
+    const main = document.querySelector('.admin-content');
+    if (!main) return;
+    const catalogs = DB.getAll('catalogs').sort((a, b) => (a.order || 0) - (b.order || 0));
+
+    main.innerHTML = `
+      <div class="admin-table-wrapper">
+        <div class="admin-table-header">
+          <h3>Catalogs / Categories (${catalogs.length})</h3>
+          <button class="btn btn-primary btn-sm" onclick="Admin.showAddCatalog()">+ Add Catalog</button>
+        </div>
+        <table class="admin-table">
+          <thead>
+            <tr><th>Icon/Image</th><th>Name</th><th>Description</th><th>Status</th><th>Order</th><th>Products</th><th>Actions</th></tr>
+          </thead>
+          <tbody>
+            ${catalogs.length === 0
+              ? '<tr><td colspan="7" style="text-align:center;padding:40px;">No catalogs yet.</td></tr>'
+              : catalogs.map(c => {
+                  const productCount = DB.getAll('products').filter(p => p.category === c.name).length;
+                  return `
+                    <tr>
+                      <td style="font-size:2rem;text-align:center;">
+                        ${c.image ? `<img src="${c.image}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;">` : c.emoji}
+                      </td>
+                      <td style="font-weight:600;">${c.name}</td>
+                      <td style="font-size:0.82rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${c.description}</td>
+                      <td><span style="color:${c.active ? 'var(--success)' : 'var(--danger)'};font-weight:600;">${c.active ? 'Active' : 'Hidden'}</span></td>
+                      <td>${c.order || '-'}</td>
+                      <td>${productCount}</td>
+                      <td>
+                        <div class="action-btns">
+                          <button class="action-btn edit" onclick="Admin.editCatalog('${c.id}')">Edit</button>
+                          <button class="action-btn delete" onclick="Admin.deleteCatalog('${c.id}')">Delete</button>
+                        </div>
+                      </td>
+                    </tr>`;
+                }).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div id="productModal" class="modal-overlay" onclick="if(event.target===this)this.classList.remove('active')">
+        <div class="modal" id="productModalContent"></div>
+      </div>`;
+  },
+
+  showAddCatalog() {
+    const modal = document.getElementById('productModal');
+    const content = document.getElementById('productModalContent');
+    content.innerHTML = `
+      <button class="modal-close" onclick="Admin.closeModal()">✕</button>
+      <h2>Add Catalog / Category</h2>
+      <form onsubmit="Admin.saveCatalog(event)">
+        <div class="form-group">
+          <label>Catalog Image (optional, overrides emoji)</label>
+          <input type="file" id="cImage" accept="image/*" style="margin-bottom:8px;">
+          <img id="cImagePreview" src="" style="max-height:80px;border-radius:8px;display:none;">
+        </div>
+        <div class="form-group">
+          <label>Category Name</label>
+          <input type="text" id="cName" required placeholder="e.g. Dairy, Fruits">
+        </div>
+        <div class="form-group">
+          <label>Emoji</label>
+          <input type="text" id="cEmoji" placeholder="e.g. 🥛" maxlength="4">
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <input type="text" id="cDesc" placeholder="Short description">
+        </div>
+        <div class="form-group">
+          <label>Display Order</label>
+          <input type="number" id="cOrder" min="1" value="1">
+        </div>
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="cActive" checked> Active (visible on site)
+          </label>
+        </div>
+        <input type="hidden" id="cEditId" value="">
+        <input type="hidden" id="cExistingImage" value="">
+        <button type="submit" class="btn btn-primary btn-lg" style="width:100%;justify-content:center;">Save Catalog</button>
+      </form>`;
+    modal.classList.add('active');
+    App.handleImageUpload('cImage', 'cImagePreview', 300);
+  },
+
+  editCatalog(id) {
+    const catalog = DB.getById('catalogs', id);
+    if (!catalog) return;
+    this.showAddCatalog();
+    document.getElementById('productModalContent').querySelector('h2').textContent = 'Edit Catalog';
+    document.getElementById('cName').value = catalog.name;
+    document.getElementById('cEmoji').value = catalog.emoji || '';
+    document.getElementById('cDesc').value = catalog.description || '';
+    document.getElementById('cOrder').value = catalog.order || 1;
+    document.getElementById('cActive').checked = catalog.active;
+    document.getElementById('cEditId').value = id;
+    document.getElementById('cExistingImage').value = catalog.image || '';
+    if (catalog.image) {
+      const preview = document.getElementById('cImagePreview');
+      preview.src = catalog.image;
+      preview.style.display = 'block';
+    }
+  },
+
+  saveCatalog(e) {
+    e.preventDefault();
+    const editId = document.getElementById('cEditId').value;
+    const imageData = App.getImageData('cImage');
+    const existingImage = document.getElementById('cExistingImage').value;
+    const data = {
+      name: document.getElementById('cName').value.trim(),
+      emoji: document.getElementById('cEmoji').value.trim() || '📦',
+      description: document.getElementById('cDesc').value.trim(),
+      order: parseInt(document.getElementById('cOrder').value) || 1,
+      active: document.getElementById('cActive').checked,
+      image: imageData || existingImage || ''
+    };
+    if (editId) {
+      DB.update('catalogs', editId, data);
+      App.showToast('Catalog updated!', 'success');
+    } else {
+      DB.insert('catalogs', data);
+      App.showToast('Catalog added!', 'success');
+    }
+    this.closeModal();
+    this.renderCatalogs();
+  },
+
+  deleteCatalog(id) {
+    if (confirm('Delete this catalog? Products in this category will not be deleted.')) {
+      DB.delete('catalogs', id);
+      App.showToast('Catalog deleted', 'info');
+      this.renderCatalogs();
+    }
   },
 
   closeModal() {

@@ -55,5 +55,20 @@ const SEED_DATA = {
     { id: "p053", name: "Cheerios", category: "Snacks", price: 199, unit: "200g", image: "", description: "Healthy oat cereal loops.", stock: 15, badge: "" },
     { id: "p054", name: "Red Bull", category: "Beverages", price: 115, unit: "250ml", image: "", description: "Energy drink.", stock: 30, badge: "" },
     { id: "p055", name: "Coconut Water", category: "Beverages", price: 30, unit: "200ml", image: "", description: "Natural tender coconut water.", stock: 35, badge: "New" }
+  ],
+  banners: [
+    { id: "b001", title: "Fresh Fruits", subtitle: "Get 20% off on all seasonal fruits", gradient: "linear-gradient(135deg, #2d6a4f, #40916c)", link: "shop.html?cat=Fruits", image: "", active: true, order: 1 },
+    { id: "b002", title: "Daily Essentials", subtitle: "Free delivery on orders above ₹200", gradient: "linear-gradient(135deg, #f48c06, #f4a261)", link: "shop.html", image: "", active: true, order: 2 },
+    { id: "b003", title: "New Arrivals", subtitle: "Try our newly added products", gradient: "linear-gradient(135deg, #40916c, #74c69d)", link: "shop.html", image: "", active: true, order: 3 }
+  ],
+  catalogs: [
+    { id: "c001", name: "Dairy", emoji: "🥛", description: "Fresh milk, butter, paneer and more", image: "", active: true, order: 1 },
+    { id: "c002", name: "Fruits", emoji: "🍎", description: "Seasonal and exotic fruits", image: "", active: true, order: 2 },
+    { id: "c003", name: "Vegetables", emoji: "🥦", description: "Farm fresh vegetables", image: "", active: true, order: 3 },
+    { id: "c004", name: "Snacks", emoji: "🍿", description: "Chips, biscuits and namkeen", image: "", active: true, order: 4 },
+    { id: "c005", name: "Beverages", emoji: "🥤", description: "Juices, tea, coffee and more", image: "", active: true, order: 5 },
+    { id: "c006", name: "Grains", emoji: "🌾", description: "Rice, dal, flour and spices", image: "", active: true, order: 6 },
+    { id: "c007", name: "Bakery", emoji: "🍞", description: "Fresh bread, buns and pastries", image: "", active: true, order: 7 },
+    { id: "c008", name: "Frozen", emoji: "🧊", description: "Frozen foods and ready-to-cook", image: "", active: true, order: 8 }
   ]
 };

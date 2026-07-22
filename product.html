@@ -76,7 +76,9 @@
       const cartItem = cart.find(c => c.productId === product.id);
 
       document.getElementById('productDetail').innerHTML = `
-        <div class="detail-image">${App.getProductEmojiLarge(product.category)}</div>
+        <div class="detail-image">
+          ${product.image ? `<img src="${product.image}" style="width:100%;height:100%;object-fit:cover;border-radius:var(--border-radius-lg);">` : App.getProductEmojiLarge(product.category)}
+        </div>
         <div class="detail-info">
           <span class="detail-category">${product.category}</span>
           ${product.badge ? `<span class="product-badge" style="position:static;display:inline-block;margin-left:8px;">${product.badge}</span>` : ''}

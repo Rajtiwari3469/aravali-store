@@ -92,6 +92,8 @@ const DB = {
 function initDB() {
   if (typeof SEED_DATA !== 'undefined') {
     DB.seed('products', SEED_DATA.products);
+    DB.seed('banners', SEED_DATA.banners);
+    DB.seed('catalogs', SEED_DATA.catalogs);
   }
 
   const adminExists = DB.getAll('admins').length > 0;

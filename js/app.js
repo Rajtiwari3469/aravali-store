@@ -258,6 +258,35 @@ const App = {
     return order;
   },
 
+  // Image upload to base64
+  handleImageUpload(inputId, previewId, maxSizeKB = 200) {
+    const input = document.getElementById(inputId);
+    const preview = document.getElementById(previewId);
+    if (!input || !preview) return;
+
+    input.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (file.size > maxSizeKB * 1024) {
+        App.showToast(`Image too large. Max ${maxSizeKB}KB.`, 'error');
+        input.value = '';
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        preview.src = ev.target.result;
+        preview.style.display = 'block';
+        input.dataset.imageData = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  },
+
+  getImageData(inputId) {
+    const input = document.getElementById(inputId);
+    return input && input.dataset.imageData ? input.dataset.imageData : '';
+  },
+
   // Product image (emoji fallback)
   getProductEmoji(category) {
     const emojis = {
@@ -287,7 +316,7 @@ const App = {
     return emojis[category] || '🛒';
   },
 
-  // Search placeholder auto-cycle
+  // Search placeholder auto-cycle (Blinkit-style slow swipe)
   initSearchCycle() {
     const searchInput = document.querySelector('.search-bar input');
     if (!searchInput) return;
@@ -298,54 +327,75 @@ const App = {
       'Search snacks & beverages...',
       'Search dairy products...',
       'Search frozen food...',
-      'Search grains & spices...'
+      'Search grains & spices...',
+      'Search bakery items...',
+      'Search organic products...'
     ];
 
     let currentIndex = 0;
-    let cycleInterval;
+    let cycleTimer = null;
+    let typewriterTimer = null;
 
     const cycleEl = document.createElement('span');
     cycleEl.className = 'search-placeholder-cycle';
     searchInput.parentElement.appendChild(cycleEl);
 
-    function showPlaceholder() {
+    function typeText(text, el, callback) {
+      let i = 0;
+      el.textContent = '';
+      el.classList.add('active');
+      el.classList.remove('fade-out');
+
+      function typeChar() {
+        if (i < text.length) {
+          el.textContent += text.charAt(i);
+          i++;
+          typewriterTimer = setTimeout(typeChar, 45);
+        } else {
+          if (callback) callback();
+        }
+      }
+      typeChar();
+    }
+
+    function showNextPlaceholder() {
       if (document.activeElement === searchInput && searchInput.value) return;
-
-      cycleEl.textContent = placeholders[currentIndex];
-      cycleEl.classList.add('active');
-      cycleEl.classList.remove('fade-out');
-
-      setTimeout(() => {
-        cycleEl.classList.add('fade-out');
-        setTimeout(() => {
-          currentIndex = (currentIndex + 1) % placeholders.length;
-          if (!searchInput.value && document.activeElement !== searchInput) {
-            showPlaceholder();
-          }
-        }, 400);
-      }, 2500);
+      if (!searchInput.value && document.activeElement !== searchInput) {
+        const text = placeholders[currentIndex];
+        typeText(text, cycleEl, () => {
+          setTimeout(() => {
+            cycleEl.classList.add('fade-out');
+            setTimeout(() => {
+              currentIndex = (currentIndex + 1) % placeholders.length;
+              showNextPlaceholder();
+            }, 600);
+          }, 3500);
+        });
+      }
     }
 
     searchInput.addEventListener('focus', () => {
       cycleEl.classList.remove('active');
-      clearInterval(cycleInterval);
+      clearTimeout(cycleTimer);
+      clearTimeout(typewriterTimer);
     });
 
     searchInput.addEventListener('blur', () => {
       if (!searchInput.value) {
-        showPlaceholder();
-        cycleInterval = setInterval(showPlaceholder, 3200);
+        currentIndex = (currentIndex + 1) % placeholders.length;
+        showNextPlaceholder();
       }
     });
 
     searchInput.addEventListener('input', () => {
       if (searchInput.value) {
         cycleEl.classList.remove('active');
+        clearTimeout(cycleTimer);
+        clearTimeout(typewriterTimer);
       }
     });
 
-    showPlaceholder();
-    cycleInterval = setInterval(showPlaceholder, 3200);
+    showNextPlaceholder();
   },
 
   // Hamburger
