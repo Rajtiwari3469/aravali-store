@@ -80,7 +80,7 @@
 
       document.getElementById('productDetail').innerHTML = `
         <div class="detail-image">
-          ${product.image ? `<img src="${product.image}" style="width:100%;height:100%;object-fit:cover;border-radius:var(--border-radius-lg);">` : App.getProductEmojiLarge(product.category)}
+          ${product.image ? `<img src="${product.image}" style="width:100%;height:100%;object-fit:cover;border-radius:var(--border-radius-lg);">` : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(45,106,79,0.06),rgba(82,183,136,0.1));border-radius:var(--border-radius-lg);color:var(--text-muted);font-size:0.9rem;">No Image Uploaded</div>`}
         </div>
         <div class="detail-info">
           <span class="detail-category">${product.category}</span>

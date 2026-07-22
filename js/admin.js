@@ -208,7 +208,7 @@ const Admin = {
           <div style="display:flex;align-items:center;gap:10px;">
             ${p.image
               ? `<img src="${p.image}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;">`
-              : `<span style="font-size:1.5rem;">${App.getProductEmoji(p.category)}</span>`
+              : `<div style="width:40px;height:40px;border-radius:8px;background:rgba(45,106,79,0.08);display:flex;align-items:center;justify-content:center;font-size:0.65rem;color:var(--text-muted);">No Img</div>`
             }
             <div>
               <div style="font-weight:600;">${p.name}</div>
@@ -821,7 +821,7 @@ const Admin = {
                   return `
                     <tr>
                       <td style="font-size:2rem;text-align:center;">
-                        ${c.image ? `<img src="${c.image}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;">` : c.emoji}
+                        ${c.image ? `<img src="${c.image}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;">` : `<div style="width:40px;height:40px;border-radius:8px;background:rgba(45,106,79,0.08);display:flex;align-items:center;justify-content:center;font-size:0.65rem;color:var(--text-muted);">No Img</div>`}
                       </td>
                       <td style="font-weight:600;">${c.name}</td>
                       <td style="font-size:0.82rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${c.description}</td>

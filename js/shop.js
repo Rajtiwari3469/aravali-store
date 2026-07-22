@@ -168,7 +168,7 @@ const Shop = {
           ${inWishlist ? '❤️' : '🤍'}
         </button>
         <div class="product-image">
-          ${p.image ? `<img src="${p.image}" style="width:100%;height:100%;object-fit:cover;border-radius:var(--border-radius-sm);">` : App.getProductEmoji(p.category)}
+          ${p.image ? `<img src="${p.image}" style="width:100%;height:100%;object-fit:cover;border-radius:var(--border-radius-sm);">` : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(45,106,79,0.06),rgba(82,183,136,0.1));border-radius:var(--border-radius-sm);color:var(--text-muted);font-size:0.75rem;text-align:center;padding:8px;">No Image</div>`}
         </div>
         <div class="product-info">
           <div class="product-category">${p.category}</div>

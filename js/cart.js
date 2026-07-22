@@ -24,7 +24,9 @@ const Cart = {
 
     container.innerHTML = items.map(item => `
       <div class="cart-item" data-id="${item.productId}">
-        <div class="item-emoji">${App.getProductEmoji(item.product.category)}</div>
+        <div class="item-emoji" style="display:flex;align-items:center;justify-content:center;overflow:hidden;">
+          ${item.product.image ? `<img src="${item.product.image}" style="width:100%;height:100%;object-fit:cover;">` : `<span style="color:var(--text-muted);font-size:0.7rem;">No Image</span>`}
+        </div>
         <div class="item-details">
           <div class="item-name">${item.product.name}</div>
           <div class="item-unit">${item.product.unit}</div>
@@ -112,7 +114,7 @@ const Checkout = {
     container.innerHTML = items.map(item => `
       <div class="order-item">
         <div>
-          <span>${App.getProductEmoji(item.product.category)} </span>
+          ${item.product.image ? `<img src="${item.product.image}" style="width:20px;height:20px;border-radius:4px;object-fit:cover;vertical-align:middle;margin-right:4px;">` : ''}
           <span>${item.product.name}</span>
           <span style="color:var(--text-muted);font-size:0.8rem;"> × ${item.qty}</span>
         </div>
