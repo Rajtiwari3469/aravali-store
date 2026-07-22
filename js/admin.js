@@ -36,6 +36,9 @@ const Admin = {
     } else if (path.includes('returns')) {
       this.currentPage = 'returns';
       this.renderReturns();
+    } else if (path.includes('offers')) {
+      this.currentPage = 'offers';
+      this.renderOffers();
     } else {
       this.currentPage = 'dashboard';
       this.renderDashboard();
@@ -1513,6 +1516,226 @@ const Admin = {
     DB.clearAllData();
     App.showToast('All data deleted. Re-seeding products and catalogs...', 'success');
     setTimeout(() => location.reload(), 1200);
+  },
+
+  // Offer Management
+  OFFER_CATEGORIES: [
+    { id: 'today', label: "🔥 Today's Deals", gradient: 'linear-gradient(135deg, #ff6b6b, #ee5a24)', offerTag: "🔥 Today's Deals" },
+    { id: 'flash', label: '⚡ Flash Sale', gradient: 'linear-gradient(135deg, #f9ca24, #f0932b)', offerTag: '⚡ Flash Sale' },
+    { id: 'half', label: '💸 Up to 50% OFF', gradient: 'linear-gradient(135deg, #6c5ce7, #a29bfe)', offerTag: '💸 Up to 50% OFF' },
+    { id: 'bogo', label: '🛍️ Buy 1 Get 1 Free', gradient: 'linear-gradient(135deg, #fd79a8, #e84393)', offerTag: '🛍️ Buy 1 Get 1 Free' },
+    { id: 'combo', label: '🎁 Combo Packs', gradient: 'linear-gradient(135deg, #00b894, #55efc4)', offerTag: '🎁 Combo Packs' },
+    { id: 'fresh', label: '🥦 Fresh Produce Deals', gradient: 'linear-gradient(135deg, #00b894, #00cec9)', offerTag: '🥦 Fresh Produce Deals' },
+    { id: 'dairy', label: '🥛 Dairy Specials', gradient: 'linear-gradient(135deg, #74b9ff, #0984e3)', offerTag: '🥛 Dairy Specials' },
+    { id: 'snack', label: '🍿 Snack Offers', gradient: 'linear-gradient(135deg, #ffeaa7, #fdcb6e)', offerTag: '🍿 Snack Offers' },
+    { id: 'personal', label: '🧴 Personal Care Discounts', gradient: 'linear-gradient(135deg, #dfe6e9, #b2bec3)', offerTag: '🧴 Personal Care Discounts' },
+    { id: 'household', label: '🧹 Household Essentials Sale', gradient: 'linear-gradient(135deg, #a29bfe, #6c5ce7)', offerTag: '🧹 Household Essentials Sale' },
+    { id: 'new', label: '🆕 New Arrival Offers', gradient: 'linear-gradient(135deg, #55efc4, #00b894)', offerTag: '🆕 New Arrival Offers' },
+    { id: 'bestvalue', label: '⭐ Best Value Deals', gradient: 'linear-gradient(135deg, #ffeaa7, #f9ca24)', offerTag: '⭐ Best Value Deals' },
+    { id: 'festival', label: '🎉 Festival Offers', gradient: 'linear-gradient(135deg, #fd79a8, #e84393)', offerTag: '🎉 Festival Offers' },
+    { id: 'bank', label: '💳 Bank & Wallet Offers', gradient: 'linear-gradient(135deg, #636e72, #2d3436)', offerTag: '💳 Bank & Wallet Offers' },
+    { id: 'delivery', label: '🚚 Free Delivery on ₹499+', gradient: 'linear-gradient(135deg, #00cec9, #0984e3)', offerTag: '🚚 Free Delivery on ₹499+' }
+  ],
+
+  renderOffers() {
+    const main = document.querySelector('.admin-content');
+    if (!main) return;
+
+    const products = DB.getAll('products');
+    const totalWithOffer = products.filter(p => p.offer).length;
+
+    let html = `
+      <div style="margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+        <div>
+          <h3 style="margin:0;color:var(--primary-dark);">Offer Categories</h3>
+          <p style="margin:4px 0 0;font-size:0.82rem;color:var(--text-muted);">${totalWithOffer} product${totalWithOffer !== 1 ? 's' : ''} assigned across ${this.OFFER_CATEGORIES.length} categories</p>
+        </div>
+        <button class="btn btn-primary" style="padding:8px 20px;font-size:0.85rem;" onclick="Admin.showBulkOfferAssign()">📦 Bulk Assign Products</button>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-bottom:24px;">`;
+
+    this.OFFER_CATEGORIES.forEach(cat => {
+      const catProducts = products.filter(p => p.offer === cat.offerTag);
+      html += `
+        <div onclick="Admin.showOfferCategory('${cat.id}')" style="background:rgba(255,255,255,0.55);backdrop-filter:blur(8px);border:2px solid rgba(45,106,79,0.06);border-radius:14px;padding:18px;cursor:pointer;transition:all 0.25s;position:relative;overflow:hidden;"
+          onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(45,106,79,0.12)'"
+          onmouseout="this.style.transform='';this.style.boxShadow=''">
+          <div style="width:52px;height:52px;border-radius:14px;background:${cat.gradient};display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:10px;">${cat.label.split(' ')[0]}</div>
+          <div style="font-weight:700;font-size:0.9rem;color:var(--text);margin-bottom:4px;">${cat.label.split(' ').slice(1).join(' ')}</div>
+          <div style="font-size:0.78rem;color:var(--text-muted);">${catProducts.length} product${catProducts.length !== 1 ? 's' : ''}</div>
+          ${catProducts.length > 0 ? `<div style="position:absolute;top:12px;right:12px;width:28px;height:28px;border-radius:50%;background:var(--primary);color:white;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;">${catProducts.length}</div>` : ''}
+        </div>`;
+    });
+
+    html += `</div>`;
+    main.innerHTML = html;
+  },
+
+  showOfferCategory(categoryId) {
+    const cat = this.OFFER_CATEGORIES.find(c => c.id === categoryId);
+    if (!cat) return;
+    const products = DB.getAll('products');
+    const catProducts = products.filter(p => p.offer === cat.offerTag);
+    const allProducts = products.filter(p => !p.offer);
+
+    const modal = document.getElementById('productModal');
+    const content = document.getElementById('productModalContent');
+    if (!modal || !content) return;
+
+    content.innerHTML = `
+      <button class="modal-close" onclick="Admin.closeModal()">✕</button>
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;">
+        <div style="width:50px;height:50px;border-radius:14px;background:${cat.gradient};display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;">${cat.label.split(' ')[0]}</div>
+        <div>
+          <h2 style="margin:0;font-size:1.15rem;">${cat.label}</h2>
+          <p style="margin:2px 0 0;font-size:0.82rem;color:var(--text-muted);">${catProducts.length} product${catProducts.length !== 1 ? 's' : ''} assigned</p>
+        </div>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <h4 style="margin:0 0 8px;font-size:0.88rem;color:var(--primary-dark);">Assign Products</h4>
+        <div style="display:flex;gap:8px;">
+          <select id="offerProductSelect" style="flex:1;padding:10px 14px;border:1px solid rgba(45,106,79,0.15);border-radius:10px;font-family:var(--font);font-size:0.88rem;">
+            <option value="">Select a product to add...</option>
+            ${allProducts.map(p => `<option value="${p.id}">${p.name} (${p.category}) — ₹${p.price}</option>`).join('')}
+          </select>
+          <button class="btn btn-primary" style="padding:10px 20px;white-space:nowrap;" onclick="Admin.assignProductToOffer('${categoryId}')">Add</button>
+        </div>
+      </div>
+
+      <div style="border-top:1px solid rgba(45,106,79,0.08);padding-top:14px;">
+        <h4 style="margin:0 0 10px;font-size:0.88rem;color:var(--primary-dark);">Assigned Products (${catProducts.length})</h4>
+        ${catProducts.length === 0 ? '<p style="color:var(--text-muted);font-size:0.85rem;padding:16px 0;text-align:center;">No products assigned to this offer yet.</p>' : `
+        <div style="max-height:300px;overflow-y:auto;">
+          ${catProducts.map(p => `
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:10px;margin-bottom:6px;background:rgba(82,183,136,0.04);border:1px solid rgba(45,106,79,0.06);">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div style="width:38px;height:38px;border-radius:8px;overflow:hidden;background:rgba(45,106,79,0.06);flex-shrink:0;">
+                  ${p.image ? `<img src="${p.image}" style="width:100%;height:100%;object-fit:cover;">` : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:var(--text-muted);">📦</div>`}
+                </div>
+                <div>
+                  <div style="font-weight:600;font-size:0.85rem;">${p.name}</div>
+                  <div style="font-size:0.75rem;color:var(--text-muted);">${p.category} • ₹${p.price}</div>
+                </div>
+              </div>
+              <button onclick="Admin.removeProductFromOffer('${p.id}')" style="width:30px;height:30px;border-radius:8px;border:1px solid rgba(244,67,54,0.15);background:rgba(244,67,54,0.06);color:var(--danger);cursor:pointer;font-size:0.85rem;display:flex;align-items:center;justify-content:center;transition:0.15s;"
+                onmouseover="this.style.background='rgba(244,67,54,0.15)'" onmouseout="this.style.background='rgba(244,67,54,0.06)'">✕</button>
+            </div>
+          `).join('')}
+        </div>`}
+      </div>`;
+
+    modal.classList.add('active');
+  },
+
+  assignProductToOffer(categoryId) {
+    const cat = this.OFFER_CATEGORIES.find(c => c.id === categoryId);
+    if (!cat) return;
+    const select = document.getElementById('offerProductSelect');
+    const productId = select ? select.value : '';
+    if (!productId) {
+      App.showToast('Please select a product', 'error');
+      return;
+    }
+    DB.update('products', productId, { offer: cat.offerTag });
+    App.showToast('Product added to offer!', 'success');
+    this.showOfferCategory(categoryId);
+    this.renderOffers();
+  },
+
+  removeProductFromOffer(productId) {
+    DB.update('products', productId, { offer: '' });
+    App.showToast('Product removed from offer', 'info');
+    // Re-open the modal by re-rendering current category
+    const modal = document.getElementById('productModal');
+    if (modal) modal.classList.remove('active');
+    this.renderOffers();
+  },
+
+  showBulkOfferAssign() {
+    const products = DB.getAll('products');
+    const categories = this.OFFER_CATEGORIES;
+
+    const modal = document.getElementById('productModal');
+    const content = document.getElementById('productModalContent');
+    if (!modal || !content) return;
+
+    content.innerHTML = `
+      <button class="modal-close" onclick="Admin.closeModal()">✕</button>
+      <h2 style="margin-bottom:6px;">📦 Bulk Assign Products to Offers</h2>
+      <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:20px;">Select products and assign them to an offer category in one go.</p>
+
+      <div style="margin-bottom:16px;">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
+          <input type="text" id="bulkOfferSearch" class="search-input" placeholder="Search products..." oninput="Admin.filterBulkProducts(this.value)" style="flex:1;">
+          <select id="bulkOfferCategory" style="padding:9px 14px;border:1px solid rgba(45,106,79,0.15);border-radius:10px;font-family:var(--font);font-size:0.85rem;">
+            <option value="">Select offer category...</option>
+            ${categories.map(c => `<option value="${c.offerTag}">${c.label}</option>`).join('')}
+          </select>
+        </div>
+        <label style="display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;font-size:0.85rem;font-weight:600;color:var(--text);">
+          <input type="checkbox" id="bulkSelectAll" onchange="Admin.toggleBulkSelectAll(this.checked)" style="width:18px;height:18px;accent-color:var(--primary);">
+          Select All (${products.length})
+        </label>
+      </div>
+
+      <div id="bulkProductList" style="max-height:350px;overflow-y:auto;border:1px solid rgba(45,106,79,0.08);border-radius:10px;">
+        ${this.renderBulkProductRows(products)}
+      </div>
+
+      <div style="margin-top:16px;display:flex;gap:10px;">
+        <button class="btn btn-primary" style="flex:1;" onclick="Admin.applyBulkOffer()">✅ Assign Selected</button>
+        <button class="btn" style="flex:1;background:rgba(45,106,79,0.06);color:var(--text);" onclick="Admin.closeModal()">Cancel</button>
+      </div>`;
+
+    modal.classList.add('active');
+  },
+
+  renderBulkProductRows(products) {
+    return products.map(p => `
+      <label style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;transition:background 0.12s;border-bottom:1px solid rgba(45,106,79,0.04);"
+        onmouseover="this.style.background='rgba(45,106,79,0.03)'" onmouseout="this.style.background='transparent'">
+        <input type="checkbox" class="bulk-product-cb" value="${p.id}" style="width:18px;height:18px;accent-color:var(--primary);">
+        <div style="width:34px;height:34px;border-radius:8px;overflow:hidden;background:rgba(45,106,79,0.06);flex-shrink:0;">
+          ${p.image ? `<img src="${p.image}" style="width:100%;height:100%;object-fit:cover;">` : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:0.65rem;">📦</div>`}
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:600;font-size:0.84rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.name}</div>
+          <div style="font-size:0.73rem;color:var(--text-muted);">${p.category} • ₹${p.price}</div>
+        </div>
+        ${p.offer ? `<span style="font-size:0.65rem;padding:2px 8px;border-radius:8px;background:rgba(230,57,70,0.08);color:var(--danger);font-weight:600;white-space:nowrap;">${p.offer.split(' ').slice(1).join(' ')}</span>` : ''}
+      </label>
+    `).join('');
+  },
+
+  filterBulkProducts(term) {
+    const products = DB.getAll('products');
+    const t = term.toLowerCase();
+    const filtered = t ? products.filter(p => p.name.toLowerCase().includes(t) || p.category.toLowerCase().includes(t)) : products;
+    document.getElementById('bulkProductList').innerHTML = this.renderBulkProductRows(filtered);
+  },
+
+  toggleBulkSelectAll(checked) {
+    document.querySelectorAll('.bulk-product-cb').forEach(cb => cb.checked = checked);
+  },
+
+  applyBulkOffer() {
+    const category = document.getElementById('bulkOfferCategory').value;
+    if (!category) {
+      App.showToast('Please select an offer category', 'error');
+      return;
+    }
+    const checked = document.querySelectorAll('.bulk-product-cb:checked');
+    if (checked.length === 0) {
+      App.showToast('Please select at least one product', 'error');
+      return;
+    }
+    const ids = Array.from(checked).map(cb => cb.value);
+    ids.forEach(id => DB.update('products', id, { offer: category }));
+    App.showToast(`${ids.length} product${ids.length > 1 ? 's' : ''} assigned to ${category}!`, 'success');
+    this.closeModal();
+    this.renderOffers();
   },
 
   // Returns & Refunds
