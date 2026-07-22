@@ -53,28 +53,7 @@
         </div>
 
         <h2 style="margin-top:24px;">Payment Method</h2>
-        <div class="payment-options">
-          <label class="payment-option selected">
-            <input type="radio" name="payment" value="Cash on Delivery" checked>
-            <span>💵</span>
-            <span>Cash on Delivery</span>
-          </label>
-          <label class="payment-option">
-            <input type="radio" name="payment" value="UPI">
-            <span>📱</span>
-            <span>UPI Payment</span>
-          </label>
-          <label class="payment-option">
-            <input type="radio" name="payment" value="Card">
-            <span>💳</span>
-            <span>Credit / Debit Card</span>
-          </label>
-          <label class="payment-option">
-            <input type="radio" name="payment" value="Net Banking">
-            <span>🏦</span>
-            <span>Net Banking</span>
-          </label>
-        </div>
+        <div class="payment-options" id="paymentOptions"></div>
 
         <button type="submit" class="btn btn-primary btn-lg" style="width:100%;justify-content:center;margin-top:24px;">
           Place Order ✓
@@ -100,7 +79,40 @@
   <script src="js/shop.js"></script>
   <script src="js/cart.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', () => { Checkout.init(); });
+    document.addEventListener('DOMContentLoaded', () => {
+      Checkout.init();
+      const settings = DB.getSettings();
+      const hasUpi = !!(settings.upiId && settings.upiId.trim());
+      const po = document.getElementById('paymentOptions');
+      let html = `
+        <label class="payment-option selected">
+          <input type="radio" name="payment" value="Cash on Delivery" checked>
+          <span>💵</span>
+          <span>Cash on Delivery</span>
+        </label>`;
+      if (hasUpi) {
+        html += `
+          <label class="payment-option">
+            <input type="radio" name="payment" value="UPI">
+            <span>📱</span>
+            <span>UPI Payment (${settings.upiId})</span>
+          </label>`;
+      } else {
+        html += `
+          <label class="payment-option" style="opacity:0.45;pointer-events:none;">
+            <input type="radio" name="payment" value="" disabled>
+            <span>📱</span>
+            <span>Online Payment — Not Available</span>
+          </label>`;
+      }
+      po.innerHTML = html;
+      document.querySelectorAll('.payment-option').forEach(opt => {
+        opt.addEventListener('click', () => {
+          document.querySelectorAll('.payment-option').forEach(o => o.classList.remove('selected'));
+          opt.classList.add('selected');
+        });
+      });
+    });
   </script>
 </body>
 </html>

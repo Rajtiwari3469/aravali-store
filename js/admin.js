@@ -620,6 +620,16 @@ const Admin = {
         </div>
 
         <div class="glass-card" style="padding:30px;margin-top:20px;">
+          <h3 style="margin-bottom:20px;color:var(--primary-dark);">Online Payment Settings</h3>
+          <div class="form-group">
+            <label>Admin UPI ID</label>
+            <input type="text" id="adminUpi" value="${settings.upiId || ''}" placeholder="e.g. merchant@upi or 9876543210@paytm">
+            <p style="font-size:0.8rem;color:var(--text-muted);margin-top:6px;">If set, customers can pay online via UPI. If empty, online payment is disabled and only COD is available.</p>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="Admin.saveUpiId()">Save UPI ID</button>
+        </div>
+
+        <div class="glass-card" style="padding:30px;margin-top:20px;">
           <h3 style="margin-bottom:20px;color:var(--primary-dark);">Change Password</h3>
           <form id="settingsForm">
             <div class="form-group">
@@ -686,6 +696,12 @@ const Admin = {
     DB.update('admins', adminId, { password: newPass });
     App.showToast('Password updated successfully!', 'success');
     document.getElementById('settingsForm').reset();
+  },
+
+  saveUpiId() {
+    const upi = document.getElementById('adminUpi').value.trim();
+    DB.saveSetting('upiId', upi);
+    App.showToast(upi ? 'UPI ID saved — Online payment enabled' : 'UPI ID cleared — Only COD available', 'success');
   },
 
   toggleBannerSwipe(enabled) {

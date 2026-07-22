@@ -175,8 +175,15 @@ const Checkout = {
       return;
     }
 
-    if (!payment) {
-      App.showToast('Please select a payment method', 'error');
+    if (!payment || !payment.value) {
+      App.showToast('Please select a valid payment method', 'error');
+      return;
+    }
+
+    const settings = DB.getSettings();
+    const hasUpi = !!(settings.upiId && settings.upiId.trim());
+    if (!hasUpi && payment.value !== 'Cash on Delivery') {
+      App.showToast('Online payment is not available. Please select Cash on Delivery.', 'error');
       return;
     }
 
