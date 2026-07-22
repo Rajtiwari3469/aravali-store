@@ -136,6 +136,15 @@ const DB = {
     return { total, outOfStock, lowStock, inStock };
   },
 
+  clearTable(table) {
+    localStorage.removeItem(this._key(table));
+  },
+
+  clearAllData() {
+    const tables = ['products', 'banners', 'catalogs', 'orders', 'users', 'stock_logs', 'settings'];
+    tables.forEach(t => localStorage.removeItem(this._key(t)));
+  },
+
   logStockChange(productId, productName, change, reason) {
     const logs = this.getAll('stock_logs');
     logs.unshift({
@@ -150,6 +159,56 @@ const DB = {
     localStorage.setItem(this._key('stock_logs'), JSON.stringify(logs));
   }
 };
+
+function generateSeedOrders() {
+  const names = ['Rahul Sharma', 'Priya Patel', 'Amit Kumar', 'Sneha Gupta', 'Vikram Singh', 'Neha Reddy', 'Rohan Mehta', 'Ananya Das', 'Karan Bhatia', 'Pooja Nair', 'Suresh Iyer', 'Deepa Menon', 'Arun Tiwari', 'Kavita Joshi', 'Manoj Verma'];
+  const addresses = ['12 MG Road, Jaipur', '45 Park Street, Delhi', '78 Civil Lines, Lucknow', '23 Gomti Nagar, Varanasi', '90 Hazratganj, Lucknow', '34 Aundh, Pune', '56 Whitefield, Bangalore', '67 Salt Lake, Kolkata', '81 Banjara Hills, Hyderabad', '14 Deccan, Pune'];
+  const statuses = ['pending', 'confirmed', 'delivered', 'delivered', 'delivered', 'cancelled'];
+  const paymentMethods = ['cod', 'cod', 'cod', 'upi'];
+
+  const products = DB.getAll('products');
+  if (products.length === 0) return [];
+
+  const orders = [];
+  const now = new Date();
+
+  for (let m = 0; m < 6; m++) {
+    const orderCount = m === 0 ? 8 : (m === 1 ? 10 : Math.floor(Math.random() * 8) + 5);
+    for (let j = 0; j < orderCount; j++) {
+      const itemCount = Math.floor(Math.random() * 5) + 1;
+      const items = [];
+      const usedProductIds = new Set();
+      for (let k = 0; k < itemCount; k++) {
+        let p;
+        do { p = products[Math.floor(Math.random() * products.length)]; } while (usedProductIds.has(p.id) && usedProductIds.size < products.length);
+        usedProductIds.add(p.id);
+        const qty = Math.floor(Math.random() * 3) + 1;
+        items.push({ productId: p.id, name: p.name, price: p.price, qty, unit: p.unit });
+      }
+      const subtotal = items.reduce((sum, i) => sum + i.price * i.qty, 0);
+      const delivery = subtotal > 200 ? 0 : 30;
+
+      const dayOffset = Math.floor(Math.random() * 28);
+      const orderDate = new Date(now.getFullYear(), now.getMonth() - m, Math.max(1, now.getDate() - dayOffset));
+
+      orders.push({
+        id: Date.now().toString(36) + Math.random().toString(36).substr(2, 9) + m + j,
+        userId: 'seed_' + (j + 1),
+        userName: names[Math.floor(Math.random() * names.length)],
+        items,
+        address: addresses[Math.floor(Math.random() * addresses.length)],
+        paymentMethod: paymentMethods[Math.floor(Math.random() * paymentMethods.length)],
+        subtotal,
+        delivery,
+        total: subtotal + delivery,
+        status: statuses[Math.floor(Math.random() * statuses.length)],
+        orderDate: orderDate.toISOString()
+      });
+    }
+  }
+
+  return orders;
+}
 
 function initDB() {
   if (typeof SEED_DATA !== 'undefined') {
@@ -170,7 +229,7 @@ function initDB() {
   }
 
   if (DB.getAll('orders').length === 0) {
-    DB.seed('orders', []);
+    DB.seed('orders', generateSeedOrders());
   }
 
   if (DB.getAll('users').length === 0) {

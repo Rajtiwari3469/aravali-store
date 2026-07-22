@@ -92,7 +92,7 @@ const Admin = {
   },
 
   renderDashboard() {
-    const main = document.querySelector('.admin-content');
+    const main = document.querySelector('.admin-main');
     if (!main) return;
 
     const products = DB.getAll('products');
@@ -676,6 +676,26 @@ const Admin = {
             <input type="file" id="importFile" accept=".json" style="display:none;" onchange="Admin.importData(event)">
           </div>
         </div>
+
+        <div class="glass-card" style="padding:30px;margin-top:20px;">
+          <h3 style="margin-bottom:6px;color:var(--primary-dark);">⚠️ Manage Data</h3>
+          <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:20px;">Select specific data types to delete, or delete everything at once.</p>
+
+          <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;" id="dataCheckboxes">
+            ${Admin.renderDataCheckboxes()}
+          </div>
+
+          <div style="display:flex;gap:10px;margin-bottom:16px;">
+            <button class="btn btn-secondary btn-sm" onclick="Admin.deleteSelectedData()" id="deleteSelectedBtn">🗑️ Delete Selected</button>
+            <button class="btn btn-danger btn-sm" onclick="Admin.deleteAllData()" style="background:var(--danger);color:white;" id="deleteAllBtn">💥 Delete ALL Data</button>
+          </div>
+
+          <div style="padding:14px;background:rgba(230,57,70,0.06);border-radius:10px;border:1px dashed rgba(230,57,70,0.3);">
+            <p style="font-size:0.78rem;color:var(--text-muted);margin:0;">
+              <strong style="color:var(--danger);">Warning:</strong> "Delete Selected" removes only checked items. "Delete ALL Data" removes everything except admin account. This action cannot be undone. Export your data first as backup.
+            </p>
+          </div>
+        </div>
       </div>`;
 
     document.getElementById('settingsForm').addEventListener('submit', (e) => {
@@ -1117,6 +1137,55 @@ const Admin = {
           </div>`
       }`;
     modal.classList.add('active');
+  },
+
+  renderDataCheckboxes() {
+    const tables = [
+      { key: 'orders', label: 'Orders', icon: '🛒' },
+      { key: 'users', label: 'Users', icon: '👥' },
+      { key: 'products', label: 'Products', icon: '📦' },
+      { key: 'banners', label: 'Banners', icon: '🖼️' },
+      { key: 'catalogs', label: 'Catalogs', icon: '📂' },
+      { key: 'stock_logs', label: 'Stock Logs', icon: '📋' }
+    ];
+    return tables.map(t => {
+      const count = DB.getAll(t.key).length;
+      return `<label style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(45,106,79,0.03);border-radius:10px;cursor:pointer;border:1px solid rgba(45,106,79,0.08);transition:background 0.2s;" onmouseover="this.style.background='rgba(45,106,79,0.08)'" onmouseout="this.style.background='rgba(45,106,79,0.03)'">
+        <input type="checkbox" class="data-checkbox" value="${t.key}" style="width:18px;height:18px;accent-color:var(--primary);">
+        <span style="font-size:1.2rem;">${t.icon}</span>
+        <span style="font-weight:600;flex:1;">${t.label}</span>
+        <span style="font-size:0.78rem;color:var(--text-muted);background:rgba(45,106,79,0.08);padding:2px 10px;border-radius:12px;">${count} items</span>
+      </label>`;
+    }).join('');
+  },
+
+  deleteSelectedData() {
+    const checked = document.querySelectorAll('.data-checkbox:checked');
+    if (checked.length === 0) {
+      App.showToast('Please select at least one data type to delete', 'error');
+      return;
+    }
+    const selected = Array.from(checked).map(cb => cb.value);
+    const labels = selected.map(s => {
+      const count = DB.getAll(s).length;
+      return `${s} (${count})`;
+    }).join(', ');
+    if (!confirm(`⚠️ Are you sure you want to delete:\n\n${labels}?\n\nThis cannot be undone.`)) return;
+
+    selected.forEach(table => {
+      DB.clearTable(table);
+    });
+    App.showToast(`Deleted ${selected.length} data type(s) successfully`, 'success');
+    this.initSettings();
+  },
+
+  deleteAllData() {
+    if (!confirm('⚠️ DANGER ZONE ⚠️\n\nThis will DELETE ALL data:\n• Orders\n• Users\n• Products\n• Banners\n• Catalogs\n• Stock Logs\n• Settings\n\nOnly admin account will be kept.\n\nThis CANNOT be undone. Are you absolutely sure?')) return;
+    if (!confirm('Last chance! Type OK to confirm deletion of ALL data.')) return;
+
+    DB.clearAllData();
+    App.showToast('All data deleted. Re-seeding products and catalogs...', 'success');
+    setTimeout(() => location.reload(), 1200);
   },
 
   closeModal() {
