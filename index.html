@@ -306,35 +306,35 @@
       const products = DB.getAll('products');
 
       // Recent
-      const recent = products.slice(-8).reverse();
+      const recent = products.slice(-16).reverse();
       const rGrid = document.getElementById('recentGrid');
       if (rGrid && recent.length > 0) {
         rGrid.innerHTML = recent.map(p => Shop.renderProductCard(p)).join('');
       }
 
       // Trending Now (highest stock = most popular)
-      const trending = [...products].sort((a, b) => (b.stock || 0) - (a.stock || 0)).slice(0, 8);
+      const trending = [...products].sort((a, b) => (b.stock || 0) - (a.stock || 0)).slice(0, 16);
       const tGrid = document.getElementById('trendingGrid');
       if (tGrid && trending.length > 0) {
         tGrid.innerHTML = trending.map(p => Shop.renderProductCard(p)).join('');
       }
 
       // Deals & Combos (Top Rated + New badges)
-      const deals = products.filter(p => p.badge === 'Top Rated' || p.badge === 'New').slice(0, 8);
+      const deals = products.filter(p => p.badge === 'Top Rated' || p.badge === 'New').slice(0, 16);
       const dGrid = document.getElementById('dealsGrid');
       if (dGrid && deals.length > 0) {
         dGrid.innerHTML = deals.map(p => Shop.renderProductCard(p)).join('');
       }
 
       // Seasonal Picks (Fresh Fruits + Fresh Vegetables)
-      const seasonal = products.filter(p => p.category === 'Fresh Fruits' || p.category === 'Fresh Vegetables').slice(0, 8);
+      const seasonal = products.filter(p => p.category === 'Fresh Fruits' || p.category === 'Fresh Vegetables').slice(0, 16);
       const sGrid = document.getElementById('seasonalGrid');
       if (sGrid && seasonal.length > 0) {
         sGrid.innerHTML = seasonal.map(p => Shop.renderProductCard(p)).join('');
       }
 
       // Top Rated (Top Rated badge, then sorted by price desc)
-      const topRated = products.filter(p => p.badge === 'Top Rated').slice(0, 8);
+      const topRated = products.filter(p => p.badge === 'Top Rated').slice(0, 16);
       const trGrid = document.getElementById('topRatedGrid');
       if (trGrid && topRated.length > 0) {
         trGrid.innerHTML = topRated.map(p => Shop.renderProductCard(p)).join('');

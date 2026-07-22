@@ -13,8 +13,8 @@ const App = {
     document.querySelectorAll('.nav-user-section').forEach(el => {
       if (this.currentUser) {
         const avatarHtml = this.currentUser.avatar
-          ? `<img src="${this.currentUser.avatar}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;">`
-          : `<span>${(this.currentUser.name || 'U').charAt(0).toUpperCase()}</span>`;
+          ? `<img src="${this.currentUser.avatar}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid white;box-shadow:0 2px 8px rgba(45,106,79,0.3);">`
+          : `<span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--secondary));color:white;font-weight:800;font-size:0.85rem;border:2px solid white;box-shadow:0 2px 8px rgba(45,106,79,0.3);">${(this.currentUser.name || 'U').charAt(0).toUpperCase()}</span>`;
         el.innerHTML = `
           <div class="user-dropdown">
             <button class="nav-icon-btn" onclick="App.toggleUserDropdown()" style="font-size:1rem;">
