@@ -26,8 +26,6 @@
       <li><a href="shop.html">Shop</a></li>
       <li><a href="categories.html">Categories</a></li>
       <li><a href="offers.html">Offers</a></li>
-      <li><a href="bestsellers.html">Bestsellers</a></li>
-      <li><a href="trending.html">Trending</a></li>
       <li><a href="fresh-arrivals.html">Fresh Arrivals</a></li>
       <li><a href="about.html">About Us</a></li>
       <li><a href="contact.html">Contact Us</a></li>
@@ -100,6 +98,38 @@
       <a href="shop.html">View All →</a>
     </div>
     <div class="product-grid" id="recentGrid"></div>
+  </section>
+
+  <section class="section">
+    <div class="section-header">
+      <h2>Trending Now</h2>
+      <a href="shop.html">View All →</a>
+    </div>
+    <div class="product-grid" id="trendingGrid"></div>
+  </section>
+
+  <section class="section">
+    <div class="section-header">
+      <h2>Deals & Combos</h2>
+      <a href="shop.html">View All →</a>
+    </div>
+    <div class="product-grid" id="dealsGrid"></div>
+  </section>
+
+  <section class="section">
+    <div class="section-header">
+      <h2>Seasonal Picks</h2>
+      <a href="shop.html">View All →</a>
+    </div>
+    <div class="product-grid" id="seasonalGrid"></div>
+  </section>
+
+  <section class="section">
+    <div class="section-header">
+      <h2>Top Rated</h2>
+      <a href="shop.html">View All →</a>
+    </div>
+    <div class="product-grid" id="topRatedGrid"></div>
   </section>
 
   <section class="section">
@@ -274,19 +304,42 @@
         `).join('');
       }
 
-      // Bestsellers
+      // All products
       const products = DB.getAll('products');
-      const bestsellers = products.filter(p => p.badge === 'Bestseller');
-      const bsGrid = document.getElementById('bestsellerGrid');
-      if (bsGrid && bestsellers.length > 0) {
-        bsGrid.innerHTML = bestsellers.slice(0, 6).map(p => Shop.renderProductCard(p)).join('');
-      }
 
       // Recent
       const recent = products.slice(-8).reverse();
       const rGrid = document.getElementById('recentGrid');
       if (rGrid && recent.length > 0) {
         rGrid.innerHTML = recent.map(p => Shop.renderProductCard(p)).join('');
+      }
+
+      // Trending Now (highest stock = most popular)
+      const trending = [...products].sort((a, b) => (b.stock || 0) - (a.stock || 0)).slice(0, 8);
+      const tGrid = document.getElementById('trendingGrid');
+      if (tGrid && trending.length > 0) {
+        tGrid.innerHTML = trending.map(p => Shop.renderProductCard(p)).join('');
+      }
+
+      // Deals & Combos (Bestseller + New badges)
+      const deals = products.filter(p => p.badge === 'Bestseller' || p.badge === 'New').slice(0, 8);
+      const dGrid = document.getElementById('dealsGrid');
+      if (dGrid && deals.length > 0) {
+        dGrid.innerHTML = deals.map(p => Shop.renderProductCard(p)).join('');
+      }
+
+      // Seasonal Picks (Fresh Fruits + Fresh Vegetables)
+      const seasonal = products.filter(p => p.category === 'Fresh Fruits' || p.category === 'Fresh Vegetables').slice(0, 8);
+      const sGrid = document.getElementById('seasonalGrid');
+      if (sGrid && seasonal.length > 0) {
+        sGrid.innerHTML = seasonal.map(p => Shop.renderProductCard(p)).join('');
+      }
+
+      // Top Rated (Bestseller badge, then sorted by price desc)
+      const topRated = products.filter(p => p.badge === 'Bestseller').slice(0, 8);
+      const trGrid = document.getElementById('topRatedGrid');
+      if (trGrid && topRated.length > 0) {
+        trGrid.innerHTML = topRated.map(p => Shop.renderProductCard(p)).join('');
       }
 
       // Init search cycle for home page
