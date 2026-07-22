@@ -191,10 +191,12 @@ function generateSeedOrders() {
       const dayOffset = Math.floor(Math.random() * 28);
       const orderDate = new Date(now.getFullYear(), now.getMonth() - m, Math.max(1, now.getDate() - dayOffset));
 
+      const userIdx = j % 15;
+
       orders.push({
         id: Date.now().toString(36) + Math.random().toString(36).substr(2, 9) + m + j,
-        userId: 'seed_' + (j + 1),
-        userName: names[Math.floor(Math.random() * names.length)],
+        userId: 'seed_user_' + userIdx,
+        userName: names[userIdx],
         items,
         address: addresses[Math.floor(Math.random() * addresses.length)],
         paymentMethod: paymentMethods[Math.floor(Math.random() * paymentMethods.length)],
@@ -208,6 +210,48 @@ function generateSeedOrders() {
   }
 
   return orders;
+}
+
+function generateSeedUsers() {
+  const users = [
+    { id: 'seed_user_0', name: 'Rahul Sharma', email: 'rahul@example.com', phone: '9876543210', password: 'pass123' },
+    { id: 'seed_user_1', name: 'Priya Patel', email: 'priya@example.com', phone: '9876543211', password: 'pass123' },
+    { id: 'seed_user_2', name: 'Amit Kumar', email: 'amit@example.com', phone: '9876543212', password: 'pass123' },
+    { id: 'seed_user_3', name: 'Sneha Gupta', email: 'sneha@example.com', phone: '9876543213', password: 'pass123' },
+    { id: 'seed_user_4', name: 'Vikram Singh', email: 'vikram@example.com', phone: '9876543214', password: 'pass123' },
+    { id: 'seed_user_5', name: 'Neha Reddy', email: 'neha@example.com', phone: '9876543215', password: 'pass123' },
+    { id: 'seed_user_6', name: 'Rohan Mehta', email: 'rohan@example.com', phone: '9876543216', password: 'pass123' },
+    { id: 'seed_user_7', name: 'Ananya Das', email: 'ananya@example.com', phone: '9876543217', password: 'pass123' },
+    { id: 'seed_user_8', name: 'Karan Bhatia', email: 'karan@example.com', phone: '9876543218', password: 'pass123' },
+    { id: 'seed_user_9', name: 'Pooja Nair', email: 'pooja@example.com', phone: '9876543219', password: 'pass123' },
+    { id: 'seed_user_10', name: 'Suresh Iyer', email: 'suresh@example.com', phone: '9876543220', password: 'pass123' },
+    { id: 'seed_user_11', name: 'Deepa Menon', email: 'deepa@example.com', phone: '9876543221', password: 'pass123' },
+    { id: 'seed_user_12', name: 'Arun Tiwari', email: 'arun@example.com', phone: '9876543222', password: 'pass123' },
+    { id: 'seed_user_13', name: 'Kavita Joshi', email: 'kavita@example.com', phone: '9876543223', password: 'pass123' },
+    { id: 'seed_user_14', name: 'Manoj Verma', email: 'manoj@example.com', phone: '9876543224', password: 'pass123' }
+  ];
+  return users.map(u => ({ ...u, createdAt: new Date(Date.now() - Math.floor(Math.random() * 90) * 86400000).toISOString() }));
+}
+
+function generateSeedStockLogs() {
+  const products = DB.getAll('products');
+  if (products.length === 0) return [];
+  const reasons = ['Admin restock', 'Admin adjustment', 'Order placed', 'Quick restock', 'Stock corrected'];
+  const logs = [];
+  const now = Date.now();
+  for (let i = 0; i < 40; i++) {
+    const p = products[Math.floor(Math.random() * products.length)];
+    const change = Math.floor(Math.random() * 20) - 5;
+    logs.push({
+      id: now.toString(36) + Math.random().toString(36).substr(2, 8) + i,
+      productId: p.id,
+      productName: p.name,
+      change,
+      reason: reasons[Math.floor(Math.random() * reasons.length)],
+      timestamp: new Date(now - Math.floor(Math.random() * 30) * 86400000).toISOString()
+    });
+  }
+  return logs;
 }
 
 function initDB() {
@@ -233,11 +277,11 @@ function initDB() {
   }
 
   if (DB.getAll('users').length === 0) {
-    DB.seed('users', []);
+    DB.seed('users', generateSeedUsers());
   }
 
   if (DB.getAll('stock_logs').length === 0) {
-    DB.seed('stock_logs', []);
+    DB.seed('stock_logs', generateSeedStockLogs());
   }
 }
 
