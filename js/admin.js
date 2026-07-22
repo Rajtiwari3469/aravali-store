@@ -297,6 +297,7 @@ const Admin = {
             <div>
               <div style="font-weight:600;">${p.name}</div>
               <div style="font-size:0.75rem;color:var(--text-muted);">${p.unit}</div>
+              ${p.offer ? `<div style="font-size:0.68rem;margin-top:3px;display:inline-block;padding:2px 8px;background:rgba(230,57,70,0.08);color:var(--danger);border-radius:8px;font-weight:600;">${p.offer}</div>` : ''}
             </div>
           </div>
         </td>
@@ -387,6 +388,27 @@ const Admin = {
           <label>Badge (optional)</label>
           <input type="text" id="pBadge" placeholder="e.g. Top Rated, New">
         </div>
+        <div class="form-group">
+          <label>Add to Offer Section (optional)</label>
+          <select id="pOffer">
+            <option value="">None</option>
+            <option value="🔥 Today's Deals">🔥 Today's Deals</option>
+            <option value="⚡ Flash Sale">⚡ Flash Sale</option>
+            <option value="💸 Up to 50% OFF">💸 Up to 50% OFF</option>
+            <option value="🛍️ Buy 1 Get 1 Free">🛍️ Buy 1 Get 1 Free</option>
+            <option value="🎁 Combo Packs">🎁 Combo Packs</option>
+            <option value="🥦 Fresh Produce Deals">🥦 Fresh Produce Deals</option>
+            <option value="🥛 Dairy Specials">🥛 Dairy Specials</option>
+            <option value="🍿 Snack Offers">🍿 Snack Offers</option>
+            <option value="🧴 Personal Care Discounts">🧴 Personal Care Discounts</option>
+            <option value="🧹 Household Essentials Sale">🧹 Household Essentials Sale</option>
+            <option value="🆕 New Arrival Offers">🆕 New Arrival Offers</option>
+            <option value="⭐ Best Value Deals">⭐ Best Value Deals</option>
+            <option value="🎉 Festival Offers">🎉 Festival Offers</option>
+            <option value="💳 Bank & Wallet Offers">💳 Bank & Wallet Offers</option>
+            <option value="🚚 Free Delivery on ₹499+">🚚 Free Delivery on ₹499+</option>
+          </select>
+        </div>
         <input type="hidden" id="pEditId" value="">
         <input type="hidden" id="pExistingImages" value="">
         <button type="submit" class="btn btn-primary btn-lg" style="width:100%;justify-content:center;">Save Product</button>
@@ -411,6 +433,7 @@ const Admin = {
     document.getElementById('pStock').value = product.stock;
     document.getElementById('pDesc').value = product.description || '';
     document.getElementById('pBadge').value = product.badge || '';
+    document.getElementById('pOffer').value = product.offer || '';
     document.getElementById('pEditId').value = id;
 
     const existingImages = (product.images && product.images.length > 0) ? product.images : (product.image ? [product.image] : []);
@@ -457,6 +480,7 @@ const Admin = {
       stock: parseInt(document.getElementById('pStock').value),
       description: document.getElementById('pDesc').value.trim(),
       badge: document.getElementById('pBadge').value.trim(),
+      offer: document.getElementById('pOffer').value,
       images: allImages,
       image: allImages[0] || ''
     };

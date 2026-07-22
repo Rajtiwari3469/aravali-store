@@ -167,6 +167,7 @@ const Shop = {
       <div class="product-card" data-id="${p.id}" onclick="${isOutOfStock ? '' : `window.location.href='product.html?id=${p.id}'`}" style="cursor:${isOutOfStock ? 'default' : 'pointer'}; ${isOutOfStock ? 'opacity:0.7;' : ''}">
         ${isOutOfStock ? '<span class="product-badge" style="background:var(--danger);">Out of Stock</span>' : (p.badge ? `<span class="product-badge">${p.badge}</span>` : '')}
         ${isLowStock && !isOutOfStock ? '<span class="product-badge" style="left:auto;right:8px;background:var(--accent);">Low Stock</span>' : ''}
+        ${p.offer && !isOutOfStock ? `<span class="product-badge" style="left:auto;right:8px;top:auto;bottom:8px;background:linear-gradient(135deg,#ff6b6b,#ee5a24);font-size:0.62rem;padding:3px 8px;">${p.offer.split(' ').slice(1).join(' ')}</span>` : ''}
         <button class="wishlist-btn ${inWishlist ? 'active' : ''}" data-wishlist="${p.id}" onclick="event.stopPropagation();">
           ${inWishlist ? '❤️' : '🤍'}
         </button>

@@ -84,21 +84,21 @@
       let activeDeal = null;
 
       const dealTypes = [
-        { id: 'today', label: "🔥 Today's Deals", gradient: 'linear-gradient(135deg, #ff6b6b, #ee5a24)', categories: null },
-        { id: 'flash', label: '⚡ Flash Sale', gradient: 'linear-gradient(135deg, #f9ca24, #f0932b)', categories: null },
-        { id: 'half', label: '💸 Up to 50% OFF', gradient: 'linear-gradient(135deg, #6c5ce7, #a29bfe)', categories: null },
-        { id: 'bogo', label: '🛍️ Buy 1 Get 1 Free', gradient: 'linear-gradient(135deg, #fd79a8, #e84393)', categories: null },
-        { id: 'combo', label: '🎁 Combo Packs', gradient: 'linear-gradient(135deg, #00b894, #55efc4)', categories: null },
-        { id: 'fresh', label: '🥦 Fresh Produce Deals', gradient: 'linear-gradient(135deg, #00b894, #00cec9)', categories: ['Fresh Fruits', 'Fresh Vegetables'] },
-        { id: 'dairy', label: '🥛 Dairy Specials', gradient: 'linear-gradient(135deg, #74b9ff, #0984e3)', categories: ['Dairy & Eggs'] },
-        { id: 'snack', label: '🍿 Snack Offers', gradient: 'linear-gradient(135deg, #ffeaa7, #fdcb6e)', categories: ['Snacks & Namkeen', 'Biscuits & Cookies', 'Chocolates & Candy'] },
-        { id: 'personal', label: '🧴 Personal Care Discounts', gradient: 'linear-gradient(135deg, #dfe6e9, #b2bec3)', categories: ['Personal Care', 'Baby Care'] },
-        { id: 'household', label: '🧹 Household Essentials Sale', gradient: 'linear-gradient(135deg, #a29bfe, #6c5ce7)', categories: ['Household Essentials', 'Cleaning Supplies'] },
-        { id: 'new', label: '🆕 New Arrival Offers', gradient: 'linear-gradient(135deg, #55efc4, #00b894)', categories: null, badgeFilter: 'New' },
-        { id: 'bestvalue', label: '⭐ Best Value Deals', gradient: 'linear-gradient(135deg, #ffeaa7, #f9ca24)', categories: null, badgeFilter: 'Top Rated' },
-        { id: 'festival', label: '🎉 Festival Offers', gradient: 'linear-gradient(135deg, #fd79a8, #e84393)', categories: null },
-        { id: 'bank', label: '💳 Bank & Wallet Offers', gradient: 'linear-gradient(135deg, #636e72, #2d3436)', categories: null },
-        { id: 'delivery', label: '🚚 Free Delivery on Orders Above ₹499', gradient: 'linear-gradient(135deg, #00cec9, #0984e3)', categories: null }
+        { id: 'today', label: "🔥 Today's Deals", gradient: 'linear-gradient(135deg, #ff6b6b, #ee5a24)', offerTag: "🔥 Today's Deals" },
+        { id: 'flash', label: '⚡ Flash Sale', gradient: 'linear-gradient(135deg, #f9ca24, #f0932b)', offerTag: '⚡ Flash Sale' },
+        { id: 'half', label: '💸 Up to 50% OFF', gradient: 'linear-gradient(135deg, #6c5ce7, #a29bfe)', offerTag: '💸 Up to 50% OFF' },
+        { id: 'bogo', label: '🛍️ Buy 1 Get 1 Free', gradient: 'linear-gradient(135deg, #fd79a8, #e84393)', offerTag: '🛍️ Buy 1 Get 1 Free' },
+        { id: 'combo', label: '🎁 Combo Packs', gradient: 'linear-gradient(135deg, #00b894, #55efc4)', offerTag: '🎁 Combo Packs' },
+        { id: 'fresh', label: '🥦 Fresh Produce Deals', gradient: 'linear-gradient(135deg, #00b894, #00cec9)', offerTag: '🥦 Fresh Produce Deals' },
+        { id: 'dairy', label: '🥛 Dairy Specials', gradient: 'linear-gradient(135deg, #74b9ff, #0984e3)', offerTag: '🥛 Dairy Specials' },
+        { id: 'snack', label: '🍿 Snack Offers', gradient: 'linear-gradient(135deg, #ffeaa7, #fdcb6e)', offerTag: '🍿 Snack Offers' },
+        { id: 'personal', label: '🧴 Personal Care Discounts', gradient: 'linear-gradient(135deg, #dfe6e9, #b2bec3)', offerTag: '🧴 Personal Care Discounts' },
+        { id: 'household', label: '🧹 Household Essentials Sale', gradient: 'linear-gradient(135deg, #a29bfe, #6c5ce7)', offerTag: '🧹 Household Essentials Sale' },
+        { id: 'new', label: '🆕 New Arrival Offers', gradient: 'linear-gradient(135deg, #55efc4, #00b894)', offerTag: '🆕 New Arrival Offers' },
+        { id: 'bestvalue', label: '⭐ Best Value Deals', gradient: 'linear-gradient(135deg, #ffeaa7, #f9ca24)', offerTag: '⭐ Best Value Deals' },
+        { id: 'festival', label: '🎉 Festival Offers', gradient: 'linear-gradient(135deg, #fd79a8, #e84393)', offerTag: '🎉 Festival Offers' },
+        { id: 'bank', label: '💳 Bank & Wallet Offers', gradient: 'linear-gradient(135deg, #636e72, #2d3436)', offerTag: '💳 Bank & Wallet Offers' },
+        { id: 'delivery', label: '🚚 Free Delivery on ₹499+', gradient: 'linear-gradient(135deg, #00cec9, #0984e3)', offerTag: '🚚 Free Delivery on ₹499+' }
       ];
 
       // Render deal category cards
@@ -148,13 +148,9 @@
       function getFiltered() {
         let products = getBaseProducts();
 
-        // Apply deal filter
+        // Apply deal filter - match by product.offer field
         if (activeDeal) {
-          if (activeDeal.badgeFilter) {
-            products = products.filter(p => p.badge === activeDeal.badgeFilter);
-          } else if (activeDeal.categories) {
-            products = products.filter(p => activeDeal.categories.includes(p.category));
-          }
+          products = products.filter(p => p.offer === activeDeal.offerTag);
         }
 
         // Apply category chip filter
@@ -182,7 +178,7 @@
         const pag = document.getElementById('offersPagination');
 
         if (pageProducts.length === 0) {
-          grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon">🏷️</div><h3>No products found</h3><p>Try a different deal or category</p></div>';
+          grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon">🏷️</div><h3>No products found</h3><p>${activeDeal ? 'No products assigned to this offer yet. Go to Admin → Products → Edit to assign products.' : 'No products with offers yet. Assign offers from Admin → Products.'}</p></div>`;
           if (pag) pag.innerHTML = '';
           return;
         }
