@@ -141,7 +141,7 @@ const DB = {
   },
 
   clearAllData() {
-    const tables = ['products', 'banners', 'catalogs', 'orders', 'users', 'stock_logs', 'settings'];
+    const tables = ['products', 'banners', 'catalogs', 'orders', 'users', 'stock_logs', 'settings', 'returns'];
     tables.forEach(t => localStorage.removeItem(this._key(t)));
   },
 

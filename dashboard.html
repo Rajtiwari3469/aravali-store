@@ -527,8 +527,89 @@
                 <span class="detail-value">${App.formatDate(order.orderDate || order.createdAt)}</span>
               </div>
             </div>
+
+            ${order.status === 'delivered' ? `
+            <div style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(45,106,79,0.08);">
+              <h4 style="margin-bottom:10px;color:var(--danger);">🔄 Return & Refund</h4>
+              <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:12px;">Not satisfied? Request a return within 7 days of delivery.</p>
+              <div style="display:flex;flex-direction:column;gap:8px;">
+                <select id="returnReason-${order.id}" style="padding:10px 14px;border-radius:10px;border:1px solid rgba(45,106,79,0.15);font-family:var(--font);font-size:0.88rem;">
+                  <option value="">Select reason for return...</option>
+                  <option value="Damaged product">Damaged product</option>
+                  <option value="Wrong item received">Wrong item received</option>
+                  <option value="Product quality issue">Product quality issue</option>
+                  <option value="Expired product">Expired product</option>
+                  <option value="Missing items">Missing items</option>
+                  <option value="Better price available">Better price available</option>
+                  <option value="No longer needed">No longer needed</option>
+                  <option value="Other">Other</option>
+                </select>
+                <textarea id="returnInfo-${order.id}" placeholder="Additional details (optional)" style="padding:10px 14px;border-radius:10px;border:1px solid rgba(45,106,79,0.15);font-family:var(--font);font-size:0.88rem;min-height:70px;resize:vertical;"></textarea>
+                <button class="btn" style="background:rgba(244,67,54,0.08);color:var(--danger);font-weight:600;width:100%;padding:11px;" onclick="Dash.requestReturn('${order.id}')">🔄 Request Return</button>
+              </div>
+            </div>
+            ` : ''}
+
+            ${(order.status === 'return_requested' || order.status === 'return_approved' || order.status === 'refunded') ? `
+            <div style="margin-top:16px;padding:14px;border-radius:10px;background:${order.status === 'refunded' ? 'rgba(156,39,176,0.06)' : 'rgba(255,152,0,0.06)'};border:1px solid ${order.status === 'refunded' ? 'rgba(156,39,176,0.2)' : 'rgba(255,152,0,0.2)'};">
+              <p style="font-weight:700;margin:0 0 4px;color:${order.status === 'refunded' ? '#9c27b0' : '#e67e22'};">
+                ${order.status === 'return_requested' ? '⏳ Return request submitted — awaiting admin review' : ''}
+                ${order.status === 'return_approved' ? '✅ Return approved — refund is being processed' : ''}
+                ${order.status === 'refunded' ? '💰 Refund has been processed successfully' : ''}
+              </p>
+            </div>
+            ` : ''}
           `;
           document.getElementById('dashOrderModal').classList.add('active');
+        },
+
+        requestReturn(orderId) {
+          const reasonSelect = document.getElementById('returnReason-' + orderId);
+          const infoEl = document.getElementById('returnInfo-' + orderId);
+          const reason = reasonSelect ? reasonSelect.value : '';
+          const additionalInfo = infoEl ? infoEl.value.trim() : '';
+
+          if (!reason) {
+            App.showToast('Please select a reason for return', 'error');
+            return;
+          }
+
+          const allOrders = App.getOrders();
+          const order = allOrders.find(o => o.id === orderId);
+          if (!order) return;
+
+          const existingReturns = DB.getAll('returns');
+          const alreadyReturned = existingReturns.find(r => r.orderId === orderId && r.status !== 'rejected');
+          if (alreadyReturned) {
+            App.showToast('A return request already exists for this order', 'error');
+            return;
+          }
+
+          const firstItem = (order.items || [])[0] || {};
+          const refundAmount = order.total || 0;
+
+          DB.insert('returns', {
+            orderId: orderId,
+            userId: App.currentUser ? App.currentUser.id : null,
+            customerName: App.currentUser ? App.currentUser.name : 'Guest',
+            productName: firstItem.name || 'Full Order',
+            productId: firstItem.productId || null,
+            qty: (order.items || []).reduce((s, i) => s + (i.qty || 1), 0),
+            reason: reason,
+            additionalInfo: additionalInfo,
+            refundAmount: refundAmount,
+            status: 'pending'
+          });
+
+          DB.update('orders', orderId, { status: 'return_requested' });
+
+          App.showToast('Return request submitted! Admin will review it shortly.', 'success');
+
+          if (document.getElementById('dashOrderModal')) {
+            document.getElementById('dashOrderModal').classList.remove('active');
+          }
+
+          setTimeout(() => this.showOrderDetail(orderId), 300);
         },
 
         // ===== ADDRESSES =====

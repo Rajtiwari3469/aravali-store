@@ -33,6 +33,9 @@ const Admin = {
     } else if (path.includes('settings')) {
       this.currentPage = 'settings';
       this.initSettings();
+    } else if (path.includes('returns')) {
+      this.currentPage = 'returns';
+      this.renderReturns();
     } else {
       this.currentPage = 'dashboard';
       this.renderDashboard();
@@ -101,6 +104,7 @@ const Admin = {
     const totalRevenue = orders.reduce((sum, o) => sum + (o.total || 0), 0);
     const pendingOrders = orders.filter(o => o.status === 'pending').length;
     const deliveredOrders = orders.filter(o => o.status === 'delivered').length;
+    const pendingReturns = DB.getAll('returns').filter(r => r.status === 'pending').length;
     const outOfStockProducts = DB.getOutOfStockProducts();
     const lowStockProducts = DB.getLowStockProducts(5);
 
@@ -130,7 +134,11 @@ const Admin = {
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(82,183,136,0.15);">✅</div>
           <div class="stat-info"><h3>${deliveredOrders}</h3><p>Delivered</p></div>
-        </div>`;
+        </div>
+        ${pendingReturns > 0 ? `<div class="stat-card">
+          <div class="stat-icon" style="background:rgba(255,152,0,0.15);">🔄</div>
+          <div class="stat-info"><h3>${pendingReturns}</h3><p>Pending Returns</p></div>
+        </div>` : ''}`;
     }
 
     // Stock Alert Banner (placed after stat-cards)
@@ -506,21 +514,46 @@ const Admin = {
   },
 
   // Orders
-  renderOrders() {
+  renderOrders(filterStatus) {
     const main = document.querySelector('.admin-content');
     if (!main) return;
 
-    const orders = DB.getAll('orders').reverse();
+    const allOrders = DB.getAll('orders').reverse();
+    const statusCounts = { all: allOrders.length, pending: 0, confirmed: 0, delivered: 0, cancelled: 0 };
+    allOrders.forEach(o => {
+      if (statusCounts[o.status] !== undefined) statusCounts[o.status]++;
+    });
+
+    const activeTab = filterStatus || 'all';
+    const filtered = activeTab === 'all' ? allOrders : allOrders.filter(o => o.status === activeTab);
 
     main.innerHTML = `
       <div class="admin-table-wrapper">
         <div class="admin-table-header">
-          <h3>All Orders (${orders.length})</h3>
+          <h3>Orders</h3>
           <div style="display:flex;gap:10px;align-items:center;">
             <input type="text" class="search-input" placeholder="Search by ID, name, phone..." oninput="Admin.filterOrders(this.value)">
-            ${orders.length > 0 ? `<button class="btn btn-sm" onclick="Admin.deleteAllOrders()" style="background:rgba(230,57,70,0.1);color:var(--danger);font-weight:600;padding:6px 14px;border-radius:8px;border:none;cursor:pointer;font-family:var(--font);font-size:0.82rem;">🗑️ Clear All</button>` : ''}
+            ${allOrders.length > 0 ? `<button class="btn btn-sm" onclick="Admin.deleteAllOrders()" style="background:rgba(230,57,70,0.1);color:var(--danger);font-weight:600;padding:6px 14px;border-radius:8px;border:none;cursor:pointer;font-family:var(--font);font-size:0.82rem;">🗑️ Clear All</button>` : ''}
           </div>
         </div>
+
+        <div style="display:flex;gap:6px;padding:0 0 16px;flex-wrap:wrap;">
+          <button onclick="Admin.renderOrders('all')" style="padding:7px 16px;border-radius:20px;border:none;cursor:pointer;font-family:var(--font);font-size:0.8rem;font-weight:600;transition:0.2s;${activeTab==='all'?'background:var(--primary);color:white;':'background:rgba(45,106,79,0.06);color:var(--text-light);'}">All <span style="margin-left:4px;opacity:0.8;">${statusCounts.all}</span></button>
+          <button onclick="Admin.renderOrders('pending')" style="padding:7px 16px;border-radius:20px;border:none;cursor:pointer;font-family:var(--font);font-size:0.8rem;font-weight:600;transition:0.2s;${activeTab==='pending'?'background:#ff9800;color:white;':'background:rgba(255,152,0,0.08);color:#e67e22;'}">⏳ Pending <span style="margin-left:4px;">${statusCounts.pending}</span></button>
+          <button onclick="Admin.renderOrders('confirmed')" style="padding:7px 16px;border-radius:20px;border:none;cursor:pointer;font-family:var(--font);font-size:0.8rem;font-weight:600;transition:0.2s;${activeTab==='confirmed'?'background:#2196f3;color:white;':'background:rgba(33,150,243,0.08);color:#2196f3;'}">✅ Confirmed <span style="margin-left:4px;">${statusCounts.confirmed}</span></button>
+          <button onclick="Admin.renderOrders('delivered')" style="padding:7px 16px;border-radius:20px;border:none;cursor:pointer;font-family:var(--font);font-size:0.8rem;font-weight:600;transition:0.2s;${activeTab==='delivered'?'background:#4caf50;color:white;':'background:rgba(76,175,80,0.08);color:#4caf50;'}">🚚 Delivered <span style="margin-left:4px;">${statusCounts.delivered}</span></button>
+          <button onclick="Admin.renderOrders('cancelled')" style="padding:7px 16px;border-radius:20px;border:none;cursor:pointer;font-family:var(--font);font-size:0.8rem;font-weight:600;transition:0.2s;${activeTab==='cancelled'?'background:#f44336;color:white;':'background:rgba(244,67,54,0.08);color:#f44336;'}">❌ Cancelled <span style="margin-left:4px;">${statusCounts.cancelled}</span></button>
+        </div>
+
+        ${activeTab === 'pending' && filtered.length > 0 ? `
+        <div style="background:linear-gradient(135deg,rgba(255,152,0,0.08),rgba(255,183,77,0.06));border:1px solid rgba(255,152,0,0.2);border-radius:12px;padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;gap:10px;">
+          <span style="font-size:1.3rem;">⏳</span>
+          <div>
+            <p style="margin:0;font-weight:700;color:#e67e22;font-size:0.9rem;">${filtered.length} pending order${filtered.length > 1 ? 's' : ''} awaiting action</p>
+            <p style="margin:2px 0 0;font-size:0.78rem;color:#b7791f;">Review and confirm these orders to keep your store running smoothly.</p>
+          </div>
+        </div>` : ''}
+
         <table class="admin-table">
           <thead>
             <tr>
@@ -536,7 +569,7 @@ const Admin = {
             </tr>
           </thead>
           <tbody id="ordersTableBody">
-            ${this.renderOrderRows(orders)}
+            ${this.renderOrderRows(filtered)}
           </tbody>
         </table>
       </div>`;
@@ -578,6 +611,9 @@ const Admin = {
             <option value="confirmed" ${o.status === 'confirmed' ? 'selected' : ''}>Confirmed</option>
             <option value="delivered" ${o.status === 'delivered' ? 'selected' : ''}>Delivered</option>
             <option value="cancelled" ${o.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+            ${o.status === 'return_requested' ? '<option value="return_requested" selected>🔄 Return Requested</option>' : ''}
+            ${o.status === 'return_approved' ? '<option value="return_approved" selected>✅ Return Approved</option>' : ''}
+            ${o.status === 'refunded' ? '<option value="refunded" selected>💰 Refunded</option>' : ''}
           </select>
         </td>
         <td style="font-size:0.82rem;">${App.formatDate(o.orderDate || o.createdAt)}</td>
@@ -1418,6 +1454,7 @@ const Admin = {
   renderDataCheckboxes() {
     const tables = [
       { key: 'orders', label: 'Orders', icon: '🛒', color: 'var(--accent)' },
+      { key: 'returns', label: 'Returns', icon: '🔄', color: '#ff9800' },
       { key: 'users', label: 'Users', icon: '👥', color: 'var(--primary)' },
       { key: 'products', label: 'Products', icon: '📦', color: 'var(--secondary)' },
       { key: 'banners', label: 'Banners', icon: '🖼️', color: '#0077b6' },
@@ -1476,6 +1513,228 @@ const Admin = {
     DB.clearAllData();
     App.showToast('All data deleted. Re-seeding products and catalogs...', 'success');
     setTimeout(() => location.reload(), 1200);
+  },
+
+  // Returns & Refunds
+  renderReturns(filterStatus) {
+    const main = document.querySelector('.admin-content');
+    if (!main) return;
+
+    const allReturns = DB.getAll('returns').reverse();
+    const statusCounts = { all: allReturns.length, pending: 0, approved: 0, rejected: 0, refunded: 0 };
+    allReturns.forEach(r => {
+      if (statusCounts[r.status] !== undefined) statusCounts[r.status]++;
+    });
+
+    const activeTab = filterStatus || 'all';
+    const filtered = activeTab === 'all' ? allReturns : allReturns.filter(r => r.status === activeTab);
+
+    main.innerHTML = `
+      <div class="admin-table-wrapper">
+        <div class="admin-table-header">
+          <h3>Returns & Refunds</h3>
+          <input type="text" class="search-input" placeholder="Search by order ID, customer, reason..." oninput="Admin.filterReturns(this.value)">
+        </div>
+
+        <div style="display:flex;gap:6px;padding:0 0 16px;flex-wrap:wrap;">
+          <button onclick="Admin.renderReturns('all')" style="padding:7px 16px;border-radius:20px;border:none;cursor:pointer;font-family:var(--font);font-size:0.8rem;font-weight:600;transition:0.2s;${activeTab==='all'?'background:var(--primary);color:white;':'background:rgba(45,106,79,0.06);color:var(--text-light);'}">All <span style="margin-left:4px;">${statusCounts.all}</span></button>
+          <button onclick="Admin.renderReturns('pending')" style="padding:7px 16px;border-radius:20px;border:none;cursor:pointer;font-family:var(--font);font-size:0.8rem;font-weight:600;transition:0.2s;${activeTab==='pending'?'background:#ff9800;color:white;':'background:rgba(255,152,0,0.08);color:#e67e22;'}">⏳ Pending <span style="margin-left:4px;">${statusCounts.pending}</span></button>
+          <button onclick="Admin.renderReturns('approved')" style="padding:7px 16px;border-radius:20px;border:none;cursor:pointer;font-family:var(--font);font-size:0.8rem;font-weight:600;transition:0.2s;${activeTab==='approved'?'background:#2196f3;color:white;':'background:rgba(33,150,243,0.08);color:#2196f3;'}">✅ Approved <span style="margin-left:4px;">${statusCounts.approved}</span></button>
+          <button onclick="Admin.renderReturns('rejected')" style="padding:7px 16px;border-radius:20px;border:none;cursor:pointer;font-family:var(--font);font-size:0.8rem;font-weight:600;transition:0.2s;${activeTab==='rejected'?'background:#f44336;color:white;':'background:rgba(244,67,54,0.08);color:#f44336;'}">❌ Rejected <span style="margin-left:4px;">${statusCounts.rejected}</span></button>
+          <button onclick="Admin.renderReturns('refunded')" style="padding:7px 16px;border-radius:20px;border:none;cursor:pointer;font-family:var(--font);font-size:0.8rem;font-weight:600;transition:0.2s;${activeTab==='refunded'?'background:#9c27b0;color:white;':'background:rgba(156,39,176,0.08);color:#9c27b0;'}">💰 Refunded <span style="margin-left:4px;">${statusCounts.refunded}</span></button>
+        </div>
+
+        ${activeTab === 'pending' && filtered.length > 0 ? `
+        <div style="background:linear-gradient(135deg,rgba(255,152,0,0.08),rgba(255,183,77,0.06));border:1px solid rgba(255,152,0,0.2);border-radius:12px;padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;gap:10px;">
+          <span style="font-size:1.3rem;">🔄</span>
+          <div>
+            <p style="margin:0;font-weight:700;color:#e67e22;font-size:0.9rem;">${filtered.length} return request${filtered.length > 1 ? 's' : ''} awaiting review</p>
+            <p style="margin:2px 0 0;font-size:0.78rem;color:#b7791f;">Approve or reject these requests to process customer refunds.</p>
+          </div>
+        </div>` : ''}
+
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Return ID</th>
+              <th>Order ID</th>
+              <th>Customer</th>
+              <th>Item</th>
+              <th>Reason</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="returnsTableBody">
+            ${this.renderReturnRows(filtered)}
+          </tbody>
+        </table>
+      </div>`;
+  },
+
+  renderReturnRows(returns) {
+    if (returns.length === 0) {
+      return '<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-muted);"><div style="font-size:2rem;margin-bottom:8px;">📦</div>No return requests yet.</td></tr>';
+    }
+    const statusColors = { pending: '#ff9800', approved: '#2196f3', rejected: '#f44336', refunded: '#9c27b0' };
+    return returns.map(r => `
+      <tr>
+        <td style="font-weight:600;">#${r.id.slice(-6).toUpperCase()}</td>
+        <td style="font-weight:600;color:var(--primary);">#${(r.orderId || '').slice(-6).toUpperCase()}</td>
+        <td style="font-size:0.85rem;">${r.customerName || 'Guest'}</td>
+        <td style="font-size:0.85rem;">${r.productName || 'N/A'} ${r.qty > 1 ? '× ' + r.qty : ''}</td>
+        <td style="font-size:0.78rem;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${r.reason}">${r.reason || 'N/A'}</td>
+        <td style="font-weight:700;color:var(--danger);">${App.formatCurrency(r.refundAmount || 0)}</td>
+        <td><span style="display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.75rem;font-weight:600;background:${statusColors[r.status] || '#999'}20;color:${statusColors[r.status] || '#999'};">${r.status}</span></td>
+        <td style="font-size:0.82rem;">${App.formatDate(r.createdAt)}</td>
+        <td>
+          <div class="action-btns">
+            ${r.status === 'pending' ? `
+              <button class="action-btn view" onclick="Admin.approveReturn('${r.id}')" style="background:rgba(76,175,80,0.1);color:#4caf50;">Approve</button>
+              <button class="action-btn delete" onclick="Admin.rejectReturn('${r.id}')" style="background:rgba(244,67,54,0.1);color:#f44336;">Reject</button>
+            ` : ''}
+            ${r.status === 'approved' ? `
+              <button class="action-btn view" onclick="Admin.processRefund('${r.id}')" style="background:rgba(156,39,176,0.1);color:#9c27b0;">Refund</button>
+            ` : ''}
+            <button class="action-btn view" onclick="Admin.viewReturn('${r.id}')">View</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  },
+
+  filterReturns(term) {
+    let returns = DB.getAll('returns').reverse();
+    if (term) {
+      const t = term.toLowerCase();
+      returns = returns.filter(r =>
+        r.id.toLowerCase().includes(t) ||
+        (r.orderId && r.orderId.toLowerCase().includes(t)) ||
+        (r.customerName && r.customerName.toLowerCase().includes(t)) ||
+        (r.productName && r.productName.toLowerCase().includes(t)) ||
+        (r.reason && r.reason.toLowerCase().includes(t))
+      );
+    }
+    document.getElementById('returnsTableBody').innerHTML = this.renderReturnRows(returns);
+  },
+
+  approveReturn(returnId) {
+    if (!confirm('Approve this return request? The order status will be updated.')) return;
+    const ret = DB.getById('returns', returnId);
+    if (!ret) return;
+    DB.update('returns', returnId, { status: 'approved', reviewedAt: new Date().toISOString() });
+    if (ret.orderId) {
+      DB.update('orders', ret.orderId, { status: 'return_approved' });
+    }
+    App.showToast('Return approved!', 'success');
+    this.renderReturns('pending');
+  },
+
+  rejectReturn(returnId) {
+    const reason = prompt('Reason for rejection (optional):');
+    if (reason === null) return;
+    const ret = DB.getById('returns', returnId);
+    if (!ret) return;
+    DB.update('returns', returnId, { status: 'rejected', rejectReason: reason, reviewedAt: new Date().toISOString() });
+    if (ret.orderId) {
+      const order = DB.getById('orders', ret.orderId);
+      if (order && order.status === 'return_requested') {
+        DB.update('orders', ret.orderId, { status: 'delivered' });
+      }
+    }
+    App.showToast('Return rejected', 'info');
+    this.renderReturns('pending');
+  },
+
+  processRefund(returnId) {
+    const ret = DB.getById('returns', returnId);
+    if (!ret) return;
+    if (!confirm(`Process refund of ${App.formatCurrency(ret.refundAmount || 0)}? This cannot be undone.`)) return;
+    DB.update('returns', returnId, { status: 'refunded', refundedAt: new Date().toISOString() });
+    if (ret.orderId) {
+      DB.update('orders', ret.orderId, { status: 'refunded' });
+    }
+    App.showToast(`Refund of ${App.formatCurrency(ret.refundAmount || 0)} processed!`, 'success');
+    this.renderReturns('approved');
+  },
+
+  viewReturn(returnId) {
+    const ret = DB.getById('returns', returnId);
+    if (!ret) return;
+    const order = ret.orderId ? DB.getById('orders', ret.orderId) : null;
+    const statusColors = { pending: '#ff9800', approved: '#2196f3', rejected: '#f44336', refunded: '#9c27b0' };
+
+    const modal = document.getElementById('productModal');
+    const content = document.getElementById('productModalContent');
+    content.innerHTML = `
+      <button class="modal-close" onclick="Admin.closeModal()">✕</button>
+      <h2 style="margin-bottom:20px;">Return #${ret.id.slice(-6).toUpperCase()}</h2>
+
+      <div style="text-align:center;margin-bottom:20px;">
+        <span style="display:inline-block;padding:6px 18px;border-radius:20px;font-weight:700;font-size:0.88rem;background:${statusColors[ret.status] || '#999'}18;color:${statusColors[ret.status] || '#999'};">${ret.status.toUpperCase()}</span>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;">
+        <div style="padding:12px;background:rgba(82,183,136,0.05);border-radius:10px;">
+          <p style="font-size:0.72rem;color:var(--text-muted);margin:0 0 3px;">Customer</p>
+          <p style="font-weight:700;margin:0;font-size:0.9rem;">${ret.customerName || 'Guest'}</p>
+        </div>
+        <div style="padding:12px;background:rgba(82,183,136,0.05);border-radius:10px;">
+          <p style="font-size:0.72rem;color:var(--text-muted);margin:0 0 3px;">Order</p>
+          <p style="font-weight:700;margin:0;font-size:0.9rem;color:var(--primary);">#${(ret.orderId || '').slice(-6).toUpperCase()}</p>
+        </div>
+        <div style="padding:12px;background:rgba(82,183,136,0.05);border-radius:10px;">
+          <p style="font-size:0.72rem;color:var(--text-muted);margin:0 0 3px;">Product</p>
+          <p style="font-weight:700;margin:0;font-size:0.9rem;">${ret.productName || 'N/A'}</p>
+        </div>
+        <div style="padding:12px;background:rgba(82,183,136,0.05);border-radius:10px;">
+          <p style="font-size:0.72rem;color:var(--text-muted);margin:0 0 3px;">Quantity</p>
+          <p style="font-weight:700;margin:0;font-size:0.9rem;">${ret.qty || 1}</p>
+        </div>
+      </div>
+
+      <div style="padding:14px;background:rgba(244,67,54,0.04);border-radius:10px;border-left:3px solid var(--danger);margin-bottom:16px;">
+        <p style="font-size:0.72rem;color:var(--text-muted);margin:0 0 3px;">Reason for Return</p>
+        <p style="font-weight:600;margin:0;font-size:0.9rem;">${ret.reason || 'No reason provided'}</p>
+      </div>
+
+      ${ret.additionalInfo ? `
+      <div style="padding:14px;background:rgba(45,106,79,0.04);border-radius:10px;border-left:3px solid var(--primary);margin-bottom:16px;">
+        <p style="font-size:0.72rem;color:var(--text-muted);margin:0 0 3px;">Additional Details</p>
+        <p style="font-weight:600;margin:0;font-size:0.88rem;">${ret.additionalInfo}</p>
+      </div>` : ''}
+
+      <div style="display:flex;gap:12px;margin-bottom:16px;">
+        <div style="flex:1;padding:12px;text-align:center;background:rgba(244,67,54,0.06);border-radius:10px;">
+          <span style="font-size:0.75rem;color:var(--text-muted);">Refund Amount</span><br>
+          <span style="font-weight:800;font-size:1.15rem;color:var(--danger);">${App.formatCurrency(ret.refundAmount || 0)}</span>
+        </div>
+        <div style="flex:1;padding:12px;text-align:center;background:rgba(45,106,79,0.06);border-radius:10px;">
+          <span style="font-size:0.75rem;color:var(--text-muted);">Payment Method</span><br>
+          <span style="font-weight:700;font-size:0.95rem;">${order ? (order.paymentMethod === 'cod' ? '💵 COD' : '📱 UPI') : 'N/A'}</span>
+        </div>
+      </div>
+
+      <div style="font-size:0.78rem;color:var(--text-muted);">
+        <p style="margin:4px 0;">Requested: ${App.formatDate(ret.createdAt)}</p>
+        ${ret.reviewedAt ? `<p style="margin:4px 0;">Reviewed: ${App.formatDate(ret.reviewedAt)}</p>` : ''}
+        ${ret.refundedAt ? `<p style="margin:4px 0;color:var(--primary);font-weight:600;">Refunded: ${App.formatDate(ret.refundedAt)}</p>` : ''}
+        ${ret.rejectReason ? `<p style="margin:4px 0;color:var(--danger);">Rejection reason: ${ret.rejectReason}</p>` : ''}
+      </div>
+
+      ${ret.status === 'pending' ? `
+      <div style="display:flex;gap:10px;margin-top:20px;">
+        <button class="btn btn-primary" style="flex:1;" onclick="Admin.approveReturn('${ret.id}');Admin.closeModal();">✅ Approve Return</button>
+        <button class="btn" style="flex:1;background:rgba(244,67,54,0.1);color:var(--danger);" onclick="Admin.rejectReturn('${ret.id}');Admin.closeModal();">❌ Reject</button>
+      </div>` : ''}
+      ${ret.status === 'approved' ? `
+      <div style="margin-top:20px;">
+        <button class="btn btn-primary" style="width:100%;" onclick="Admin.processRefund('${ret.id}');Admin.closeModal();">💰 Process Refund — ${App.formatCurrency(ret.refundAmount || 0)}</button>
+      </div>` : ''}`;
+
+    modal.classList.add('active');
   },
 
   closeModal() {
