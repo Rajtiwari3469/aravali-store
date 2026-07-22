@@ -787,6 +787,58 @@ img {
   gap: 20px;
 }
 
+.promo-grid.swipe-mode {
+  display: flex;
+  overflow: hidden;
+  position: relative;
+  border-radius: var(--border-radius);
+  height: 200px;
+}
+
+.promo-grid.swipe-mode .promo-card {
+  min-width: 100%;
+  border-radius: 0;
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  transition: opacity 0.8s ease-in-out;
+}
+
+.promo-grid.swipe-mode .promo-card.active-slide {
+  opacity: 1;
+}
+
+.promo-grid.swipe-mode .swipe-dots {
+  display: flex;
+}
+
+.swipe-dots {
+  display: none;
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  gap: 8px;
+  z-index: 10;
+}
+
+.swipe-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  border: none;
+  cursor: pointer;
+  transition: var(--transition);
+  padding: 0;
+}
+
+.swipe-dot.active {
+  background: white;
+  transform: scale(1.3);
+}
+
 .promo-card {
   border-radius: var(--border-radius);
   padding: 32px 24px;
@@ -961,6 +1013,82 @@ img {
 .form-group textarea {
   resize: vertical;
   min-height: 100px;
+}
+
+/* Password Toggle */
+.password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-wrapper input {
+  padding-right: 48px !important;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1rem;
+  color: var(--text-muted);
+  padding: 4px;
+  transition: var(--transition);
+  z-index: 2;
+  line-height: 1;
+}
+
+.password-toggle:hover {
+  color: var(--primary);
+}
+
+/* Toggle Switch */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 52px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  border-radius: 28px;
+  transition: 0.3s;
+}
+
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  height: 22px;
+  width: 22px;
+  left: 3px;
+  bottom: 3px;
+  background: white;
+  border-radius: 50%;
+  transition: 0.3s;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background: var(--primary);
+}
+
+.toggle-switch input:checked + .toggle-slider::before {
+  transform: translateX(24px);
 }
 
 .auth-card .btn {

@@ -222,18 +222,47 @@
   <script src="js/shop.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // Banners from admin
+      // Banners from admin with auto-swipe support
       const banners = DB.getAll('banners').filter(b => b.active).sort((a, b) => (a.order || 0) - (b.order || 0));
       const promoGrid = document.getElementById('promoGrid');
+      const swipeEnabled = DB.getSettings().bannerSwipe !== false;
       if (promoGrid && banners.length > 0) {
-        promoGrid.innerHTML = banners.map(b => `
-          <div class="promo-card" style="background:${b.gradient};">
-            ${b.image ? `<img src="${b.image}" style="position:absolute;top:0;right:0;width:50%;height:100%;object-fit:cover;opacity:0.3;border-radius:0 var(--border-radius) var(--border-radius) 0;">` : '<div style="position:absolute;top:-50%;right:-20%;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,0.1);"></div>'}
-            <h3 style="position:relative;z-index:1;">${b.title}</h3>
-            <p style="position:relative;z-index:1;">${b.subtitle}</p>
-            <a href="${b.link}" class="btn btn-sm" style="background:rgba(255,255,255,0.25);color:white;margin-top:12px;width:fit-content;position:relative;z-index:1;">Shop Now</a>
-          </div>
-        `).join('');
+        if (swipeEnabled && banners.length > 1) {
+          promoGrid.classList.add('swipe-mode');
+          promoGrid.innerHTML = banners.map((b, i) => `
+            <div class="promo-card ${i === 0 ? 'active-slide' : ''}" style="background:${b.gradient};">
+              ${b.image ? `<img src="${b.image}" style="position:absolute;top:0;right:0;width:50%;height:100%;object-fit:cover;opacity:0.3;border-radius:0;">` : '<div style="position:absolute;top:-50%;right:-20%;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,0.1);"></div>'}
+              <h3 style="position:relative;z-index:1;">${b.title}</h3>
+              <p style="position:relative;z-index:1;">${b.subtitle}</p>
+              <a href="${b.link}" class="btn btn-sm" style="background:rgba(255,255,255,0.25);color:white;margin-top:12px;width:fit-content;position:relative;z-index:1;">Shop Now</a>
+            </div>
+          `).join('') + `<div class="swipe-dots">${banners.map((_, i) => `<button class="swipe-dot ${i === 0 ? 'active' : ''}" data-slide="${i}"></button>`).join('')}</div>`;
+          let currentSlide = 0;
+          function goToSlide(index) {
+            const cards = promoGrid.querySelectorAll('.promo-card');
+            const dots = promoGrid.querySelectorAll('.swipe-dot');
+            cards.forEach(c => c.classList.remove('active-slide'));
+            dots.forEach(d => d.classList.remove('active'));
+            cards[index].classList.add('active-slide');
+            dots[index].classList.add('active');
+            currentSlide = index;
+          }
+          promoGrid.querySelectorAll('.swipe-dot').forEach(dot => {
+            dot.addEventListener('click', () => goToSlide(parseInt(dot.dataset.slide)));
+          });
+          setInterval(() => {
+            goToSlide((currentSlide + 1) % banners.length);
+          }, 4000);
+        } else {
+          promoGrid.innerHTML = banners.map(b => `
+            <div class="promo-card" style="background:${b.gradient};">
+              ${b.image ? `<img src="${b.image}" style="position:absolute;top:0;right:0;width:50%;height:100%;object-fit:cover;opacity:0.3;border-radius:0 var(--border-radius) var(--border-radius) 0;">` : '<div style="position:absolute;top:-50%;right:-20%;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,0.1);"></div>'}
+              <h3 style="position:relative;z-index:1;">${b.title}</h3>
+              <p style="position:relative;z-index:1;">${b.subtitle}</p>
+              <a href="${b.link}" class="btn btn-sm" style="background:rgba(255,255,255,0.25);color:white;margin-top:12px;width:fit-content;position:relative;z-index:1;">Shop Now</a>
+            </div>
+          `).join('');
+        }
       }
 
       // Catalogs from admin

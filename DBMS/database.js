@@ -86,6 +86,21 @@ const DB = {
     const start = (page - 1) * perPage;
     const paginatedItems = items.slice(start, start + perPage);
     return { items: paginatedItems, total, totalPages, page, perPage };
+  },
+
+  getSettings() {
+    try {
+      const data = localStorage.getItem(this._prefix + 'settings');
+      return data ? JSON.parse(data) : {};
+    } catch {
+      return {};
+    }
+  },
+
+  saveSetting(key, value) {
+    const settings = this.getSettings();
+    settings[key] = value;
+    localStorage.setItem(this._prefix + 'settings', JSON.stringify(settings));
   }
 };
 

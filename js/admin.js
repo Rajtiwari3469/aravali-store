@@ -525,22 +525,46 @@ const Admin = {
     if (!main) return;
 
     const admin = DB.getAll('admins')[0];
+    const settings = DB.getSettings();
     main.innerHTML = `
       <div style="max-width:500px;">
         <div class="glass-card" style="padding:30px;">
+          <h3 style="margin-bottom:20px;color:var(--primary-dark);">Banner Settings</h3>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px;background:rgba(82,183,136,0.05);border-radius:12px;">
+            <div>
+              <p style="font-weight:600;margin:0;">Auto-Swipe Banners</p>
+              <p style="color:var(--text-muted);font-size:0.82rem;margin:4px 0 0;">When ON, homepage banners swipe automatically. When OFF, banners are fixed in grid.</p>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="bannerSwipeToggle" ${settings.bannerSwipe !== false ? 'checked' : ''} onchange="Admin.toggleBannerSwipe(this.checked)">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="glass-card" style="padding:30px;margin-top:20px;">
           <h3 style="margin-bottom:20px;color:var(--primary-dark);">Change Password</h3>
           <form id="settingsForm">
             <div class="form-group">
               <label>Current Password</label>
-              <input type="password" id="currentPass" required>
+              <div class="password-wrapper">
+                <input type="password" id="currentPass" required>
+                <button type="button" class="password-toggle" onclick="App.togglePassword('currentPass')">👁️</button>
+              </div>
             </div>
             <div class="form-group">
               <label>New Password</label>
-              <input type="password" id="newPass" required>
+              <div class="password-wrapper">
+                <input type="password" id="newPass" required>
+                <button type="button" class="password-toggle" onclick="App.togglePassword('newPass')">👁️</button>
+              </div>
             </div>
             <div class="form-group">
               <label>Confirm New Password</label>
-              <input type="password" id="confirmPass" required>
+              <div class="password-wrapper">
+                <input type="password" id="confirmPass" required>
+                <button type="button" class="password-toggle" onclick="App.togglePassword('confirmPass')">👁️</button>
+              </div>
             </div>
             <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">Update Password</button>
           </form>
@@ -585,6 +609,11 @@ const Admin = {
     DB.update('admins', adminId, { password: newPass });
     App.showToast('Password updated successfully!', 'success');
     document.getElementById('settingsForm').reset();
+  },
+
+  toggleBannerSwipe(enabled) {
+    DB.saveSetting('bannerSwipe', enabled);
+    App.showToast(enabled ? 'Banner auto-swipe enabled' : 'Banner auto-swipe disabled — banners fixed in grid', 'success');
   },
 
   exportData() {

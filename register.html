@@ -49,7 +49,10 @@
         </div>
         <div class="form-group">
           <label>Password</label>
-          <input type="password" id="regPassword" placeholder="Create a password" required minlength="6">
+          <div class="password-wrapper">
+            <input type="password" id="regPassword" placeholder="Create a password" required minlength="6">
+            <button type="button" class="password-toggle" onclick="App.togglePassword('regPassword')">👁️</button>
+          </div>
         </div>
         <button type="submit" class="btn btn-primary btn-lg">Create Account</button>
       </form>

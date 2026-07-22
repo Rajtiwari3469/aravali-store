@@ -292,31 +292,11 @@ const App = {
 
   // Product image (emoji fallback)
   getProductEmoji(category) {
-    const emojis = {
-      'Dairy': '🥛',
-      'Fruits': '🍎',
-      'Vegetables': '🥦',
-      'Snacks': '🍿',
-      'Beverages': '🥤',
-      'Grains': '🌾',
-      'Bakery': '🍞',
-      'Frozen': '🧊'
-    };
-    return emojis[category] || '🛒';
+    return CATEGORY_EMOJIS[category] || '🛒';
   },
 
   getProductEmojiLarge(category) {
-    const emojis = {
-      'Dairy': '🥛',
-      'Fruits': '🍊',
-      'Vegetables': '🥬',
-      'Snacks': '🍿',
-      'Beverages': '☕',
-      'Grains': '🌾',
-      'Bakery': '🍞',
-      'Frozen': '🧊'
-    };
-    return emojis[category] || '🛒';
+    return CATEGORY_EMOJIS[category] || '🛒';
   },
 
   // Search placeholder auto-cycle (Blinkit-style slow swipe)
@@ -442,6 +422,19 @@ const App = {
     return params.get(name);
   },
 
+  togglePassword(inputId) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    const toggle = input.parentElement.querySelector('.password-toggle');
+    if (input.type === 'password') {
+      input.type = 'text';
+      if (toggle) toggle.textContent = '🙈';
+    } else {
+      input.type = 'password';
+      if (toggle) toggle.textContent = '👁️';
+    }
+  },
+
   formatDate(dateStr) {
     const d = new Date(dateStr);
     return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -465,14 +458,30 @@ const App = {
 // Category emojis map
 const CATEGORY_EMOJIS = {
   'All': '🏪',
-  'Dairy': '🥛',
-  'Fruits': '🍎',
-  'Vegetables': '🥦',
-  'Snacks': '🍿',
-  'Beverages': '🥤',
-  'Grains': '🌾',
-  'Bakery': '🍞',
-  'Frozen': '🧊'
+  'Fresh Fruits': '🍎',
+  'Fresh Vegetables': '🥦',
+  'Dairy & Eggs': '🥛',
+  'Bakery & Bread': '🍞',
+  'Rice, Atta & Grains': '🌾',
+  'Pulses & Lentils': '🫘',
+  'Cooking Oil & Ghee': '🫗',
+  'Spices & Masalas': '🌶️',
+  'Snacks & Namkeen': '🍿',
+  'Biscuits & Cookies': '🍪',
+  'Chocolates & Candy': '🍫',
+  'Tea & Coffee': '☕',
+  'Soft Drinks & Juices': '🥤',
+  'Instant & Ready-to-Eat': '🍜',
+  'Frozen Foods': '🧊',
+  'Meat & Seafood': '🍗',
+  'Personal Care': '🧴',
+  'Baby Care': '👶',
+  'Household Essentials': '🏠',
+  'Cleaning Supplies': '🧹',
+  'Pet Care': '🐾',
+  'Organic Products': '🌿',
+  'Dry Fruits & Nuts': '🥜',
+  'Health & Wellness': '💊'
 };
 
 document.addEventListener('DOMContentLoaded', () => {
