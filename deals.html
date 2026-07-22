@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Offers - Aravali Store</title>
+  <title>Deals & Combos - Aravali Store</title>
   <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/responsive.css">
@@ -35,17 +35,17 @@
   </nav>
 
   <div class="page-header">
-    <div class="breadcrumb"><a href="index.html">Home</a> <span>/</span> <span>Offers</span></div>
-    <h1>🔥 Today's Deals</h1>
-    <p>Don't miss out on these amazing offers!</p>
+    <div class="breadcrumb"><a href="index.html">Home</a> <span>/</span> <span>Deals & Combos</span></div>
+    <h1>Deals & Combos</h1>
+    <p>Grab the best deals before they're gone</p>
   </div>
 
   <section class="section" style="padding-bottom:0;">
-    <div class="categories-scroll" id="dealCategories" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;"></div>
+    <div class="promo-grid" id="dealsBanners"></div>
   </section>
 
   <section class="section" style="padding-top:20px;">
-    <div class="categories-scroll" id="shopCategories"></div>
+    <div class="categories-scroll" id="dealsCategories"></div>
 
     <div style="display:flex;justify-content:flex-end;align-items:center;margin:20px 0 16px;">
       <select id="sortSelect" style="padding:8px 14px;border:1px solid rgba(45,106,79,0.15);border-radius:8px;font-family:var(--font);font-size:0.85rem;background:rgba(255,255,255,0.6);outline:none;">
@@ -56,8 +56,8 @@
       </select>
     </div>
 
-    <div class="product-grid" id="offersGrid"></div>
-    <div class="pagination" id="offersPagination"></div>
+    <div class="product-grid" id="dealsGrid"></div>
+    <div class="pagination" id="dealsPagination"></div>
   </section>
 
   <footer class="footer">
@@ -85,86 +85,41 @@
       let currentPage = 1;
       const perPage = 12;
       let sortBy = 'default';
-      let activeDeal = null;
 
-      const dealTypes = [
-        { id: 'today', label: "🔥 Today's Deals", gradient: 'linear-gradient(135deg, #ff6b6b, #ee5a24)', categories: null },
-        { id: 'flash', label: '⚡ Flash Sale', gradient: 'linear-gradient(135deg, #f9ca24, #f0932b)', categories: null },
-        { id: 'half', label: '💸 Up to 50% OFF', gradient: 'linear-gradient(135deg, #6c5ce7, #a29bfe)', categories: null },
-        { id: 'bogo', label: '🛍️ Buy 1 Get 1 Free', gradient: 'linear-gradient(135deg, #fd79a8, #e84393)', categories: null },
-        { id: 'combo', label: '🎁 Combo Packs', gradient: 'linear-gradient(135deg, #00b894, #55efc4)', categories: null },
-        { id: 'fresh', label: '🥦 Fresh Produce Deals', gradient: 'linear-gradient(135deg, #00b894, #00cec9)', categories: ['Fresh Fruits', 'Fresh Vegetables'] },
-        { id: 'dairy', label: '🥛 Dairy Specials', gradient: 'linear-gradient(135deg, #74b9ff, #0984e3)', categories: ['Dairy & Eggs'] },
-        { id: 'snack', label: '🍿 Snack Offers', gradient: 'linear-gradient(135deg, #ffeaa7, #fdcb6e)', categories: ['Snacks & Namkeen', 'Biscuits & Cookies', 'Chocolates & Candy'] },
-        { id: 'personal', label: '🧴 Personal Care Discounts', gradient: 'linear-gradient(135deg, #dfe6e9, #b2bec3)', categories: ['Personal Care', 'Baby Care'] },
-        { id: 'household', label: '🧹 Household Essentials Sale', gradient: 'linear-gradient(135deg, #a29bfe, #6c5ce7)', categories: ['Household Essentials', 'Cleaning Supplies'] },
-        { id: 'new', label: '🆕 New Arrival Offers', gradient: 'linear-gradient(135deg, #55efc4, #00b894)', categories: null, badgeFilter: 'New' },
-        { id: 'bestvalue', label: '⭐ Best Value Deals', gradient: 'linear-gradient(135deg, #ffeaa7, #f9ca24)', categories: null, badgeFilter: 'Bestseller' },
-        { id: 'festival', label: '🎉 Festival Offers', gradient: 'linear-gradient(135deg, #fd79a8, #e84393)', categories: null },
-        { id: 'bank', label: '💳 Bank & Wallet Offers', gradient: 'linear-gradient(135deg, #636e72, #2d3436)', categories: null },
-        { id: 'delivery', label: '🚚 Free Delivery on Orders Above ₹499', gradient: 'linear-gradient(135deg, #00cec9, #0984e3)', categories: null }
+      // Deal banner cards
+      const banners = [
+        { title: 'Buy 1 Get 1 Free', subtitle: 'Select items on BOGO', gradient: 'linear-gradient(135deg, #667eea, #764ba2)' },
+        { title: 'Combo Packs', subtitle: 'Save more with combos', gradient: 'linear-gradient(135deg, #f093fb, #f5576c)' },
+        { title: 'Up to 50% OFF', subtitle: 'Limited time offers', gradient: 'linear-gradient(135deg, #4facfe, #00f2fe)' },
+        { title: 'Free Delivery Above ₹499', subtitle: 'No delivery charges', gradient: 'linear-gradient(135deg, #43e97b, #38f9d7)' }
       ];
-
-      // Render deal category cards
-      const dealContainer = document.getElementById('dealCategories');
-      if (dealContainer) {
-        let html = `<button class="category-chip active glass-card" data-deal="show-all" style="padding:10px 18px;cursor:pointer;border:2px solid var(--accent);background:rgba(45,106,79,0.08);font-weight:600;">📋 Show All</button>`;
-        html += dealTypes.map(d => `
-          <button class="category-chip glass-card" data-deal="${d.id}" style="padding:10px 18px;cursor:pointer;border:2px solid transparent;background:rgba(255,255,255,0.4);text-align:left;">
-            <div style="display:flex;align-items:center;gap:8px;">
-              <span style="display:inline-block;width:36px;height:36px;border-radius:10px;background:${d.gradient};display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;">${d.label.split(' ')[0]}</span>
-              <span style="font-size:0.8rem;font-weight:600;color:var(--text);line-height:1.2;">${d.label.substring(d.label.indexOf(' ') + 1)}</span>
-            </div>
-          </button>
+      const bannerGrid = document.getElementById('dealsBanners');
+      if (bannerGrid) {
+        bannerGrid.innerHTML = banners.map(b => `
+          <div class="promo-card" style="background:${b.gradient};">
+            <h3>${b.title}</h3><p>${b.subtitle}</p>
+          </div>
         `).join('');
-        dealContainer.innerHTML = html;
-        dealContainer.querySelectorAll('[data-deal]').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const dealId = btn.dataset.deal;
-            dealContainer.querySelectorAll('[data-deal]').forEach(b => { b.classList.remove('active'); b.style.borderColor = 'transparent'; });
-            if (dealId === 'show-all') {
-              activeDeal = null;
-              btn.classList.add('active');
-              btn.style.borderColor = 'var(--accent)';
-            } else {
-              activeDeal = dealTypes.find(d => d.id === dealId);
-              btn.classList.add('active');
-              btn.style.borderColor = activeDeal.gradient.includes('#') ? activeDeal.gradient.match(/#[a-f0-9]{6}/i)?.[0] || 'var(--accent)' : 'var(--accent)';
-            }
-            currentPage = 1;
-            renderProducts();
-          });
-        });
       }
 
       function getBaseProducts() {
-        return DB.getAll('products');
+        const all = DB.getAll('products');
+        const deals = all.filter(p => p.badge === 'Bestseller' || p.badge === 'New');
+        if (deals.length > 0) return deals;
+        return all;
       }
 
       function getFiltered() {
         let products = getBaseProducts();
-
-        // Apply deal filter
-        if (activeDeal) {
-          if (activeDeal.badgeFilter) {
-            products = products.filter(p => p.badge === activeDeal.badgeFilter);
-          } else if (activeDeal.categories) {
-            products = products.filter(p => activeDeal.categories.includes(p.category));
-          }
-        }
-
-        // Apply category chip filter
         if (currentCategory !== 'All') {
           products = products.filter(p => p.category === currentCategory);
         }
-
         switch (sortBy) {
           case 'price-low': products.sort((a, b) => a.price - b.price); break;
           case 'price-high': products.sort((a, b) => b.price - a.price); break;
           case 'name': products.sort((a, b) => a.name.localeCompare(b.name)); break;
           default: break;
         }
-
         return products;
       }
 
@@ -174,11 +129,11 @@
         const totalPages = Math.ceil(total / perPage);
         const start = (currentPage - 1) * perPage;
         const pageProducts = products.slice(start, start + perPage);
-        const grid = document.getElementById('offersGrid');
-        const pag = document.getElementById('offersPagination');
+        const grid = document.getElementById('dealsGrid');
+        const pag = document.getElementById('dealsPagination');
 
         if (pageProducts.length === 0) {
-          grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon">🏷️</div><h3>No products found</h3><p>Try a different deal or category</p></div>';
+          grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon">🎁</div><h3>No deals found</h3><p>Check back soon for new deals!</p></div>';
           if (pag) pag.innerHTML = '';
           return;
         }
@@ -202,7 +157,7 @@
 
       // Category chips
       const catalogs = DB.getAll('catalogs').filter(c => c.active).sort((a, b) => (a.order || 0) - (b.order || 0));
-      const catContainer = document.getElementById('shopCategories');
+      const catContainer = document.getElementById('dealsCategories');
       if (catContainer) {
         let html = `<button class="category-chip active" data-category="All"><span class="emoji">🏪</span> All</button>`;
         if (catalogs.length > 0) {
