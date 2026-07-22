@@ -21,8 +21,11 @@ const App = {
               <div style="padding:10px 14px;font-weight:600;font-size:0.88rem;border-bottom:1px solid rgba(45,106,79,0.08);margin-bottom:4px;">
                 ${this.currentUser.name}
               </div>
+              <a href="dashboard.html">👤 My Profile</a>
               <a href="orders.html">📦 My Orders</a>
               <a href="wishlist.html">❤️ Wishlist</a>
+              <a href="dashboard.html?section=addresses">📍 Addresses</a>
+              <a href="dashboard.html?section=settings">⚙️ Settings</a>
               <button onclick="App.logout()" style="color:var(--danger);">🚪 Logout</button>
             </div>
           </div>`;

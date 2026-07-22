@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Dashboard - Aravali Store</title>
+  <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  <style>
+    .dashboard-layout {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 24px;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 20px 60px;
+    }
+    .dashboard-sidebar {
+      position: sticky;
+      top: 100px;
+      height: fit-content;
+    }
+    .dashboard-sidebar .sidebar-menu {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .dashboard-sidebar .sidebar-menu li {
+      margin-bottom: 4px;
+    }
+    .dashboard-sidebar .sidebar-menu li a {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      color: #ccc;
+      text-decoration: none;
+      transition: all 0.2s;
+      font-size: 0.95rem;
+    }
+    .dashboard-sidebar .sidebar-menu li a:hover,
+    .dashboard-sidebar .sidebar-menu li a.active-link {
+      background: rgba(255, 107, 53, 0.15);
+      color: #ff6b35;
+    }
+    .dashboard-content .form-group {
+      margin-bottom: 18px;
+    }
+    .dashboard-content .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 500;
+      font-size: 0.9rem;
+      color: #bbb;
+    }
+    .dashboard-content .form-group input {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.05);
+      color: #fff;
+      font-size: 0.95rem;
+      box-sizing: border-box;
+    }
+    .address-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+      position: relative;
+    }
+    .address-card .delete-addr {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      background: none;
+      border: none;
+      color: #e74c3c;
+      cursor: pointer;
+      font-size: 1.1rem;
+    }
+    @media (max-width: 768px) {
+      .dashboard-layout {
+        grid-template-columns: 1fr;
+      }
+      .dashboard-sidebar {
+        position: static;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-animation"><div class="bubble"></div><div class="bubble"></div><div class="bubble"></div><div class="bubble"></div><div class="bubble"></div></div>
+
+  <nav class="navbar">
+    <a href="index.html" class="logo"><img src="assets/logo.svg" alt="Aravali Store"></a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="shop.html">Shop</a></li>
+      <li><a href="categories.html">Categories</a></li>
+      <li><a href="offers.html">Offers</a></li>
+      <li><a href="fresh-arrivals.html">Fresh Arrivals</a></li>
+      <li><a href="about.html">About Us</a></li>
+      <li><a href="contact.html">Contact Us</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="wishlist.html" class="nav-icon-btn"><span>❤️</span><span class="badge wishlist-count" style="display:none;">0</span></a>
+      <a href="cart.html" class="nav-icon-btn"><span>🛒</span><span class="badge cart-count" style="display:none;">0</span></a>
+      <div class="nav-user-section"></div>
+      <button class="hamburger" onclick="document.querySelector('.nav-links').classList.toggle('open')"><span></span><span></span><span></span></button>
+    </div>
+  </nav>
+
+  <section class="page-header">
+    <h1>My Dashboard</h1>
+    <p>Manage your account, orders, and preferences</p>
+  </section>
+
+  <div class="dashboard-layout">
+    <aside class="dashboard-sidebar glass-card" style="padding:16px;border-radius:16px;">
+      <ul class="sidebar-menu">
+        <li><a href="dashboard.html" class="active-link" data-section="profile">👤 My Profile</a></li>
+        <li><a href="dashboard.html?section=orders" data-section="orders">📦 My Orders</a></li>
+        <li><a href="wishlist.html">❤️ Wishlist</a></li>
+        <li><a href="dashboard.html?section=addresses" data-section="addresses">📍 Addresses</a></li>
+        <li><a href="dashboard.html?section=settings" data-section="settings">⚙️ Settings</a></li>
+        <li><a href="#" onclick="App.logout(); return false;">🚪 Logout</a></li>
+      </ul>
+    </aside>
+
+    <main class="dashboard-content">
+      <div id="section-profile" class="glass-card" style="padding:30px;border-radius:16px;">
+        <h2 style="margin-top:0;">My Profile</h2>
+        <form id="profileForm" onsubmit="DashboardApp.saveProfile(event)">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div class="form-group">
+              <label>Full Name</label>
+              <input type="text" id="profile-name" placeholder="Your name">
+            </div>
+            <div class="form-group">
+              <label>Phone Number</label>
+              <input type="tel" id="profile-phone" placeholder="Your phone">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" id="profile-email" placeholder="Your email">
+          </div>
+          <button type="submit" class="btn btn-primary" style="padding:12px 32px;border:none;border-radius:10px;background:linear-gradient(135deg,#ff6b35,#f7931e);color:#fff;font-weight:600;cursor:pointer;font-size:1rem;">Save Changes</button>
+        </form>
+      </div>
+
+      <div id="section-orders" class="glass-card" style="padding:30px;border-radius:16px;display:none;">
+        <h2 style="margin-top:0;">My Orders</h2>
+        <div id="orders-list"><p style="color:#aaa;">Loading your orders...</p></div>
+      </div>
+
+      <div id="section-addresses" class="glass-card" style="padding:30px;border-radius:16px;display:none;">
+        <h2 style="margin-top:0;">My Addresses</h2>
+        <div id="addresses-list" style="margin-bottom:24px;"></div>
+        <h3 style="margin-top:0;">Add New Address</h3>
+        <form id="addressForm" onsubmit="DashboardApp.saveAddress(event)">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div class="form-group">
+              <label>Full Name</label>
+              <input type="text" id="addr-name" placeholder="Recipient name" required>
+            </div>
+            <div class="form-group">
+              <label>Phone Number</label>
+              <input type="tel" id="addr-phone" placeholder="Phone number" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Address Line</label>
+            <input type="text" id="addr-line" placeholder="Street address, apartment, etc." required>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+            <div class="form-group">
+              <label>City</label>
+              <input type="text" id="addr-city" placeholder="City" required>
+            </div>
+            <div class="form-group">
+              <label>State</label>
+              <input type="text" id="addr-state" placeholder="State" required>
+            </div>
+            <div class="form-group">
+              <label>Pincode</label>
+              <input type="text" id="addr-pincode" placeholder="Pincode" required>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary" style="padding:12px 32px;border:none;border-radius:10px;background:linear-gradient(135deg,#ff6b35,#f7931e);color:#fff;font-weight:600;cursor:pointer;font-size:1rem;">Add Address</button>
+        </form>
+      </div>
+
+      <div id="section-settings" class="glass-card" style="padding:30px;border-radius:16px;display:none;">
+        <h2 style="margin-top:0;">Change Password</h2>
+        <form id="passwordForm" onsubmit="DashboardApp.changePassword(event)">
+          <div class="form-group">
+            <label>Current Password</label>
+            <input type="password" id="current-password" placeholder="Enter current password" required>
+          </div>
+          <div class="form-group">
+            <label>New Password</label>
+            <input type="password" id="new-password" placeholder="Enter new password" required minlength="6">
+          </div>
+          <div class="form-group">
+            <label>Confirm New Password</label>
+            <input type="password" id="confirm-password" placeholder="Confirm new password" required minlength="6">
+          </div>
+          <button type="submit" class="btn btn-primary" style="padding:12px 32px;border:none;border-radius:10px;background:linear-gradient(135deg,#ff6b35,#f7931e);color:#fff;font-weight:600;cursor:pointer;font-size:1rem;">Update Password</button>
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-grid">
+      <div><img src="assets/logo.svg" alt="Aravali Store" style="height:40px;margin-bottom:12px;filter:brightness(10);"><p>Your one-stop destination for fresh groceries.</p></div>
+      <div><h3>Quick Links</h3><ul><li><a href="index.html">Home</a></li><li><a href="shop.html">Shop</a></li><li><a href="categories.html">Categories</a></li><li><a href="offers.html">Offers</a></li></ul></div>
+      <div><h3>Policies</h3><ul><li><a href="privacy-policy.html">Privacy Policy</a></li><li><a href="terms-conditions.html">Terms & Conditions</a></li><li><a href="refund-return.html">Refund & Return</a></li><li><a href="shipping-policy.html">Shipping Policy</a></li><li><a href="cookie-policy.html">Cookie Policy</a></li></ul></div>
+      <div><h3>Contact</h3><ul><li>📍 Udaipur, Rajasthan</li><li>📞 +91 98765 43210</li></ul></div>
+    </div>
+    <div class="footer-bottom"><span>© 2026 Aravali Store. All rights reserved.</span></div>
+  </footer>
+
+  <script src="DBMS/data.js"></script>
+  <script src="DBMS/database.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    if (!App.requireAuth()) {
+      // redirect handled by requireAuth
+    } else {
+      const DashboardApp = {
+        init() {
+          const params = new URLSearchParams(window.location.search);
+          const section = params.get('section') || 'profile';
+          this.showSection(section);
+          this.loadProfile();
+          if (section === 'addresses') this.loadAddresses();
+          if (section === 'orders') this.loadOrders();
+        },
+
+        showSection(name) {
+          document.querySelectorAll('.dashboard-content > div').forEach(el => el.style.display = 'none');
+          const target = document.getElementById('section-' + name);
+          if (target) target.style.display = 'block';
+          document.querySelectorAll('.sidebar-menu li a[data-section]').forEach(a => {
+            a.classList.toggle('active-link', a.dataset.section === name);
+          });
+        },
+
+        loadProfile() {
+          const user = App.currentUser;
+          if (!user) return;
+          document.getElementById('profile-name').value = user.name || '';
+          document.getElementById('profile-email').value = user.email || '';
+          document.getElementById('profile-phone').value = user.phone || '';
+        },
+
+        saveProfile(e) {
+          e.preventDefault();
+          const user = App.currentUser;
+          if (!user) return;
+          user.name = document.getElementById('profile-name').value.trim();
+          user.email = document.getElementById('profile-email').value.trim();
+          user.phone = document.getElementById('profile-phone').value.trim();
+          App.updateCurrentUser(user);
+          App.showToast('Profile updated successfully!');
+        },
+
+        loadAddresses() {
+          const addresses = JSON.parse(localStorage.getItem('aravali_addresses') || '[]');
+          const container = document.getElementById('addresses-list');
+          if (addresses.length === 0) {
+            container.innerHTML = '<p style="color:#aaa;">No saved addresses yet. Add one below.</p>';
+            return;
+          }
+          container.innerHTML = addresses.map((a, i) => `
+            <div class="address-card">
+              <button class="delete-addr" onclick="DashboardApp.deleteAddress(${i})" title="Delete">✕</button>
+              <strong>${a.name}</strong> &nbsp;|&nbsp; ${a.phone}<br>
+              <span style="color:#bbb;">${a.line}, ${a.city}, ${a.state} - ${a.pincode}</span>
+            </div>
+          `).join('');
+        },
+
+        saveAddress(e) {
+          e.preventDefault();
+          const addresses = JSON.parse(localStorage.getItem('aravali_addresses') || '[]');
+          addresses.push({
+            name: document.getElementById('addr-name').value.trim(),
+            phone: document.getElementById('addr-phone').value.trim(),
+            line: document.getElementById('addr-line').value.trim(),
+            city: document.getElementById('addr-city').value.trim(),
+            state: document.getElementById('addr-state').value.trim(),
+            pincode: document.getElementById('addr-pincode').value.trim()
+          });
+          localStorage.setItem('aravali_addresses', JSON.stringify(addresses));
+          document.getElementById('addressForm').reset();
+          this.loadAddresses();
+          App.showToast('Address added successfully!');
+        },
+
+        deleteAddress(index) {
+          const addresses = JSON.parse(localStorage.getItem('aravali_addresses') || '[]');
+          addresses.splice(index, 1);
+          localStorage.setItem('aravali_addresses', JSON.stringify(addresses));
+          this.loadAddresses();
+          App.showToast('Address removed.');
+        },
+
+        loadOrders() {
+          const container = document.getElementById('orders-list');
+          const user = App.currentUser;
+          if (!user) return;
+          const orders = App.getOrders ? App.getOrders() : [];
+          if (orders.length === 0) {
+            container.innerHTML = '<p style="color:#aaa;">No orders yet. <a href="shop.html" style="color:#ff6b35;">Start shopping</a></p>';
+            return;
+          }
+          container.innerHTML = orders.map(o => `
+            <div class="address-card">
+              <strong>Order #${o.id || 'N/A'}</strong> &nbsp;|&nbsp; <span style="color:#aaa;">${o.date || ''}</span><br>
+              <span style="color:#bbb;">Total: ₹${o.total || 0} &nbsp;|&nbsp; Status: ${o.status || 'Pending'}</span>
+            </div>
+          `).join('');
+        },
+
+        changePassword(e) {
+          e.preventDefault();
+          const current = document.getElementById('current-password').value;
+          const newPass = document.getElementById('new-password').value;
+          const confirm = document.getElementById('confirm-password').value;
+          const user = App.currentUser;
+          if (!user) return;
+
+          if (current !== user.password) {
+            App.showToast('Current password is incorrect!', 'error');
+            return;
+          }
+          if (newPass !== confirm) {
+            App.showToast('New passwords do not match!', 'error');
+            return;
+          }
+          if (newPass.length < 6) {
+            App.showToast('Password must be at least 6 characters!', 'error');
+            return;
+          }
+          user.password = newPass;
+          App.updateCurrentUser(user);
+          document.getElementById('passwordForm').reset();
+          App.showToast('Password updated successfully!');
+        }
+      };
+
+      document.addEventListener('DOMContentLoaded', () => DashboardApp.init());
+    }
+  </script>
+</body>
+</html>

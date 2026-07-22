@@ -24,7 +24,11 @@
     <ul class="nav-links">
       <li><a href="index.html" class="active">Home</a></li>
       <li><a href="shop.html">Shop</a></li>
-      <li><a href="about.html">About</a></li>
+      <li><a href="categories.html">Categories</a></li>
+      <li><a href="offers.html">Offers</a></li>
+      <li><a href="fresh-arrivals.html">Fresh Arrivals</a></li>
+      <li><a href="about.html">About Us</a></li>
+      <li><a href="contact.html">Contact Us</a></li>
     </ul>
     <div class="nav-actions">
       <a href="wishlist.html" class="nav-icon-btn">
@@ -63,7 +67,6 @@
 
   <div class="search-container">
     <div class="search-bar">
-      <span class="search-icon">🔍</span>
       <input type="text" placeholder="" id="homeSearch">
       <button class="search-btn" onclick="window.location.href='shop.html?q='+document.getElementById('homeSearch').value">Search</button>
     </div>
@@ -97,6 +100,78 @@
     <div class="product-grid" id="recentGrid"></div>
   </section>
 
+  <section class="section">
+    <div class="section-header"><h2>Why Choose Us</h2></div>
+    <div class="about-features">
+      <div class="about-feature glass-card">
+        <div class="icon">🌿</div>
+        <h3>100% Fresh</h3>
+        <p>We source directly from local farmers. Every product is handpicked for quality and freshness.</p>
+      </div>
+      <div class="about-feature glass-card">
+        <div class="icon">⚡</div>
+        <h3>Lightning Fast Delivery</h3>
+        <p>Get your groceries delivered within minutes. No more waiting in long queues.</p>
+      </div>
+      <div class="about-feature glass-card">
+        <div class="icon">💰</div>
+        <h3>Best Prices</h3>
+        <p>We offer the best prices with no hidden charges. Quality doesn't have to be expensive.</p>
+      </div>
+      <div class="about-feature glass-card">
+        <div class="icon">🔒</div>
+        <h3>Secure Payments</h3>
+        <p>Multiple secure payment options including UPI, cards, and cash on delivery.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-header"><h2>What Our Customers Say</h2></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;">
+      <div class="glass-card" style="padding:24px;">
+        <div style="color:var(--accent);font-size:1.2rem;margin-bottom:8px;">★★★★★</div>
+        <p style="color:var(--text-light);font-size:0.9rem;margin-bottom:12px;">"Amazing quality fruits and vegetables! The delivery is always on time and the packaging is excellent. Highly recommend Aravali Store!"</p>
+        <p style="font-weight:600;font-size:0.88rem;">— Priya Sharma</p>
+      </div>
+      <div class="glass-card" style="padding:24px;">
+        <div style="color:var(--accent);font-size:1.2rem;margin-bottom:8px;">★★★★★</div>
+        <p style="color:var(--text-light);font-size:0.9rem;margin-bottom:12px;">"Best online grocery store in Udaipur. Their dairy products are always fresh and the prices are very reasonable compared to local stores."</p>
+        <p style="font-weight:600;font-size:0.88rem;">— Rahul Verma</p>
+      </div>
+      <div class="glass-card" style="padding:24px;">
+        <div style="color:var(--accent);font-size:1.2rem;margin-bottom:8px;">★★★★★</div>
+        <p style="color:var(--text-light);font-size:0.9rem;margin-bottom:12px;">"I love how easy it is to order. The app interface is smooth and the customer support is very responsive. Keep it up!"</p>
+        <p style="font-weight:600;font-size:0.88rem;">— Anita Patel</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="glass-card" style="padding:48px;text-align:center;background:linear-gradient(135deg, rgba(45,106,79,0.9), rgba(82,183,136,0.9));color:white;">
+      <h2 style="font-size:1.8rem;margin-bottom:12px;">Download Our App</h2>
+      <p style="opacity:0.9;margin-bottom:24px;max-width:500px;margin-left:auto;margin-right:auto;">Get exclusive deals and a seamless shopping experience on your phone. Available on Android and iOS.</p>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+        <a href="#" class="btn" style="background:rgba(255,255,255,0.2);color:white;border:1px solid rgba(255,255,255,0.3);">📱 Google Play</a>
+        <a href="#" class="btn" style="background:rgba(255,255,255,0.2);color:white;border:1px solid rgba(255,255,255,0.3);">🍎 App Store</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-header"><h2>Stay Updated</h2></div>
+    <div class="glass-card" style="padding:32px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:200px;">
+        <h3 style="font-size:1.1rem;color:var(--primary-dark);margin-bottom:6px;">Subscribe to Our Newsletter</h3>
+        <p style="color:var(--text-muted);font-size:0.88rem;">Get the latest deals, recipes, and grocery tips delivered to your inbox.</p>
+      </div>
+      <div style="display:flex;gap:8px;flex:1;min-width:250px;">
+        <input type="email" placeholder="Enter your email" style="flex:1;padding:12px 16px;border:1px solid rgba(45,106,79,0.15);border-radius:50px;font-family:var(--font);font-size:0.9rem;outline:none;background:rgba(255,255,255,0.6);">
+        <button class="btn btn-primary" onclick="App.showToast('Subscribed successfully!','success');this.textContent='Subscribed ✓';this.disabled=true;">Subscribe</button>
+      </div>
+    </div>
+  </section>
+
   <footer class="footer">
     <div class="footer-grid">
       <div>
@@ -108,17 +183,22 @@
         <ul>
           <li><a href="index.html">Home</a></li>
           <li><a href="shop.html">Shop</a></li>
+          <li><a href="categories.html">Categories</a></li>
+          <li><a href="offers.html">Offers</a></li>
+          <li><a href="fresh-arrivals.html">Fresh Arrivals</a></li>
           <li><a href="about.html">About Us</a></li>
-          <li><a href="cart.html">Cart</a></li>
+          <li><a href="contact.html">Contact Us</a></li>
         </ul>
       </div>
       <div>
-        <h3>Categories</h3>
+        <h3>Policies</h3>
         <ul>
-          <li><a href="shop.html?cat=Fruits">Fruits</a></li>
-          <li><a href="shop.html?cat=Vegetables">Vegetables</a></li>
-          <li><a href="shop.html?cat=Dairy">Dairy</a></li>
-          <li><a href="shop.html?cat=Snacks">Snacks</a></li>
+          <li><a href="privacy-policy.html">Privacy Policy</a></li>
+          <li><a href="terms-conditions.html">Terms & Conditions</a></li>
+          <li><a href="refund-return.html">Refund & Return</a></li>
+          <li><a href="shipping-policy.html">Shipping Policy</a></li>
+          <li><a href="cookie-policy.html">Cookie Policy</a></li>
+          <li><a href="faq.html">FAQ</a></li>
         </ul>
       </div>
       <div>

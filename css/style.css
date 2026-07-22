@@ -396,13 +396,6 @@ img {
   box-shadow: 0 4px 32px rgba(82, 183, 136, 0.18);
 }
 
-.search-bar .search-icon {
-  font-size: 1.2rem;
-  color: var(--text-muted);
-  margin-right: 12px;
-  flex-shrink: 0;
-}
-
 .search-bar input {
   flex: 1;
   border: none;
@@ -438,7 +431,7 @@ img {
 /* Auto-cycle placeholder animation */
 .search-placeholder-cycle {
   position: absolute;
-  left: 60px;
+  left: 28px;
   top: 50%;
   transform: translateY(-50%);
   pointer-events: none;
