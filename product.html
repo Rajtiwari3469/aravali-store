@@ -45,6 +45,17 @@
       background: linear-gradient(135deg, rgba(45,106,79,0.04), rgba(82,183,136,0.08));
       color: var(--text-muted); font-size: 0.9rem;
     }
+    .pd-gallery-thumbs {
+      display: flex; gap: 8px; padding: 10px 20px; overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .pd-gallery-thumbs::-webkit-scrollbar { display: none; }
+    .pd-gallery-thumb {
+      min-width: 56px; width: 56px; height: 56px; border-radius: 8px; overflow: hidden;
+      border: 2px solid transparent; cursor: pointer; flex-shrink: 0; transition: border-color 0.2s;
+    }
+    .pd-gallery-thumb.active { border-color: var(--primary); }
+    .pd-gallery-thumb img { width: 100%; height: 100%; object-fit: cover; }
     .pd-info { padding: 24px 20px; }
     .pd-info .pd-category {
       display: inline-block; padding: 4px 12px; background: rgba(82,183,136,0.12);
@@ -164,12 +175,23 @@
       const extra = allProducts.filter(p => p.category !== product.category && p.id !== product.id).slice(0, 4);
       const similarProducts = [...similar, ...extra].slice(0, 12);
 
+      const productImages = (product.images && product.images.length > 0) ? product.images : (product.image ? [product.image] : []);
+      const hasMultipleImages = productImages.length > 1;
+
       let html = `
-        <div class="pd-image-section">
-          ${product.image
-            ? `<img src="${product.image}" alt="${product.name}">`
+        <div class="pd-image-section" id="pdMainImage">
+          ${productImages.length > 0
+            ? `<img src="${productImages[0]}" alt="${product.name}" id="pdMainImg">`
             : `<div class="pd-image-placeholder">No Image Uploaded</div>`}
         </div>
+        ${hasMultipleImages ? `
+        <div class="pd-gallery-thumbs" id="pdThumbs">
+          ${productImages.map((img, i) => `
+            <div class="pd-gallery-thumb ${i === 0 ? 'active' : ''}" onclick="document.getElementById('pdMainImg').src='${img}';document.querySelectorAll('.pd-gallery-thumb').forEach(t=>t.classList.remove('active'));this.classList.add('active');">
+              <img src="${img}" alt="${product.name} ${i + 1}">
+            </div>
+          `).join('')}
+        </div>` : ''}
         <div class="pd-info">
           <span class="pd-category">${product.category}</span>
           ${product.badge ? `<span class="pd-badge">${product.badge}</span>` : ''}
@@ -201,8 +223,8 @@
           html += `
             <a href="product.html?id=${sp.id}" class="similar-card">
               <div style="overflow:hidden;">
-                ${sp.image
-                  ? `<img src="${sp.image}" class="similar-card-img" alt="${sp.name}">`
+                ${(sp.image || (sp.images && sp.images[0]))
+                  ? `<img src="${sp.image || sp.images[0]}" class="similar-card-img" alt="${sp.name}">`
                   : `<div class="similar-card-img-placeholder">No Image</div>`}
               </div>
               <div class="similar-card-body">

@@ -290,8 +290,8 @@ const Admin = {
       <tr style="${stock <= 0 ? 'background:rgba(230,57,70,0.03);' : stock <= 5 ? 'background:rgba(244,140,6,0.03);' : ''}">
         <td>
           <div style="display:flex;align-items:center;gap:10px;">
-            ${p.image
-              ? `<img src="${p.image}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;">`
+            ${p.image || (p.images && p.images[0])
+              ? `<img src="${p.image || p.images[0]}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;">`
               : `<div style="width:40px;height:40px;border-radius:8px;background:rgba(45,106,79,0.08);display:flex;align-items:center;justify-content:center;font-size:0.65rem;color:var(--text-muted);">No Img</div>`
             }
             <div>
@@ -349,9 +349,9 @@ const Admin = {
       <h2>Add New Product</h2>
       <form id="productForm" onsubmit="Admin.saveProduct(event)">
         <div class="form-group">
-          <label>Product Image</label>
-          <input type="file" id="pImage" accept="image/*" style="margin-bottom:8px;">
-          <img id="pImagePreview" src="" alt="" style="max-height:80px;border-radius:8px;display:none;">
+          <label>Product Images (max 5)</label>
+          <input type="file" id="pImages" accept="image/*" multiple style="margin-bottom:8px;">
+          <div id="pImagesPreview" style="display:flex;gap:8px;flex-wrap:wrap;min-height:10px;"></div>
         </div>
         <div class="form-group">
           <label>Product Name</label>
@@ -388,11 +388,13 @@ const Admin = {
           <input type="text" id="pBadge" placeholder="e.g. Top Rated, New">
         </div>
         <input type="hidden" id="pEditId" value="">
-        <input type="hidden" id="pExistingImage" value="">
+        <input type="hidden" id="pExistingImages" value="">
         <button type="submit" class="btn btn-primary btn-lg" style="width:100%;justify-content:center;">Save Product</button>
       </form>`;
     modal.classList.add('active');
-    App.handleImageUpload('pImage', 'pImagePreview', 300);
+    const prevContainer = document.getElementById('pImagesPreview');
+    if (prevContainer) prevContainer._images = [];
+    App.handleMultiImageUpload('pImages', 'pImagesPreview', 300);
   },
 
   editProduct(id) {
@@ -410,20 +412,38 @@ const Admin = {
     document.getElementById('pDesc').value = product.description || '';
     document.getElementById('pBadge').value = product.badge || '';
     document.getElementById('pEditId').value = id;
-    document.getElementById('pExistingImage').value = product.image || '';
 
-    if (product.image) {
-      const preview = document.getElementById('pImagePreview');
-      preview.src = product.image;
-      preview.style.display = 'block';
+    const existingImages = (product.images && product.images.length > 0) ? product.images : (product.image ? [product.image] : []);
+    document.getElementById('pExistingImages').value = JSON.stringify(existingImages);
+
+    const prevContainer = document.getElementById('pImagesPreview');
+    if (prevContainer) {
+      prevContainer._images = [...existingImages];
+      this.renderImagePreviews();
     }
+  },
+
+  renderImagePreviews() {
+    const container = document.getElementById('pImagesPreview');
+    if (!container) return;
+    const images = container._images || [];
+    container.innerHTML = images.map((img, i) => `
+      <div style="position:relative;width:70px;height:70px;border-radius:8px;overflow:hidden;border:2px solid ${i === 0 ? 'var(--primary)' : 'rgba(45,106,79,0.15)'};">
+        <img src="${img}" style="width:100%;height:100%;object-fit:cover;">
+        ${i === 0 ? '<span style="position:absolute;bottom:0;left:0;right:0;background:var(--primary);color:white;font-size:0.55rem;text-align:center;padding:1px 0;font-weight:600;">MAIN</span>' : ''}
+        <button type="button" onclick="App.removeMultiImage('pImagesPreview',${i})" style="position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(230,57,70,0.9);color:white;border:none;font-size:0.65rem;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;">✕</button>
+      </div>
+    `).join('');
   },
 
   saveProduct(e) {
     e.preventDefault();
     const editId = document.getElementById('pEditId').value;
-    const imageData = App.getImageData('pImage');
-    const existingImage = document.getElementById('pExistingImage').value;
+    const newImages = App.getMultiImageData('pImagesPreview');
+    let existingImages = [];
+    try { existingImages = JSON.parse(document.getElementById('pExistingImages').value || '[]'); } catch {}
+
+    const allImages = [...existingImages, ...newImages].slice(0, 5);
 
     const mrpVal = parseFloat(document.getElementById('pMrp').value) || 0;
     const priceVal = parseFloat(document.getElementById('pPrice').value);
@@ -437,7 +457,8 @@ const Admin = {
       stock: parseInt(document.getElementById('pStock').value),
       description: document.getElementById('pDesc').value.trim(),
       badge: document.getElementById('pBadge').value.trim(),
-      image: imageData || existingImage || ''
+      images: allImages,
+      image: allImages[0] || ''
     };
 
     if (editId) {

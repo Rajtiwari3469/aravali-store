@@ -345,6 +345,54 @@ const App = {
     return input && input.dataset.imageData ? input.dataset.imageData : '';
   },
 
+  handleMultiImageUpload(inputId, previewContainerId, maxSizeKB = 300) {
+    const input = document.getElementById(inputId);
+    const container = document.getElementById(previewContainerId);
+    if (!input || !container) return;
+
+    container._images = container._images || [];
+
+    input.addEventListener('change', (e) => {
+      const files = Array.from(e.target.files);
+      if (files.length === 0) return;
+
+      const remaining = 5 - container._images.length;
+      if (remaining <= 0) {
+        App.showToast('Maximum 5 images allowed', 'error');
+        input.value = '';
+        return;
+      }
+
+      const toProcess = files.slice(0, remaining);
+      toProcess.forEach(file => {
+        if (file.size > maxSizeKB * 1024) {
+          App.showToast(`${file.name} too large. Max ${maxSizeKB}KB.`, 'error');
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          container._images.push(ev.target.result);
+          Admin.renderImagePreviews();
+        };
+        reader.readAsDataURL(file);
+      });
+      input.value = '';
+    });
+  },
+
+  getMultiImageData(containerId) {
+    const container = document.getElementById(containerId);
+    return container && container._images ? [...container._images] : [];
+  },
+
+  removeMultiImage(containerId, index) {
+    const container = document.getElementById(containerId);
+    if (container && container._images) {
+      container._images.splice(index, 1);
+      Admin.renderImagePreviews();
+    }
+  },
+
   // Product image (emoji fallback)
   getProductEmoji(category) {
     return CATEGORY_EMOJIS[category] || '🛒';

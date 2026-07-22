@@ -28,7 +28,7 @@ const Cart = {
       return `
       <div class="cart-item" data-id="${item.productId}" style="${isOutOfStock || exceedsStock ? 'border-left:3px solid var(--danger);' : ''}">
         <div class="item-emoji" style="display:flex;align-items:center;justify-content:center;overflow:hidden;">
-          ${item.product.image ? `<img src="${item.product.image}" style="width:100%;height:100%;object-fit:cover;">` : `<span style="color:var(--text-muted);font-size:0.7rem;">No Image</span>`}
+          ${(item.product.image || (item.product.images && item.product.images[0])) ? `<img src="${item.product.image || item.product.images[0]}" style="width:100%;height:100%;object-fit:cover;">` : `<span style="color:var(--text-muted);font-size:0.7rem;">No Image</span>`}
         </div>
         <div class="item-details">
           <div class="item-name">${item.product.name}</div>
@@ -127,7 +127,7 @@ const Checkout = {
     container.innerHTML = items.map(item => `
       <div class="order-item">
         <div>
-          ${item.product.image ? `<img src="${item.product.image}" style="width:20px;height:20px;border-radius:4px;object-fit:cover;vertical-align:middle;margin-right:4px;">` : ''}
+          ${(item.product.image || (item.product.images && item.product.images[0])) ? `<img src="${item.product.image || item.product.images[0]}" style="width:20px;height:20px;border-radius:4px;object-fit:cover;vertical-align:middle;margin-right:4px;">` : ''}
           <span>${item.product.name}</span>
           <span style="color:var(--text-muted);font-size:0.8rem;"> × ${item.qty}</span>
         </div>
