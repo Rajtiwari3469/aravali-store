@@ -227,6 +227,39 @@ const Admin = {
       }).join('');
     }
 
+    // DBMS Folder - Database tables overview
+    const dbmsGrid = document.querySelector('.dbms-tables-grid');
+    if (dbmsGrid) {
+      const tables = [
+        { name: 'products', icon: '📦', label: 'Products', link: 'products.html' },
+        { name: 'catalogs', icon: '📂', label: 'Catalogs', link: 'catalogs.html' },
+        { name: 'orders', icon: '🛒', label: 'Orders', link: 'orders.html' },
+        { name: 'users', icon: '👥', label: 'Users', link: 'users.html' },
+        { name: 'banners', icon: '🖼️', label: 'Banners', link: 'banners.html' },
+        { name: 'stock_logs', icon: '📋', label: 'Stock Logs', link: null },
+        { name: 'returns', icon: '🔄', label: 'Returns', link: 'returns.html' },
+        { name: 'support_tickets', icon: '💬', label: 'Support Tickets', link: 'support.html' },
+        { name: 'admins', icon: '🔑', label: 'Admins', link: null },
+        { name: 'settings', icon: '⚙️', label: 'Settings', link: 'settings.html' }
+      ];
+
+      dbmsGrid.innerHTML = tables.map(t => {
+        const count = DB.getAll(t.name).length;
+        const borderColor = count > 0 ? 'rgba(82,183,136,0.25)' : 'rgba(45,106,79,0.08)';
+        const bgColor = count > 0 ? 'rgba(82,183,136,0.05)' : 'rgba(255,255,255,0.4)';
+        const clickAttr = t.link ? `onclick="window.location.href='${t.link}'" style="cursor:pointer;"` : '';
+        return `
+          <div class="dbms-table-card" ${clickAttr} style="background:${bgColor};border:1px solid ${borderColor};border-radius:12px;padding:16px;display:flex;align-items:center;gap:14px;transition:all 0.2s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(45,106,79,0.12)'" onmouseout="this.style.transform='none';this.style.boxShadow='none'">
+            <div style="width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center;font-size:1.3rem;color:white;flex-shrink:0;">${t.icon}</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-weight:700;font-size:0.92rem;color:var(--text);margin-bottom:2px;">${t.label}</div>
+              <div style="font-size:0.78rem;color:var(--text-muted);">${count} record${count !== 1 ? 's' : ''}</div>
+            </div>
+            ${t.link ? '<span style="color:var(--primary);font-size:0.75rem;font-weight:600;">→</span>' : ''}
+          </div>`;
+      }).join('');
+    }
+
     // Recent orders (sorted by date, newest first)
     const recentContainer = document.querySelector('.recent-orders-list');
     if (recentContainer) {
