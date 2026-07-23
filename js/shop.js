@@ -180,7 +180,7 @@ const Shop = {
             ${p.offer && !isOutOfStock ? `<span class="product-badge" style="position:static;background:linear-gradient(135deg,#ff6b6b,#ee5a24);font-size:0.58rem;padding:2px 6px;">${p.offer.split(' ').slice(1).join(' ')}</span>` : ''}
           </div>
           <div class="product-name">${p.name}</div>
-          <div class="product-unit">${p.unit}${!isOutOfStock && isLowStock ? ` • <span style="color:var(--accent);font-weight:600;">${p.stock} left</span>` : ''}</div>
+          <div class="product-unit">${p.unit}</div>
             <div class="product-bottom">
               <div class="product-price">
                 ${App.formatCurrency(p.price)}

@@ -95,16 +95,16 @@
     }
     .similar-scroll::-webkit-scrollbar { display: none; }
     .similar-card {
-      min-width: 160px; max-width: 160px; scroll-snap-align: start;
+      min-width: 180px; max-width: 180px; scroll-snap-align: start;
       background: white; border-radius: 14px; overflow: hidden;
       box-shadow: 0 2px 12px rgba(0,0,0,0.04); cursor: pointer;
       transition: transform 0.2s; text-decoration: none; color: inherit;
       display: block;
     }
     .similar-card:hover { transform: translateY(-2px); }
-    .similar-card-img { width: 100%; height: 130px; object-fit: contain; background: #f8f8f8; }
+    .similar-card-img { width: 100%; height: 160px; object-fit: contain; background: #f8f8f8; }
     .similar-card-img-placeholder {
-      width: 100%; height: 130px; display: flex; align-items: center; justify-content: center;
+      width: 100%; height: 160px; display: flex; align-items: center; justify-content: center;
       background: linear-gradient(135deg, rgba(45,106,79,0.04), rgba(82,183,136,0.08));
       color: var(--text-muted); font-size: 0.7rem;
     }
@@ -206,7 +206,7 @@
           <p class="pd-desc">${product.description || 'Fresh and high-quality product from Aravali Store.'}</p>
           <div class="pd-stock">
             ${product.stock > 0
-              ? `<span class="in-stock">✓ In Stock</span> — ${product.stock} units available`
+              ? `<span class="in-stock">✓ In Stock</span>`
               : `<span class="out-stock">✗ Out of Stock</span>`}
           </div>
         </div>
