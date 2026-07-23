@@ -141,7 +141,7 @@ const DB = {
   },
 
   clearAllData() {
-    const tables = ['products', 'banners', 'catalogs', 'orders', 'users', 'stock_logs', 'settings', 'returns'];
+    const tables = ['products', 'banners', 'catalogs', 'orders', 'users', 'stock_logs', 'settings', 'returns', 'support_tickets'];
     tables.forEach(t => localStorage.removeItem(this._key(t)));
     localStorage.removeItem('aravali_addresses');
   },
@@ -339,6 +339,78 @@ function generateSeedAddresses() {
   });
 }
 
+function generateSeedSupportTickets() {
+  const users = DB.getAll('users');
+  if (users.length === 0) return [];
+
+  const subjects = [
+    'Order not delivered yet',
+    'Wrong item received',
+    'Refund not processed',
+    'App crashing on checkout',
+    'Coupon code not working',
+    'Product quality complaint',
+    'Delivery boy behavior',
+    'Payment deducted but order failed',
+    'Request for bulk order discount',
+    'Missing items in order'
+  ];
+
+  const categories = ['order_issue', 'refund', 'product', 'technical', 'other'];
+  const statuses = ['open', 'open', 'replied', 'replied', 'closed', 'closed'];
+
+  const messages = [
+    'I placed an order 3 days ago but haven\'t received it yet. Please check.',
+    'I received tomatoes instead of potatoes. Please help.',
+    'My refund for order #ABC123 was supposed to be processed 5 days ago.',
+    'Every time I try to checkout, the app crashes. Please fix.',
+    'The coupon NEWYEAR2025 is showing as invalid even though it should work.',
+    'The milk I received was already expired. Very disappointed.',
+    'The delivery person was very rude. Please take action.',
+    'Money was deducted from my account but the order shows as failed.',
+    'I want to place a bulk order for my store. Can I get a discount?',
+    'I ordered 5 items but only received 3. Please send the rest.'
+  ];
+
+  const adminReplies = [
+    '',
+    '',
+    'We apologize for the inconvenience. We will look into this right away.',
+    '',
+    'Thank you for reporting. Our team is looking into this issue.',
+    'We are sorry about this. A replacement will be delivered tomorrow.',
+    '',
+    '',
+    '',
+    'We apologize for the missing items. They will be shipped separately.'
+  ];
+
+  const tickets = [];
+  const now = Date.now();
+
+  for (let i = 0; i < Math.min(10, users.length); i++) {
+    const user = users[i % users.length];
+    const status = statuses[Math.floor(Math.random() * statuses.length)];
+    const createdDate = new Date(now - Math.floor(Math.random() * 14) * 86400000);
+
+    tickets.push({
+      id: now.toString(36) + Math.random().toString(36).substr(2, 9) + i,
+      userId: user.id,
+      customerName: user.name,
+      customerEmail: user.email,
+      subject: subjects[i % subjects.length],
+      category: categories[Math.floor(Math.random() * categories.length)],
+      message: messages[i % messages.length],
+      orderId: Math.random() > 0.5 ? 'seed_order_' + Math.floor(Math.random() * 5) : '',
+      status: status,
+      adminReply: adminReplies[i % adminReplies.length] || '',
+      createdAt: createdDate.toISOString(),
+      updatedAt: status !== 'open' ? new Date(createdDate.getTime() + 86400000).toISOString() : null
+    });
+  }
+  return tickets;
+}
+
 function initDB() {
   if (typeof SEED_DATA !== 'undefined') {
     DB.seed('products', SEED_DATA.products);
@@ -374,6 +446,10 @@ function initDB() {
   }
 
   generateSeedAddresses();
+
+  if (DB.getAll('support_tickets').length === 0) {
+    DB.seed('support_tickets', generateSeedSupportTickets());
+  }
 }
 
 if (typeof window !== 'undefined') {

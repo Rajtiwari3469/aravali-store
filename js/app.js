@@ -28,6 +28,7 @@ const App = {
               <a href="orders.html">📦 My Orders</a>
               <a href="wishlist.html">❤️ Wishlist</a>
               <a href="dashboard.html?section=addresses">📍 Addresses</a>
+              <a href="dashboard.html?section=support">💬 Customer Support</a>
               <a href="dashboard.html?section=settings">⚙️ Settings</a>
               <button onclick="App.logout()" style="color:var(--danger);">🚪 Logout</button>
             </div>
