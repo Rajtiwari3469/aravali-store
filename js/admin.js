@@ -39,6 +39,12 @@ const Admin = {
     } else if (path.includes('offers')) {
       this.currentPage = 'offers';
       this.renderOffers();
+    } else if (path.includes('stock-logs')) {
+      this.currentPage = 'stock-logs';
+      this.renderStockLogs();
+    } else if (path.includes('admins')) {
+      this.currentPage = 'admins';
+      this.renderAdmins();
     } else {
       this.currentPage = 'dashboard';
       this.renderDashboard();
@@ -228,9 +234,9 @@ const Admin = {
         { name: 'orders', icon: '🛒', label: 'Orders', link: 'orders.html' },
         { name: 'users', icon: '👥', label: 'Users', link: 'users.html' },
         { name: 'banners', icon: '🖼️', label: 'Banners', link: 'banners.html' },
-        { name: 'stock_logs', icon: '📋', label: 'Stock Logs', link: null },
+        { name: 'stock_logs', icon: '📋', label: 'Stock Logs', link: 'stock-logs.html' },
         { name: 'returns', icon: '🔄', label: 'Returns', link: 'returns.html' },
-        { name: 'admins', icon: '🔑', label: 'Admins', link: null },
+        { name: 'admins', icon: '🔑', label: 'Admins', link: 'admins.html' },
         { name: 'settings', icon: '⚙️', label: 'Settings', link: 'settings.html' }
       ];
 
@@ -2067,6 +2073,104 @@ const Admin = {
   toggleSidebar() {
     const sidebar = document.querySelector('.admin-sidebar');
     if (sidebar) sidebar.classList.toggle('open');
+  },
+
+  // Stock Logs
+  renderStockLogs() {
+    const main = document.querySelector('.admin-content');
+    if (!main) return;
+
+    const logs = DB.getAll('stock_logs').sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+    if (logs.length === 0) {
+      main.innerHTML = `
+        <div class="admin-table-wrapper">
+          <div class="admin-table-header">
+            <h3>Stock Logs</h3>
+          </div>
+          <p style="text-align:center;padding:40px;color:var(--text-muted);">No stock logs found.</p>
+        </div>`;
+      return;
+    }
+
+    main.innerHTML = `
+      <div class="admin-table-wrapper">
+        <div class="admin-table-header">
+          <h3>Stock Logs (${logs.length})</h3>
+        </div>
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Change</th>
+              <th>Reason</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${logs.map(log => `
+              <tr>
+                <td style="font-weight:600;">${log.productName || '-'}</td>
+                <td>
+                  <span style="font-weight:700;color:${log.change > 0 ? 'var(--primary)' : 'var(--danger)'};">
+                    ${log.change > 0 ? '+' : ''}${log.change}
+                  </span>
+                </td>
+                <td style="font-size:0.85rem;">${log.reason || '-'}</td>
+                <td style="font-size:0.82rem;">${App.formatDate(log.timestamp)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  },
+
+  // Admins
+  renderAdmins() {
+    const main = document.querySelector('.admin-content');
+    if (!main) return;
+
+    const admins = DB.getAll('admins');
+
+    if (admins.length === 0) {
+      main.innerHTML = `
+        <div class="admin-table-wrapper">
+          <div class="admin-table-header">
+            <h3>Admins</h3>
+          </div>
+          <p style="text-align:center;padding:40px;color:var(--text-muted);">No admins found.</p>
+        </div>`;
+      return;
+    }
+
+    main.innerHTML = `
+      <div class="admin-table-wrapper">
+        <div class="admin-table-header">
+          <h3>Admins (${admins.length})</h3>
+        </div>
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Role</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${admins.map(a => `
+              <tr>
+                <td style="font-weight:600;">${a.name || '-'}</td>
+                <td>${a.email || '-'}</td>
+                <td>
+                  <span style="display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.75rem;font-weight:600;background:${a.role === 'superadmin' ? 'rgba(82,183,136,0.15)' : 'rgba(45,106,79,0.08)'};color:${a.role === 'superadmin' ? 'var(--primary)' : 'var(--text-light)'};">
+                    ${a.role || '-'}
+                  </span>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>`;
   }
 };
 
