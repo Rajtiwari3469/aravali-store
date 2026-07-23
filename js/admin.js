@@ -953,6 +953,40 @@ const Admin = {
         </div>
 
         <div class="glass-card" style="padding:30px;margin-top:20px;">
+          <h3 style="margin-bottom:20px;color:var(--primary-dark);">📍 Store Contact Info</h3>
+          <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:16px;">This information is shown on the Contact Us page and footer. Update it anytime.</p>
+          <div class="form-group">
+            <label>Store Name</label>
+            <input type="text" id="contactStoreName" value="${settings.contactStoreName || 'Aravali Store'}" placeholder="Your store name">
+          </div>
+          <div class="form-group">
+            <label>📍 Store Address</label>
+            <input type="text" id="contactAddress" value="${settings.contactAddress || '123 MG Road, Udaipur, Rajasthan - 313001, India'}" placeholder="Full store address">
+          </div>
+          <div class="form-group">
+            <label>📞 Phone Number</label>
+            <input type="tel" id="contactPhone" value="${settings.contactPhone || '+91 98765 43210'}" placeholder="+91 XXXXX XXXXX">
+          </div>
+          <div class="form-group">
+            <label>✉️ Primary Email</label>
+            <input type="email" id="contactEmail" value="${settings.contactEmail || 'hello@aravalistore.in'}" placeholder="hello@example.com">
+          </div>
+          <div class="form-group">
+            <label>✉️ Support Email</label>
+            <input type="email" id="contactSupportEmail" value="${settings.contactSupportEmail || 'support@aravalistore.in'}" placeholder="support@example.com">
+          </div>
+          <div class="form-group">
+            <label>🕐 Weekday Hours</label>
+            <input type="text" id="contactWeekdayHours" value="${settings.contactWeekdayHours || 'Monday - Saturday: 8:00 AM - 10:00 PM'}" placeholder="e.g. Mon-Sat: 9AM-9PM">
+          </div>
+          <div class="form-group">
+            <label>🕐 Sunday Hours</label>
+            <input type="text" id="contactSundayHours" value="${settings.contactSundayHours || 'Sunday: 9:00 AM - 8:00 PM'}" placeholder="e.g. Sunday: 10AM-6PM">
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="Admin.saveContactInfo()">Save Contact Info</button>
+        </div>
+
+        <div class="glass-card" style="padding:30px;margin-top:20px;">
           <h3 style="margin-bottom:20px;color:var(--primary-dark);">Change Password</h3>
           <form id="settingsForm">
             <div class="form-group">
@@ -1060,6 +1094,17 @@ const Admin = {
   toggleBannerSwipe(enabled) {
     DB.saveSetting('bannerSwipe', enabled);
     App.showToast(enabled ? 'Banner auto-swipe enabled' : 'Banner auto-swipe disabled — banners fixed in grid', 'success');
+  },
+
+  saveContactInfo() {
+    DB.saveSetting('contactStoreName', document.getElementById('contactStoreName').value.trim());
+    DB.saveSetting('contactAddress', document.getElementById('contactAddress').value.trim());
+    DB.saveSetting('contactPhone', document.getElementById('contactPhone').value.trim());
+    DB.saveSetting('contactEmail', document.getElementById('contactEmail').value.trim());
+    DB.saveSetting('contactSupportEmail', document.getElementById('contactSupportEmail').value.trim());
+    DB.saveSetting('contactWeekdayHours', document.getElementById('contactWeekdayHours').value.trim());
+    DB.saveSetting('contactSundayHours', document.getElementById('contactSundayHours').value.trim());
+    App.showToast('Contact info saved! Public pages will update instantly.', 'success');
   },
 
   exportData() {
@@ -1871,6 +1916,7 @@ const Admin = {
         ticket.subject.toLowerCase().includes(t) ||
         (ticket.customerName && ticket.customerName.toLowerCase().includes(t)) ||
         (ticket.customerEmail && ticket.customerEmail.toLowerCase().includes(t)) ||
+        (ticket.customerPhone && ticket.customerPhone.toLowerCase().includes(t)) ||
         ticket.message.toLowerCase().includes(t)
       );
     }
@@ -1909,6 +1955,10 @@ const Admin = {
           <p style="font-size:0.72rem;color:var(--text-muted);margin:0 0 3px;">Email</p>
           <p style="font-weight:600;margin:0;font-size:0.82rem;">${ticket.customerEmail || 'N/A'}</p>
         </div>
+        ${ticket.customerPhone ? `<div style="padding:12px;background:rgba(82,183,136,0.05);border-radius:10px;">
+          <p style="font-size:0.72rem;color:var(--text-muted);margin:0 0 3px;">Phone</p>
+          <p style="font-weight:600;margin:0;font-size:0.85rem;">${ticket.customerPhone}</p>
+        </div>` : ''}
         ${ticket.orderId ? `<div style="padding:12px;background:rgba(82,183,136,0.05);border-radius:10px;">
           <p style="font-size:0.72rem;color:var(--text-muted);margin:0 0 3px;">Related Order</p>
           <p style="font-weight:700;margin:0;font-size:0.9rem;color:var(--primary);">#${ticket.orderId.slice(-6).toUpperCase()}</p>

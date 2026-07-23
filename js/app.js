@@ -588,8 +588,12 @@ const App = {
           </select>
         </div>
         <div class="form-group">
+          <label>Order ID (optional)</label>
+          <input type="text" id="sp-orderId" placeholder="e.g. ORD-20260710-ABC123">
+        </div>
+        <div class="form-group">
           <label>Message</label>
-          <textarea id="sp-message" rows="3" placeholder="Describe your issue..."></textarea>
+          <textarea id="sp-message" rows="3" placeholder="Describe your issue in detail..."></textarea>
         </div>
         <div class="support-popup-footer">
           <button class="btn btn-primary" onclick="App.submitSupportTicket()">Submit Ticket</button>
@@ -614,6 +618,7 @@ const App = {
     const subject = document.getElementById('sp-subject').value.trim();
     const category = document.getElementById('sp-category').value;
     const message = document.getElementById('sp-message').value.trim();
+    const orderId = document.getElementById('sp-orderId') ? document.getElementById('sp-orderId').value.trim() : '';
 
     if (!subject || !message) {
       this.showToast('Subject and message are required', 'error');
@@ -624,10 +629,11 @@ const App = {
       userId: this.currentUser.id,
       customerName: this.currentUser.name,
       customerEmail: this.currentUser.email,
+      customerPhone: this.currentUser.phone || '',
       subject,
       category,
       message,
-      orderId: '',
+      orderId,
       status: 'open',
       adminReply: '',
       updatedAt: null
@@ -635,6 +641,7 @@ const App = {
 
     document.getElementById('sp-subject').value = '';
     document.getElementById('sp-message').value = '';
+    if (document.getElementById('sp-orderId')) document.getElementById('sp-orderId').value = '';
     this.showToast('Support ticket submitted!', 'success');
     this.renderSupportPopupBody();
   },

@@ -398,6 +398,7 @@ function generateSeedSupportTickets() {
       userId: user.id,
       customerName: user.name,
       customerEmail: user.email,
+      customerPhone: user.phone || '',
       subject: subjects[i % subjects.length],
       category: categories[Math.floor(Math.random() * categories.length)],
       message: messages[i % messages.length],
