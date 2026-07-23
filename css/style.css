@@ -1125,6 +1125,161 @@ img {
   font-weight: 600;
 }
 
+/* ========== FLOATING SUPPORT WIDGET ========== */
+.support-fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 900;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.support-fab-btn {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: white;
+  border: none;
+  font-size: 1.6rem;
+  cursor: pointer;
+  box-shadow: 0 6px 24px rgba(45, 106, 79, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.25s, box-shadow 0.25s;
+}
+
+.support-fab-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 8px 32px rgba(45, 106, 79, 0.45);
+}
+
+.support-popup {
+  display: none;
+  width: 340px;
+  max-height: 520px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(45, 106, 79, 0.2);
+  overflow: hidden;
+  flex-direction: column;
+  border: 1px solid rgba(45,106,79,0.08);
+}
+
+.support-popup.open {
+  display: flex;
+}
+
+.support-popup-header {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: white;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.support-popup-header h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.support-popup-header button {
+  background: rgba(255,255,255,0.2);
+  border: none;
+  color: white;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.support-popup-body {
+  padding: 18px 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.support-popup-body .form-group {
+  margin-bottom: 12px;
+}
+
+.support-popup-body label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.support-popup-body input,
+.support-popup-body select,
+.support-popup-body textarea {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid rgba(45,106,79,0.15);
+  border-radius: 8px;
+  font-family: var(--font);
+  font-size: 0.82rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.support-popup-body input:focus,
+.support-popup-body select:focus,
+.support-popup-body textarea:focus {
+  border-color: var(--secondary);
+}
+
+.support-popup-body textarea {
+  min-height: 60px;
+  resize: vertical;
+}
+
+.support-popup-footer {
+  padding: 0 20px 18px;
+}
+
+.support-popup-footer .btn {
+  width: 100%;
+  padding: 10px;
+  font-size: 0.85rem;
+}
+
+.support-logged-out-msg {
+  text-align: center;
+  padding: 20px 10px;
+}
+
+.support-logged-out-msg .btn {
+  margin-top: 12px;
+}
+
+@media (max-width: 480px) {
+  .support-fab {
+    bottom: 16px;
+    right: 16px;
+  }
+  .support-fab-btn {
+    width: 52px;
+    height: 52px;
+    font-size: 1.3rem;
+  }
+  .support-popup {
+    width: calc(100vw - 32px);
+    max-height: 460px;
+  }
+}
+
 /* ========== TOAST NOTIFICATIONS ========== */
 .toast-container {
   position: fixed;
