@@ -190,10 +190,13 @@ const Shop = {
             ${isOutOfStock
               ? `<button class="btn-add-cart" disabled style="opacity:0.5;cursor:not-allowed;background:var(--text-muted);">Sold Out</button>`
               : inCart
-                ? `<div class="qty-control" onclick="event.stopPropagation();">
-                     <button onclick="event.stopPropagation();Shop.changeQty('${p.id}', -1)">−</button>
-                     <span class="qty-val">${inCart.qty}</span>
-                     <button onclick="event.stopPropagation();Shop.changeQty('${p.id}', 1)">+</button>
+                ? `<div style="display:flex;align-items:center;gap:8px;">
+                     <div class="qty-control" onclick="event.stopPropagation();">
+                       <button onclick="event.stopPropagation();Shop.changeQty('${p.id}', -1)">−</button>
+                       <span class="qty-val">${inCart.qty}</span>
+                       <button onclick="event.stopPropagation();Shop.changeQty('${p.id}', 1)">+</button>
+                     </div>
+                     ${isLowStock ? `<span style="font-size:0.68rem;color:var(--accent);font-weight:600;">${p.stock} left</span>` : ''}
                    </div>`
                 : `<button class="btn-add-cart" onclick="event.stopPropagation();Shop.addToCart('${p.id}')">Add +</button>`
             }
