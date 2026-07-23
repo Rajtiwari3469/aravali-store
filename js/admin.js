@@ -36,9 +36,6 @@ const Admin = {
     } else if (path.includes('returns')) {
       this.currentPage = 'returns';
       this.renderReturns();
-    } else if (path.includes('support')) {
-      this.currentPage = 'support';
-      this.renderSupport();
     } else if (path.includes('offers')) {
       this.currentPage = 'offers';
       this.renderOffers();
@@ -111,7 +108,6 @@ const Admin = {
     const pendingOrders = orders.filter(o => o.status === 'pending').length;
     const deliveredOrders = orders.filter(o => o.status === 'delivered').length;
     const pendingReturns = DB.getAll('returns').filter(r => r.status === 'pending').length;
-    const openTickets = DB.getAll('support_tickets').filter(t => t.status === 'open').length;
     const outOfStockProducts = DB.getOutOfStockProducts();
     const lowStockProducts = DB.getLowStockProducts(5);
 
@@ -145,10 +141,6 @@ const Admin = {
         ${pendingReturns > 0 ? `<div class="stat-card">
           <div class="stat-icon" style="background:rgba(255,152,0,0.15);">🔄</div>
           <div class="stat-info"><h3>${pendingReturns}</h3><p>Pending Returns</p></div>
-        </div>` : ''}
-        ${openTickets > 0 ? `<div class="stat-card">
-          <div class="stat-icon" style="background:rgba(33,150,243,0.15);">💬</div>
-          <div class="stat-info"><h3>${openTickets}</h3><p>Open Tickets</p></div>
         </div>` : ''}`;
     }
 
@@ -238,7 +230,6 @@ const Admin = {
         { name: 'banners', icon: '🖼️', label: 'Banners', link: 'banners.html' },
         { name: 'stock_logs', icon: '📋', label: 'Stock Logs', link: null },
         { name: 'returns', icon: '🔄', label: 'Returns', link: 'returns.html' },
-        { name: 'support_tickets', icon: '💬', label: 'Support Tickets', link: 'support.html' },
         { name: 'admins', icon: '🔑', label: 'Admins', link: null },
         { name: 'settings', icon: '⚙️', label: 'Settings', link: 'settings.html' }
       ];
@@ -1839,237 +1830,6 @@ const Admin = {
     App.showToast(`${ids.length} product${ids.length > 1 ? 's' : ''} assigned to ${category}!`, 'success');
     this.closeModal();
     this.renderOffers();
-  },
-
-  // Customer Support
-  renderSupport(filterStatus) {
-    const main = document.querySelector('.admin-content');
-    if (!main) return;
-
-    const allTickets = DB.getAll('support_tickets').reverse();
-    const statusCounts = { all: allTickets.length, open: 0, replied: 0, closed: 0 };
-    allTickets.forEach(t => {
-      if (statusCounts[t.status] !== undefined) statusCounts[t.status]++;
-    });
-
-    const activeTab = filterStatus || 'all';
-    const filtered = activeTab === 'all' ? allTickets : allTickets.filter(t => t.status === activeTab);
-
-    const categoryLabels = {
-      order_issue: '📦 Order Issue',
-      refund: '💰 Refund / Return',
-      product: '🏷️ Product Issue',
-      technical: '⚙️ Technical Problem',
-      other: '📝 Other'
-    };
-
-    main.innerHTML = `
-      <div class="admin-table-wrapper">
-        <div class="admin-table-header">
-          <h3>Support Tickets (${allTickets.length})</h3>
-          <input type="text" class="search-input" placeholder="Search by subject, customer, message..." oninput="Admin.filterTickets(this.value)">
-        </div>
-
-        <div style="display:flex;gap:6px;padding:0 0 16px;flex-wrap:wrap;">
-          <button onclick="Admin.renderSupport('all')" style="padding:7px 16px;border-radius:20px;border:none;cursor:pointer;font-family:var(--font);font-size:0.8rem;font-weight:600;transition:0.2s;${activeTab==='all'?'background:var(--primary);color:white;':'background:rgba(45,106,79,0.06);color:var(--text-light);'}">All <span style="margin-left:4px;">${statusCounts.all}</span></button>
-          <button onclick="Admin.renderSupport('open')" style="padding:7px 16px;border-radius:20px;border:none;cursor:pointer;font-family:var(--font);font-size:0.8rem;font-weight:600;transition:0.2s;${activeTab==='open'?'background:#ff9800;color:white;':'background:rgba(255,152,0,0.08);color:#e67e22;'}">⏳ Open <span style="margin-left:4px;">${statusCounts.open}</span></button>
-          <button onclick="Admin.renderSupport('replied')" style="padding:7px 16px;border-radius:20px;border:none;cursor:pointer;font-family:var(--font);font-size:0.8rem;font-weight:600;transition:0.2s;${activeTab==='replied'?'background:#2196f3;color:white;':'background:rgba(33,150,243,0.08);color:#2196f3;'}">💬 Replied <span style="margin-left:4px;">${statusCounts.replied}</span></button>
-          <button onclick="Admin.renderSupport('closed')" style="padding:7px 16px;border-radius:20px;border:none;cursor:pointer;font-family:var(--font);font-size:0.8rem;font-weight:600;transition:0.2s;${activeTab==='closed'?'background:#4caf50;color:white;':'background:rgba(76,175,80,0.08);color:#4caf50;'}">✅ Closed <span style="margin-left:4px;">${statusCounts.closed}</span></button>
-        </div>
-
-        ${activeTab === 'open' && filtered.length > 0 ? `
-        <div style="background:linear-gradient(135deg,rgba(255,152,0,0.08),rgba(255,183,77,0.06));border:1px solid rgba(255,152,0,0.2);border-radius:12px;padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;gap:10px;">
-          <span style="font-size:1.3rem;">💬</span>
-          <div>
-            <p style="margin:0;font-weight:700;color:#e67e22;font-size:0.9rem;">${filtered.length} open ticket${filtered.length > 1 ? 's' : ''} awaiting response</p>
-            <p style="margin:2px 0 0;font-size:0.78rem;color:#b7791f;">Reply to these tickets to assist customers.</p>
-          </div>
-        </div>` : ''}
-
-        <table class="admin-table">
-          <thead>
-            <tr>
-              <th>Ticket ID</th>
-              <th>Customer</th>
-              <th>Subject</th>
-              <th>Category</th>
-              <th>Order</th>
-              <th>Status</th>
-              <th>Date</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="ticketsTableBody">
-            ${this.renderTicketRows(filtered)}
-          </tbody>
-        </table>
-      </div>`;
-  },
-
-  renderTicketRows(tickets) {
-    if (tickets.length === 0) {
-      return '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted);"><div style="font-size:2rem;margin-bottom:8px;">💬</div>No support tickets found.</td></tr>';
-    }
-    const statusColors = { open: '#ff9800', replied: '#2196f3', closed: '#4caf50' };
-    const categoryLabels = {
-      order_issue: '📦 Order',
-      refund: '💰 Refund',
-      product: '🏷️ Product',
-      technical: '⚙️ Technical',
-      other: '📝 Other'
-    };
-    return tickets.map(t => `
-      <tr>
-        <td style="font-weight:600;">#${t.id.slice(-6).toUpperCase()}</td>
-        <td>
-          <div style="font-weight:600;font-size:0.88rem;">${t.customerName || 'Guest'}</div>
-          <div style="font-size:0.75rem;color:var(--text-muted);">${t.customerEmail || ''}</div>
-        </td>
-        <td style="font-size:0.85rem;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${t.subject}">${t.subject}</td>
-        <td style="font-size:0.78rem;">${categoryLabels[t.category] || t.category}</td>
-        <td style="font-size:0.82rem;font-weight:600;color:var(--primary);">${t.orderId ? '#' + t.orderId.slice(-6).toUpperCase() : '-'}</td>
-        <td><span style="display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.75rem;font-weight:600;background:${statusColors[t.status] || '#999'}18;color:${statusColors[t.status] || '#999'};">${t.status}</span></td>
-        <td style="font-size:0.82rem;">${App.formatDate(t.createdAt)}</td>
-        <td>
-          <div class="action-btns">
-            <button class="action-btn view" onclick="Admin.viewTicket('${t.id}')">View</button>
-            ${t.status !== 'closed' ? `<button class="action-btn edit" onclick="Admin.replyToTicket('${t.id}')">Reply</button>` : ''}
-            <button class="action-btn delete" onclick="Admin.deleteTicket('${t.id}')">Delete</button>
-          </div>
-        </td>
-      </tr>
-    `).join('');
-  },
-
-  filterTickets(term) {
-    let tickets = DB.getAll('support_tickets').reverse();
-    if (term) {
-      const t = term.toLowerCase();
-      tickets = tickets.filter(ticket =>
-        ticket.subject.toLowerCase().includes(t) ||
-        (ticket.customerName && ticket.customerName.toLowerCase().includes(t)) ||
-        (ticket.customerEmail && ticket.customerEmail.toLowerCase().includes(t)) ||
-        (ticket.customerPhone && ticket.customerPhone.toLowerCase().includes(t)) ||
-        ticket.message.toLowerCase().includes(t)
-      );
-    }
-    document.getElementById('ticketsTableBody').innerHTML = this.renderTicketRows(tickets);
-  },
-
-  viewTicket(ticketId) {
-    const ticket = DB.getById('support_tickets', ticketId);
-    if (!ticket) return;
-    const modal = document.getElementById('productModal');
-    const content = document.getElementById('productModalContent');
-
-    const statusColors = { open: '#ff9800', replied: '#2196f3', closed: '#4caf50' };
-    const categoryLabels = {
-      order_issue: '📦 Order Issue',
-      refund: '💰 Refund / Return',
-      product: '🏷️ Product Issue',
-      technical: '⚙️ Technical Problem',
-      other: '📝 Other'
-    };
-
-    content.innerHTML = `
-      <button class="modal-close" onclick="Admin.closeModal()">✕</button>
-      <h2 style="margin-bottom:6px;">${ticket.subject}</h2>
-      <div style="margin-bottom:20px;display:flex;gap:8px;flex-wrap:wrap;">
-        <span style="display:inline-block;padding:4px 14px;border-radius:12px;font-size:0.78rem;font-weight:600;background:${statusColors[ticket.status] || '#999'}18;color:${statusColors[ticket.status] || '#999'};">${ticket.status.toUpperCase()}</span>
-        <span style="display:inline-block;padding:4px 14px;border-radius:12px;font-size:0.78rem;font-weight:600;background:rgba(45,106,79,0.06);color:var(--text-light);">${categoryLabels[ticket.category] || ticket.category}</span>
-      </div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;">
-        <div style="padding:12px;background:rgba(82,183,136,0.05);border-radius:10px;">
-          <p style="font-size:0.72rem;color:var(--text-muted);margin:0 0 3px;">Customer</p>
-          <p style="font-weight:700;margin:0;font-size:0.9rem;">${ticket.customerName || 'Guest'}</p>
-        </div>
-        <div style="padding:12px;background:rgba(82,183,136,0.05);border-radius:10px;">
-          <p style="font-size:0.72rem;color:var(--text-muted);margin:0 0 3px;">Email</p>
-          <p style="font-weight:600;margin:0;font-size:0.82rem;">${ticket.customerEmail || 'N/A'}</p>
-        </div>
-        ${ticket.customerPhone ? `<div style="padding:12px;background:rgba(82,183,136,0.05);border-radius:10px;">
-          <p style="font-size:0.72rem;color:var(--text-muted);margin:0 0 3px;">Phone</p>
-          <p style="font-weight:600;margin:0;font-size:0.85rem;">${ticket.customerPhone}</p>
-        </div>` : ''}
-        ${ticket.orderId ? `<div style="padding:12px;background:rgba(82,183,136,0.05);border-radius:10px;">
-          <p style="font-size:0.72rem;color:var(--text-muted);margin:0 0 3px;">Related Order</p>
-          <p style="font-weight:700;margin:0;font-size:0.9rem;color:var(--primary);">#${ticket.orderId.slice(-6).toUpperCase()}</p>
-        </div>` : ''}
-        <div style="padding:12px;background:rgba(82,183,136,0.05);border-radius:10px;">
-          <p style="font-size:0.72rem;color:var(--text-muted);margin:0 0 3px;">Date</p>
-          <p style="font-weight:600;margin:0;font-size:0.85rem;">${App.formatDate(ticket.createdAt)}</p>
-        </div>
-      </div>
-
-      <div class="detail-section">
-        <h4>Customer Message</h4>
-        <div style="padding:14px;background:rgba(255,255,255,0.5);border-radius:10px;border:1px solid rgba(45,106,79,0.06);margin-bottom:6px;">
-          <p style="margin:0;font-size:0.88rem;line-height:1.6;color:var(--text-light);">${ticket.message}</p>
-        </div>
-      </div>
-
-      ${ticket.adminReply ? `
-      <div class="detail-section">
-        <h4 style="color:var(--primary);">💬 Admin Reply</h4>
-        <div style="padding:14px;background:rgba(82,183,136,0.05);border-radius:10px;border:1px solid rgba(82,183,136,0.15);border-left:3px solid var(--primary);">
-          <p style="margin:0;font-size:0.88rem;line-height:1.6;color:var(--text);">${ticket.adminReply}</p>
-          ${ticket.updatedAt ? `<p style="margin:8px 0 0;font-size:0.72rem;color:var(--text-muted);">Replied on ${App.formatDate(ticket.updatedAt)}</p>` : ''}
-        </div>
-      </div>` : ''}
-
-      ${ticket.status !== 'closed' ? `
-      <div style="margin-top:20px;padding-top:16px;border-top:1px solid rgba(45,106,79,0.08);">
-        <h4 style="margin-bottom:10px;">Reply to Customer</h4>
-        <textarea id="adminReplyText" rows="4" placeholder="Type your reply here..." style="width:100%;padding:12px;border:1px solid rgba(45,106,79,0.15);border-radius:10px;font-family:var(--font);font-size:0.88rem;resize:vertical;margin-bottom:12px;">${ticket.adminReply || ''}</textarea>
-        <div style="display:flex;gap:10px;">
-          <button class="btn btn-primary" style="flex:1;" onclick="Admin.saveReply('${ticket.id}')">💬 Send Reply</button>
-          ${ticket.status === 'open' ? `<button class="btn" style="flex:1;background:rgba(76,175,80,0.1);color:#4caf50;" onclick="Admin.closeTicket('${ticket.id}')">✅ Mark Resolved</button>` : ''}
-        </div>
-      </div>` : ''}`;
-
-    modal.classList.add('active');
-  },
-
-  replyToTicket(ticketId) {
-    this.viewTicket(ticketId);
-    setTimeout(() => {
-      const textarea = document.getElementById('adminReplyText');
-      if (textarea) textarea.focus();
-    }, 200);
-  },
-
-  saveReply(ticketId) {
-    const reply = document.getElementById('adminReplyText').value.trim();
-    if (!reply) {
-      App.showToast('Please enter a reply', 'error');
-      return;
-    }
-    DB.update('support_tickets', ticketId, {
-      adminReply: reply,
-      status: 'replied',
-      updatedAt: new Date().toISOString()
-    });
-    this.closeModal();
-    App.showToast('Reply sent successfully!', 'success');
-    this.renderSupport();
-  },
-
-  closeTicket(ticketId) {
-    DB.update('support_tickets', ticketId, {
-      status: 'closed',
-      updatedAt: new Date().toISOString()
-    });
-    this.closeModal();
-    App.showToast('Ticket closed', 'success');
-    this.renderSupport();
-  },
-
-  deleteTicket(ticketId) {
-    if (!confirm('Delete this support ticket? This cannot be undone.')) return;
-    DB.delete('support_tickets', ticketId);
-    App.showToast('Ticket deleted', 'info');
-    this.renderSupport();
   },
 
   // Returns & Refunds

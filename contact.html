@@ -74,8 +74,8 @@
         <div id="contactSuccess" style="display:none;text-align:center;padding:40px;">
           <div style="font-size:3rem;margin-bottom:12px;">✅</div>
           <h3 style="color:var(--primary);">Message Sent!</h3>
-          <p style="color:var(--text-muted);">Your support ticket has been created. Our team will get back to you within 24 hours.</p>
-          <a href="dashboard.html?section=support" class="btn btn-primary" style="margin-top:14px;display:inline-block;text-decoration:none;">View My Tickets →</a>
+          <p style="color:var(--text-muted);">Thank you for contacting us. Our team will get back to you within 24 hours.</p>
+          <a href="index.html" class="btn btn-primary" style="margin-top:14px;display:inline-block;text-decoration:none;">Back to Home →</a>
         </div>
       </div>
 
@@ -157,26 +157,10 @@
           return;
         }
 
-        const userId = App.currentUser ? App.currentUser.id : 'guest_' + Date.now().toString(36);
-        const customerName = name;
-
-        DB.insert('support_tickets', {
-          userId: userId,
-          customerName: customerName,
-          customerEmail: email,
-          customerPhone: phone,
-          subject: subject,
-          category: category,
-          message: 'Name: ' + name + '\nEmail: ' + email + (phone ? '\nPhone: ' + phone : '') + '\n\n' + message,
-          orderId: '',
-          status: 'open',
-          adminReply: '',
-          updatedAt: null
-        });
+        App.showToast('Message sent! We will get back to you soon.', 'success');
 
         document.getElementById('contactForm').style.display = 'none';
         document.getElementById('contactSuccess').style.display = 'block';
-        App.showToast('Support ticket created! Check your dashboard.', 'success');
       });
     });
   </script>

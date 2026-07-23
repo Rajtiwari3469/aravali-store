@@ -28,16 +28,12 @@ const App = {
               <a href="orders.html">📦 My Orders</a>
               <a href="wishlist.html">❤️ Wishlist</a>
               <a href="dashboard.html?section=addresses">📍 Addresses</a>
-              <a href="dashboard.html?section=support">💬 Customer Support</a>
-              <a href="new-ticket.html" style="background:rgba(255,152,0,0.08);color:#e67e22;font-weight:600;margin-top:4px;">🎫 New Ticket</a>
               <a href="dashboard.html?section=settings">⚙️ Settings</a>
               <button onclick="App.logout()" style="color:var(--danger);">🚪 Logout</button>
             </div>
           </div>`;
       } else {
-        el.innerHTML = `
-          <a href="new-ticket.html" class="btn btn-sm" style="background:rgba(255,152,0,0.1);color:#e67e22;font-weight:600;text-decoration:none;margin-right:6px;">New Ticket</a>
-          <a href="login.html" class="btn btn-primary btn-sm">Login</a>`;
+        el.innerHTML = `<a href="login.html" class="btn btn-primary btn-sm">Login</a>`;
       }
     });
 
