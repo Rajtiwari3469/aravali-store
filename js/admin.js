@@ -229,30 +229,29 @@ const Admin = {
     const dbmsGrid = document.querySelector('.dbms-tables-grid');
     if (dbmsGrid) {
       const tables = [
-        { name: 'products', icon: '📦', label: 'Products', link: 'products.html' },
-        { name: 'catalogs', icon: '📂', label: 'Catalogs', link: 'catalogs.html' },
-        { name: 'orders', icon: '🛒', label: 'Orders', link: 'orders.html' },
-        { name: 'users', icon: '👥', label: 'Users', link: 'users.html' },
-        { name: 'banners', icon: '🖼️', label: 'Banners', link: 'banners.html' },
-        { name: 'stock_logs', icon: '📋', label: 'Stock Logs', link: 'stock-logs.html' },
-        { name: 'returns', icon: '🔄', label: 'Returns', link: 'returns.html' },
-        { name: 'admins', icon: '🔑', label: 'Admins', link: 'admins.html' },
-        { name: 'settings', icon: '⚙️', label: 'Settings', link: 'settings.html' }
+        { name: 'products', icon: '📦', label: 'Products', link: 'products.html', color: '#2d6a4f' },
+        { name: 'catalogs', icon: '📂', label: 'Catalogs', link: 'catalogs.html', color: '#40916c' },
+        { name: 'orders', icon: '🛒', label: 'Orders', link: 'orders.html', color: '#f48c06' },
+        { name: 'users', icon: '👥', label: 'Users', link: 'users.html', color: '#e63946' },
+        { name: 'banners', icon: '🖼️', label: 'Banners', link: 'banners.html', color: '#6a4c93' },
+        { name: 'stock_logs', icon: '📋', label: 'Stock Logs', link: 'stock-logs.html', color: '#457b9d' },
+        { name: 'returns', icon: '🔄', label: 'Returns', link: 'returns.html', color: '#e76f51' },
+        { name: 'admins', icon: '🔑', label: 'Admins', link: 'admins.html', color: '#264653' },
+        { name: 'settings', icon: '⚙️', label: 'Settings', link: 'settings.html', color: '#6c757d' }
       ];
 
       dbmsGrid.innerHTML = tables.map(t => {
         const count = DB.getAll(t.name).length;
-        const borderColor = count > 0 ? 'rgba(82,183,136,0.25)' : 'rgba(45,106,79,0.08)';
-        const bgColor = count > 0 ? 'rgba(82,183,136,0.05)' : 'rgba(255,255,255,0.4)';
+        const isActive = count > 0;
         const clickAttr = t.link ? `onclick="window.location.href='${t.link}'" style="cursor:pointer;"` : '';
         return `
-          <div class="dbms-table-card" ${clickAttr} style="background:${bgColor};border:1px solid ${borderColor};border-radius:12px;padding:16px;display:flex;align-items:center;gap:14px;transition:all 0.2s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(45,106,79,0.12)'" onmouseout="this.style.transform='none';this.style.boxShadow='none'">
-            <div style="width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center;font-size:1.3rem;color:white;flex-shrink:0;">${t.icon}</div>
+          <div class="dbms-table-card" ${clickAttr} style="background:white;border:1px solid rgba(0,0,0,0.06);border-radius:14px;padding:18px;display:flex;align-items:center;gap:14px;transition:all 0.25s;box-shadow:0 1px 3px rgba(0,0,0,0.04);" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 25px rgba(0,0,0,0.1)'" onmouseout="this.style.transform='none';this.style.boxShadow='0 1px 3px rgba(0,0,0,0.04)'">
+            <div style="width:48px;height:48px;border-radius:12px;background:${t.color}15;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;">${t.icon}</div>
             <div style="flex:1;min-width:0;">
-              <div style="font-weight:700;font-size:0.92rem;color:var(--text);margin-bottom:2px;">${t.label}</div>
-              <div style="font-size:0.78rem;color:var(--text-muted);">${count} record${count !== 1 ? 's' : ''}</div>
+              <div style="font-weight:700;font-size:0.95rem;color:var(--text);margin-bottom:2px;">${t.label}</div>
+              <div style="font-size:0.8rem;color:var(--text-muted);">${count} record${count !== 1 ? 's' : ''}</div>
             </div>
-            ${t.link ? '<span style="color:var(--primary);font-size:0.75rem;font-weight:600;">→</span>' : ''}
+            ${t.link ? `<div style="width:32px;height:32px;border-radius:8px;background:${isActive ? t.color + '12' : 'rgba(0,0,0,0.03)'};display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span style="color:${isActive ? t.color : '#aaa'};font-size:0.85rem;">→</span></div>` : ''}
           </div>`;
       }).join('');
     }
