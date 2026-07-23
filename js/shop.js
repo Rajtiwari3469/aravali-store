@@ -172,7 +172,7 @@ const Shop = {
           ${inWishlist ? '❤️' : '🤍'}
         </button>
         <div class="product-image" style="position:relative;">
-          ${(p.image || (p.images && p.images[0])) ? `<img src="${p.image || p.images[0]}" style="width:100%;height:100%;object-fit:cover;border-radius:var(--border-radius-sm);">` : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(45,106,79,0.06),rgba(82,183,136,0.1));border-radius:var(--border-radius-sm);color:var(--text-muted);font-size:0.75rem;text-align:center;padding:8px;">No Image</div>`}
+          ${(p.image || (p.images && p.images[0])) ? `<img src="${p.image || p.images[0]}" style="width:100%;height:100%;object-fit:contain;border-radius:var(--border-radius-sm);background:#f8f8f8;">` : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(45,106,79,0.06),rgba(82,183,136,0.1));border-radius:var(--border-radius-sm);color:var(--text-muted);font-size:0.75rem;text-align:center;padding:8px;">No Image</div>`}
           ${isOutOfStock ? '<div style="position:absolute;inset:0;background:rgba(0,0,0,0.4);border-radius:var(--border-radius-sm);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:0.85rem;">OUT OF STOCK</div>' : ''}
         </div>
         <div class="product-info">
