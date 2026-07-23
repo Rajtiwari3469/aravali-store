@@ -341,7 +341,11 @@ function generateSeedAddresses() {
 
 function initDB() {
   if (typeof SEED_DATA !== 'undefined') {
-    DB.seed('products', SEED_DATA.products);
+    const existingProducts = DB.getAll('products');
+    if (existingProducts.length === 0 || existingProducts.length !== SEED_DATA.products.length) {
+      localStorage.removeItem(DB._key('products'));
+      DB.seed('products', SEED_DATA.products);
+    }
     DB.seed('banners', SEED_DATA.banners);
     DB.seed('catalogs', SEED_DATA.catalogs);
   }
