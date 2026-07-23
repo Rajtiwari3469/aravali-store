@@ -165,9 +165,6 @@ const Shop = {
 
     return `
       <div class="product-card" data-id="${p.id}" onclick="${isOutOfStock ? '' : `window.location.href='product.html?id=${p.id}'`}" style="cursor:${isOutOfStock ? 'default' : 'pointer'}; ${isOutOfStock ? 'opacity:0.7;' : ''}">
-        ${isOutOfStock ? '<span class="product-badge" style="background:var(--danger);">Out of Stock</span>' : (p.badge ? `<span class="product-badge">${p.badge}</span>` : '')}
-        ${isLowStock && !isOutOfStock ? '<span class="product-badge" style="left:auto;right:8px;background:var(--accent);">Low Stock</span>' : ''}
-        ${p.offer && !isOutOfStock ? `<span class="product-badge" style="left:auto;right:8px;top:auto;bottom:8px;background:linear-gradient(135deg,#ff6b6b,#ee5a24);font-size:0.62rem;padding:3px 8px;">${p.offer.split(' ').slice(1).join(' ')}</span>` : ''}
         <button class="wishlist-btn ${inWishlist ? 'active' : ''}" data-wishlist="${p.id}" onclick="event.stopPropagation();">
           ${inWishlist ? '❤️' : '🤍'}
         </button>
@@ -176,7 +173,12 @@ const Shop = {
           ${isOutOfStock ? '<div style="position:absolute;inset:0;background:rgba(0,0,0,0.4);border-radius:var(--border-radius-sm);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:0.85rem;">OUT OF STOCK</div>' : ''}
         </div>
         <div class="product-info">
-          <div class="product-category">${p.category}</div>
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
+            <div class="product-category">${p.category}</div>
+            ${isOutOfStock ? '<span class="product-badge" style="position:static;background:var(--danger);font-size:0.6rem;padding:2px 6px;">Out of Stock</span>' : (p.badge ? `<span class="product-badge" style="position:static;font-size:0.6rem;padding:2px 6px;">${p.badge}</span>` : '')}
+            ${isLowStock && !isOutOfStock ? '<span class="product-badge" style="position:static;background:var(--accent);font-size:0.6rem;padding:2px 6px;">Low Stock</span>' : ''}
+            ${p.offer && !isOutOfStock ? `<span class="product-badge" style="position:static;background:linear-gradient(135deg,#ff6b6b,#ee5a24);font-size:0.58rem;padding:2px 6px;">${p.offer.split(' ').slice(1).join(' ')}</span>` : ''}
+          </div>
           <div class="product-name">${p.name}</div>
           <div class="product-unit">${p.unit}${!isOutOfStock && isLowStock ? ` • <span style="color:var(--accent);font-weight:600;">${p.stock} left</span>` : ''}</div>
             <div class="product-bottom">
