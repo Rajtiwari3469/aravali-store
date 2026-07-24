@@ -61,7 +61,7 @@ const Admin = {
           <div style="font-size:4rem;margin-bottom:16px;">🔒</div>
           <h2>Access Denied</h2>
           <p style="color:var(--text-muted);margin-bottom:20px;">Please login as admin to continue.</p>
-          <a href="login" class="btn btn-primary">Admin Login</a>
+          <a href="/admin/login" class="btn btn-primary">Admin Login</a>
         </div>`;
     }
   },
@@ -76,7 +76,7 @@ const Admin = {
 
         const result = await App.loginAdmin(email, password);
         if (result.success) {
-          window.location.href = 'index';
+          window.location.href = '/admin';
         } else {
           const errorEl = document.getElementById('loginError');
           if (errorEl) {
@@ -230,15 +230,15 @@ const Admin = {
     const dbmsGrid = document.querySelector('.dbms-tables-grid');
     if (dbmsGrid) {
       const tables = [
-        { name: 'products', icon: '📦', label: 'Products', link: 'products', color: '#2d6a4f' },
-        { name: 'catalogs', icon: '📂', label: 'Catalogs', link: 'catalogs', color: '#40916c' },
-        { name: 'orders', icon: '🛒', label: 'Orders', link: 'orders', color: '#f48c06' },
-        { name: 'users', icon: '👥', label: 'Users', link: 'users', color: '#e63946' },
-        { name: 'banners', icon: '🖼️', label: 'Banners', link: 'banners', color: '#6a4c93' },
-        { name: 'stock_logs', icon: '📋', label: 'Stock Logs', link: 'stock-logs', color: '#457b9d' },
-        { name: 'returns', icon: '🔄', label: 'Returns', link: 'returns', color: '#e76f51' },
-        { name: 'admins', icon: '🔑', label: 'Admins', link: 'admins', color: '#264653' },
-        { name: 'settings', icon: '⚙️', label: 'Settings', link: 'settings', color: '#6c757d' }
+        { name: 'products', icon: '📦', label: 'Products', link: '/admin/products', color: '#2d6a4f' },
+        { name: 'catalogs', icon: '📂', label: 'Catalogs', link: '/admin/catalogs', color: '#40916c' },
+        { name: 'orders', icon: '🛒', label: 'Orders', link: '/admin/orders', color: '#f48c06' },
+        { name: 'users', icon: '👥', label: 'Users', link: '/admin/users', color: '#e63946' },
+        { name: 'banners', icon: '🖼️', label: 'Banners', link: '/admin/banners', color: '#6a4c93' },
+        { name: 'stock_logs', icon: '📋', label: 'Stock Logs', link: '/admin/stock-logs', color: '#457b9d' },
+        { name: 'returns', icon: '🔄', label: 'Returns', link: '/admin/returns', color: '#e76f51' },
+        { name: 'admins', icon: '🔑', label: 'Admins', link: '/admin/admins', color: '#264653' },
+        { name: 'settings', icon: '⚙️', label: 'Settings', link: '/admin/settings', color: '#6c757d' }
       ];
 
       const tableCounts = {};
