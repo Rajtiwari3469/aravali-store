@@ -65,7 +65,12 @@ module.exports = async function handler(req, res) {
   const method = req.method;
   let body = {};
   if (method === 'POST' || method === 'PUT' || method === 'PATCH') {
-    try { body = JSON.parse(req.body || '{}'); } catch { body = {}; }
+    try {
+      const chunks = [];
+      for await (const chunk of req) chunks.push(chunk);
+      const raw = Buffer.concat(chunks).toString();
+      body = raw ? JSON.parse(raw) : {};
+    } catch { body = {}; }
   }
 
   try {
