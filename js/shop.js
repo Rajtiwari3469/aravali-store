@@ -188,17 +188,18 @@ const Shop = {
           </div>
           <div class="product-name">${p.name}</div>
           <div class="product-unit">${p.unit}</div>
-          <div class="product-desc">${p.description ? p.description.substring(0, 50) + (p.description.length > 50 ? '...' : '') : ''}</div>
-            <div class="product-bottom">
-              <div class="product-price">
-                ${App.formatCurrency(p.price)}
-                ${p.mrp && p.mrp > p.price ? `<span style="text-decoration:line-through;color:var(--text-muted);font-size:0.72rem;font-weight:400;margin-left:4px;">${App.formatCurrency(p.mrp)}</span><span style="font-size:0.68rem;color:var(--success);font-weight:700;margin-left:4px;">${Math.round((p.mrp - p.price) / p.mrp * 100)}% off</span>` : ''}
-                <small>/${p.unit}</small>
-              </div>
+          <div class="product-price-row">
+            <div class="product-price">
+              ${App.formatCurrency(p.price)}
+              ${p.mrp && p.mrp > p.price ? `<span style="text-decoration:line-through;color:var(--text-muted);font-size:0.72rem;font-weight:400;margin-left:4px;">${App.formatCurrency(p.mrp)}</span><span style="font-size:0.68rem;color:var(--success);font-weight:700;margin-left:4px;">${Math.round((p.mrp - p.price) / p.mrp * 100)}% off</span>` : ''}
+            </div>
+            <div class="product-desc">${p.description ? p.description.substring(0, 40) + (p.description.length > 40 ? '...' : '') : ''}</div>
+          </div>
+          <div class="product-action">
             ${isOutOfStock
-              ? `<button class="btn-add-cart" disabled style="opacity:0.5;cursor:not-allowed;background:var(--text-muted);">Sold Out</button>`
+              ? `<button class="btn-add-cart" disabled style="opacity:0.5;cursor:not-allowed;background:var(--text-muted);width:100%;">Sold Out</button>`
               : inCart
-                ? `<div style="display:flex;align-items:center;gap:8px;">
+                ? `<div style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;">
                      <div class="qty-control" onclick="event.stopPropagation();">
                        <button onclick="event.stopPropagation();Shop.changeQty('${p.id}', -1)">−</button>
                        <span class="qty-val">${inCart.qty}</span>
@@ -206,7 +207,7 @@ const Shop = {
                      </div>
                      ${isLowStock ? `<span style="font-size:0.68rem;color:var(--accent);font-weight:600;">${p.stock} left</span>` : ''}
                    </div>`
-                : `<button class="btn-add-cart" onclick="event.stopPropagation();Shop.addToCart('${p.id}')">Add +</button>`
+                : `<button class="btn-add-cart" onclick="event.stopPropagation();Shop.addToCart('${p.id}')" style="width:100%;">Add +</button>`
             }
           </div>
         </div>
