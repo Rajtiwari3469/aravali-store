@@ -6,7 +6,11 @@ const App = {
       const res = await fetch('/api/auth/me');
       if (res.ok) {
         const data = await res.json();
-        this.currentUser = data.user || data.admin || null;
+        if (data.admin) {
+          this.currentUser = { ...data.admin, isAdmin: true };
+        } else {
+          this.currentUser = data.user || null;
+        }
       }
     } catch {}
     this.updateNav();
