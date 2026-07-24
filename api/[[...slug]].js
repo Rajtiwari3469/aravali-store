@@ -21,6 +21,14 @@ async function getJose() {
   if (!jose) jose = await import('jose');
   return jose;
 }
+let resend = null;
+async function getResend() {
+  if (!resend) {
+    const { Resend } = await import('resend');
+    resend = new Resend(process.env.RESEND_API_KEY);
+  }
+  return resend;
+}
 let dbReady = false;
 
 async function initDB() {
@@ -37,6 +45,7 @@ async function initDB() {
   await sql`CREATE TABLE IF NOT EXISTS stock_logs (id TEXT PRIMARY KEY, product_id TEXT, product_name TEXT DEFAULT '', change_val INTEGER DEFAULT 0, reason TEXT DEFAULT '', timestamp TIMESTAMPTZ DEFAULT NOW())`;
   await sql`CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT DEFAULT '')`;
   await sql`CREATE TABLE IF NOT EXISTS addresses (id TEXT PRIMARY KEY, user_id TEXT NOT NULL, name TEXT DEFAULT '', phone TEXT DEFAULT '', line TEXT DEFAULT '', city TEXT DEFAULT '', state TEXT DEFAULT '', pincode TEXT DEFAULT '', type TEXT DEFAULT 'home', is_default BOOLEAN DEFAULT false)`;
+  await sql`CREATE TABLE IF NOT EXISTS password_resets (id TEXT PRIMARY KEY, email TEXT NOT NULL, code TEXT NOT NULL, expires_at TIMESTAMPTZ NOT NULL, used BOOLEAN DEFAULT false, created_at TIMESTAMPTZ DEFAULT NOW())`;
   dbReady = true;
 }
 
@@ -139,6 +148,62 @@ module.exports = async function handler(req, res) {
     if (slug === 'auth/logout' && method === 'POST') {
       res.setHeader('Set-Cookie', 'aravali_token=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0');
       return ok(res, { success: true });
+    }
+
+    // ===== FORGOT PASSWORD =====
+    if (slug === 'auth/forgot-password' && method === 'POST') {
+      const { email } = body;
+      if (!email) return err(res, 'Email is required');
+      const users = await sql`SELECT id, name FROM users WHERE email = ${email}`;
+      if (users.length === 0) return err(res, 'No account found with this email');
+      const code = String(Math.floor(100000 + Math.random() * 900000));
+      const id = gid();
+      await sql`INSERT INTO password_resets (id, email, code, expires_at) VALUES (${id}, ${email}, ${code}, NOW() + INTERVAL '10 minutes')`;
+      try {
+        const r = await getResend();
+        await r.emails.send({
+          from: 'Aravali Store <onboarding@resend.dev>',
+          to: email,
+          subject: 'Password Reset Code - Aravali Store',
+          html: `<div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px;">
+            <h2 style="color:#2d6b50;">Password Reset</h2>
+            <p>Hello ${users[0].name},</p>
+            <p>Your password reset code is:</p>
+            <div style="background:#f0f7f4;border-radius:12px;padding:20px;text-align:center;margin:20px 0;">
+              <span style="font-size:32px;font-weight:800;letter-spacing:8px;color:#2d6b50;">${code}</span>
+            </div>
+            <p style="color:#888;font-size:0.9rem;">This code expires in 10 minutes. If you didn't request this, please ignore this email.</p>
+            <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+            <p style="color:#aaa;font-size:0.8rem;">© 2026 Aravali Store</p>
+          </div>`
+        });
+      } catch (e) {
+        console.error('Email send error:', e.message);
+      }
+      return ok(res, { success: true, message: 'Reset code sent to your email' });
+    }
+
+    // ===== VERIFY RESET CODE =====
+    if (slug === 'auth/verify-reset-code' && method === 'POST') {
+      const { email, code } = body;
+      if (!email || !code) return err(res, 'Email and code are required');
+      const rows = await sql`SELECT id FROM password_resets WHERE email = ${email} AND code = ${code} AND used = false AND expires_at > NOW() ORDER BY created_at DESC LIMIT 1`;
+      if (rows.length === 0) return err(res, 'Invalid or expired code');
+      return ok(res, { success: true, resetId: rows[0].id });
+    }
+
+    // ===== RESET PASSWORD =====
+    if (slug === 'auth/reset-password' && method === 'POST') {
+      const { resetId, newPassword } = body;
+      if (!resetId || !newPassword) return err(res, 'Reset ID and new password are required');
+      if (newPassword.length < 6) return err(res, 'Password must be at least 6 characters');
+      const rows = await sql`SELECT email FROM password_resets WHERE id = ${resetId} AND used = false AND expires_at > NOW()`;
+      if (rows.length === 0) return err(res, 'Invalid or expired reset request');
+      const email = rows[0].email;
+      const ph = await bcrypt.hash(newPassword, 10);
+      await sql`UPDATE users SET password_hash = ${ph} WHERE email = ${email}`;
+      await sql`UPDATE password_resets SET used = true WHERE id = ${resetId}`;
+      return ok(res, { success: true, message: 'Password updated successfully' });
     }
 
     // ===== PRODUCTS =====
