@@ -58,8 +58,10 @@ async function signToken(payload) {
 module.exports = async function handler(req, res) {
   await initDB();
   const url = new URL(req.url, 'http://localhost');
-  const slugParts = req.query.slug || [];
-  const slug = Array.isArray(slugParts) ? slugParts.join('/') : slugParts;
+  let slug = (req.query.slug || []).join('/');
+  if (!slug) {
+    slug = url.pathname.replace(/^\/api\//, '');
+  }
   const method = req.method;
   let body = {};
   if (method === 'POST' || method === 'PUT' || method === 'PATCH') {
