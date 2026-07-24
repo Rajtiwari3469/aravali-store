@@ -180,7 +180,7 @@ const Shop = {
           ${isOutOfStock ? '<div style="position:absolute;inset:0;background:rgba(0,0,0,0.4);border-radius:var(--border-radius-sm);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:0.85rem;">OUT OF STOCK</div>' : ''}
         </div>
         <div class="product-info">
-          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
+          <div class="product-tags">
             <div class="product-category">${p.category}</div>
             ${isOutOfStock ? '<span class="product-badge" style="position:static;background:var(--danger);font-size:0.6rem;padding:2px 6px;">Out of Stock</span>' : (p.badge ? `<span class="product-badge" style="position:static;font-size:0.6rem;padding:2px 6px;">${p.badge}</span>` : '')}
             ${isLowStock && !isOutOfStock ? '<span class="product-badge" style="position:static;background:var(--accent);font-size:0.6rem;padding:2px 6px;">Low Stock</span>' : ''}
