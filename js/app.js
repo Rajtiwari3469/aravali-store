@@ -38,6 +38,11 @@ const App = {
         el.insertAdjacentHTML('afterbegin', html);
       }
     });
+    document.querySelectorAll('.pd-topbar-actions').forEach(el => {
+      if (!el.querySelector('.theme-toggle-btn')) {
+        el.insertAdjacentHTML('afterbegin', html);
+      }
+    });
     const loginToggle = document.getElementById('loginThemeToggle');
     if (loginToggle && !loginToggle.querySelector('.theme-toggle-btn')) {
       loginToggle.innerHTML = html;
