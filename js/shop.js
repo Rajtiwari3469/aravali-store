@@ -188,6 +188,7 @@ const Shop = {
           </div>
           <div class="product-name">${p.name}</div>
           <div class="product-unit">${p.unit}</div>
+          <div class="product-desc">${p.description ? p.description.substring(0, 50) + (p.description.length > 50 ? '...' : '') : ''}</div>
             <div class="product-bottom">
               <div class="product-price">
                 ${App.formatCurrency(p.price)}
