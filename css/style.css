@@ -1476,30 +1476,63 @@ img {
 .pagination {
   display: flex;
   justify-content: center;
-  gap: 8px;
+  align-items: center;
+  gap: 4px;
   margin-top: 40px;
+  flex-wrap: wrap;
 }
 
 .pagination button {
-  padding: 8px 14px;
-  border: 1px solid rgba(45, 106, 79, 0.15);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.5);
+  min-width: 36px;
+  height: 36px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
   cursor: pointer;
   font-family: var(--font);
   font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text);
   transition: var(--transition);
 }
 
-.pagination button:hover, .pagination button.active {
+.pagination button:hover {
+  background: rgba(45, 106, 79, 0.08);
+}
+
+.pagination button.active {
   background: var(--primary);
   color: white;
-  border-color: var(--primary);
+  font-weight: 700;
+}
+
+.pagination button.page-nav {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text);
+  min-width: 40px;
+  background: transparent;
+}
+
+.pagination button.page-nav:hover {
+  background: rgba(45, 106, 79, 0.08);
 }
 
 .pagination button:disabled {
-  opacity: 0.4;
+  opacity: 0.3;
   cursor: not-allowed;
+}
+
+.pagination .page-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+  font-size: 1rem;
+  color: var(--text-muted);
+  letter-spacing: 2px;
 }
 
 /* ========== LOADING SPINNER ========== */

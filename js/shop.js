@@ -233,11 +233,30 @@ const Shop = {
       return;
     }
 
-    let html = `<button ${this.currentPage === 1 ? 'disabled' : ''} onclick="Shop.goToPage(${this.currentPage - 1})">← Prev</button>`;
-    for (let i = 1; i <= totalPages; i++) {
-      html += `<button class="${i === this.currentPage ? 'active' : ''}" onclick="Shop.goToPage(${i})">${i}</button>`;
+    const cur = this.currentPage;
+    const pages = [];
+
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      if (cur > 3) pages.push('...');
+      const start = Math.max(2, cur - 1);
+      const end = Math.min(totalPages - 1, cur + 1);
+      for (let i = start; i <= end; i++) pages.push(i);
+      if (cur < totalPages - 2) pages.push('...');
+      pages.push(totalPages);
     }
-    html += `<button ${this.currentPage === totalPages ? 'disabled' : ''} onclick="Shop.goToPage(${this.currentPage + 1})">Next →</button>`;
+
+    let html = `<button class="page-nav" ${cur === 1 ? 'disabled' : ''} onclick="Shop.goToPage(${cur - 1})">‹</button>`;
+    pages.forEach(p => {
+      if (p === '...') {
+        html += `<span class="page-dots">⋯</span>`;
+      } else {
+        html += `<button class="${p === cur ? 'active' : ''}" onclick="Shop.goToPage(${p})">${p}</button>`;
+      }
+    });
+    html += `<button class="page-nav" ${cur === totalPages ? 'disabled' : ''} onclick="Shop.goToPage(${cur + 1})">›</button>`;
     container.innerHTML = html;
   },
 
