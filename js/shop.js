@@ -191,7 +191,7 @@ const Shop = {
           <div class="product-price-row">
             <div class="product-price">
               ${App.formatCurrency(p.price)}
-              ${p.mrp && p.mrp > p.price ? `<span style="text-decoration:line-through;color:var(--text-muted);font-size:0.72rem;font-weight:400;margin-left:4px;">${App.formatCurrency(p.mrp)}</span><span style="font-size:0.68rem;color:var(--success);font-weight:700;margin-left:4px;">${Math.round((p.mrp - p.price) / p.mrp * 100)}% off</span>` : ''}
+              ${p.mrp && p.mrp > p.price ? `<span style="text-decoration:line-through;color:var(--text-muted);font-size:0.72rem;font-weight:400;margin-left:4px;">${App.formatCurrency(p.mrp)}</span><span style="font-size:0.68rem;color:var(--success);font-weight:700;margin-left:4px;">${Math.round(((p.mrp - p.price) / p.mrp) * 100)}% off</span>` : ''}
             </div>
             <div class="product-desc">${p.description ? p.description.substring(0, 40) + (p.description.length > 40 ? '...' : '') : ''}</div>
           </div>
