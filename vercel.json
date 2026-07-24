@@ -1,4 +1,7 @@
 {
+  "buildCommand": "echo 'static - no build needed'",
+  "outputDirectory": ".",
+  "installCommand": "npm install",
   "functions": {
     "api/**/*.js": {
       "maxDuration": 30
