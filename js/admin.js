@@ -522,11 +522,7 @@ const Admin = {
   async saveProduct(e) {
     e.preventDefault();
     const editId = document.getElementById('pEditId').value;
-    const newImages = App.getMultiImageData('pImagesPreview');
-    let existingImages = [];
-    try { existingImages = JSON.parse(document.getElementById('pExistingImages').value || '[]'); } catch {}
-
-    const allImages = [...existingImages, ...newImages].slice(0, 5);
+    const allImages = App.getMultiImageData('pImagesPreview');
 
     const mrpVal = parseFloat(document.getElementById('pMrp').value) || 0;
     const priceVal = parseFloat(document.getElementById('pPrice').value);
