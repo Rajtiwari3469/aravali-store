@@ -497,9 +497,9 @@ const SEED_DATA = {
     { id: "p484", name: "Zinc Supplement", category: "Health & Wellness", price: 120, mrp: 140, unit: "30 tabs", image: "", description: "Zinc and Vitamin D supplement.", stock: 18, badge: "New", offer: "" },
   ],
   banners: [
-    { id: "b001", title: "Fresh Fruits", subtitle: "Get 20% off on all seasonal fruits", gradient: "linear-gradient(135deg, #2d6a4f, #40916c)", link: "shop.html?cat=Fresh Fruits", image: "", active: true, order: 1 },
-    { id: "b002", title: "Daily Essentials", subtitle: "Free delivery on orders above ₹200", gradient: "linear-gradient(135deg, #f48c06, #f4a261)", link: "shop.html", image: "", active: true, order: 2 },
-    { id: "b003", title: "New Arrivals", subtitle: "Try our newly added products", gradient: "linear-gradient(135deg, #40916c, #74c69d)", link: "shop.html", image: "", active: true, order: 3 }
+    { id: "b001", title: "Fresh Fruits", subtitle: "Get 20% off on all seasonal fruits", gradient: "linear-gradient(135deg, #2d6a4f, #40916c)", link: "/shop?cat=Fresh Fruits", image: "", active: true, order: 1 },
+    { id: "b002", title: "Daily Essentials", subtitle: "Free delivery on orders above ₹200", gradient: "linear-gradient(135deg, #f48c06, #f4a261)", link: "/shop", image: "", active: true, order: 2 },
+    { id: "b003", title: "New Arrivals", subtitle: "Try our newly added products", gradient: "linear-gradient(135deg, #40916c, #74c69d)", link: "/shop", image: "", active: true, order: 3 }
   ],
   catalogs: [
     { id: "c001", name: "Fresh Fruits", emoji: "🍎", description: "Seasonal and exotic fruits", image: "", active: true, order: 1 },

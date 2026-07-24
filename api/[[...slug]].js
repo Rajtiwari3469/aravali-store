@@ -251,8 +251,11 @@ module.exports = async function handler(req, res) {
       const user = await getUser(req);
       if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
       const id = slug.split('/')[1];
+      const ex = await sql`SELECT * FROM products WHERE id = ${id}`;
+      if (ex.length === 0) return err(res, 'Not found', 404);
+      const e = ex[0];
       const { name, description, category, price, mrp, stock, unit, image, badge, offer } = body;
-      await sql`UPDATE products SET name=${name}, description=${description || ''}, category=${category || ''}, price=${price || 0}, mrp=${mrp || 0}, stock=${stock || 0}, unit=${unit || ''}, image=${image || ''}, badge=${badge || ''}, offer=${offer || ''}, updated_at=NOW() WHERE id = ${id}`;
+      await sql`UPDATE products SET name=${name !== undefined ? name : e.name}, description=${description !== undefined ? description : e.description}, category=${category !== undefined ? category : e.category}, price=${price !== undefined ? price : e.price}, mrp=${mrp !== undefined ? mrp : e.mrp}, stock=${stock !== undefined ? stock : e.stock}, unit=${unit !== undefined ? unit : e.unit}, image=${image !== undefined ? image : e.image}, badge=${badge !== undefined ? badge : e.badge}, offer=${offer !== undefined ? offer : e.offer}, updated_at=NOW() WHERE id = ${id}`;
       return ok(res, { success: true });
     }
 
@@ -410,9 +413,12 @@ module.exports = async function handler(req, res) {
     if (slug === 'banners' && method === 'PUT') {
       const user = await getUser(req);
       if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
-      const { id, title, subtitle, gradient, link, image, active, sort_order } = body;
+      const { id } = body;
       if (!id) return err(res, 'id required');
-      await sql`UPDATE banners SET title=${title || ''}, subtitle=${subtitle || ''}, gradient=${gradient || ''}, link=${link || ''}, image=${image || ''}, active=${active !== false}, sort_order=${sort_order || 0} WHERE id = ${id}`;
+      const ex = await sql`SELECT * FROM banners WHERE id = ${id}`;
+      if (ex.length === 0) return err(res, 'Not found', 404);
+      const e = ex[0];
+      await sql`UPDATE banners SET title=${body.title !== undefined ? body.title : e.title}, subtitle=${body.subtitle !== undefined ? body.subtitle : e.subtitle}, gradient=${body.gradient !== undefined ? body.gradient : e.gradient}, link=${body.link !== undefined ? body.link : e.link}, image=${body.image !== undefined ? body.image : e.image}, active=${body.active !== undefined ? body.active : e.active}, sort_order=${body.sort_order !== undefined ? body.sort_order : e.sort_order} WHERE id = ${id}`;
       return ok(res, { success: true });
     }
 
@@ -420,8 +426,10 @@ module.exports = async function handler(req, res) {
       const user = await getUser(req);
       if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
       const id = slug.split('/')[1];
-      const { title, subtitle, gradient, link, image, active, sort_order } = body;
-      await sql`UPDATE banners SET title=${title || ''}, subtitle=${subtitle || ''}, gradient=${gradient || ''}, link=${link || ''}, image=${image || ''}, active=${active !== false}, sort_order=${sort_order || 0} WHERE id = ${id}`;
+      const ex = await sql`SELECT * FROM banners WHERE id = ${id}`;
+      if (ex.length === 0) return err(res, 'Not found', 404);
+      const e = ex[0];
+      await sql`UPDATE banners SET title=${body.title !== undefined ? body.title : e.title}, subtitle=${body.subtitle !== undefined ? body.subtitle : e.subtitle}, gradient=${body.gradient !== undefined ? body.gradient : e.gradient}, link=${body.link !== undefined ? body.link : e.link}, image=${body.image !== undefined ? body.image : e.image}, active=${body.active !== undefined ? body.active : e.active}, sort_order=${body.sort_order !== undefined ? body.sort_order : e.sort_order} WHERE id = ${id}`;
       return ok(res, { success: true });
     }
 
@@ -458,9 +466,12 @@ module.exports = async function handler(req, res) {
     if (slug === 'catalogs' && method === 'PUT') {
       const user = await getUser(req);
       if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
-      const { id, name, emoji, description, image, active, sort_order } = body;
+      const { id } = body;
       if (!id) return err(res, 'id required');
-      await sql`UPDATE catalogs SET name=${name || ''}, emoji=${emoji || ''}, description=${description || ''}, image=${image || ''}, active=${active !== false}, sort_order=${sort_order || 0} WHERE id = ${id}`;
+      const ex = await sql`SELECT * FROM catalogs WHERE id = ${id}`;
+      if (ex.length === 0) return err(res, 'Not found', 404);
+      const e = ex[0];
+      await sql`UPDATE catalogs SET name=${body.name !== undefined ? body.name : e.name}, emoji=${body.emoji !== undefined ? body.emoji : e.emoji}, description=${body.description !== undefined ? body.description : e.description}, image=${body.image !== undefined ? body.image : e.image}, active=${body.active !== undefined ? body.active : e.active}, sort_order=${body.sort_order !== undefined ? body.sort_order : e.sort_order} WHERE id = ${id}`;
       return ok(res, { success: true });
     }
 
@@ -468,8 +479,10 @@ module.exports = async function handler(req, res) {
       const user = await getUser(req);
       if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
       const id = slug.split('/')[1];
-      const { name, emoji, description, image, active, sort_order } = body;
-      await sql`UPDATE catalogs SET name=${name || ''}, emoji=${emoji || ''}, description=${description || ''}, image=${image || ''}, active=${active !== false}, sort_order=${sort_order || 0} WHERE id = ${id}`;
+      const ex = await sql`SELECT * FROM catalogs WHERE id = ${id}`;
+      if (ex.length === 0) return err(res, 'Not found', 404);
+      const e = ex[0];
+      await sql`UPDATE catalogs SET name=${body.name !== undefined ? body.name : e.name}, emoji=${body.emoji !== undefined ? body.emoji : e.emoji}, description=${body.description !== undefined ? body.description : e.description}, image=${body.image !== undefined ? body.image : e.image}, active=${body.active !== undefined ? body.active : e.active}, sort_order=${body.sort_order !== undefined ? body.sort_order : e.sort_order} WHERE id = ${id}`;
       return ok(res, { success: true });
     }
 
