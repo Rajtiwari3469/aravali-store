@@ -83,27 +83,6 @@
         const searchInput = document.querySelector('.search-bar input');
         if (searchInput) searchInput.value = q;
       }
-
-      const catalogs = DB.getAll('catalogs').filter(c => c.active).sort((a, b) => (a.order || 0) - (b.order || 0));
-      const catContainer = document.getElementById('shopCategories');
-      if (catContainer) {
-        const allChip = `<button class="category-chip ${!Shop.currentCategory || Shop.currentCategory === 'All' ? 'active' : ''}" data-category="All"><span class="emoji">🏪</span> All</button>`;
-        const catChips = catalogs.length > 0
-          ? catalogs.map(c => `
-              <button class="category-chip ${c.name === Shop.currentCategory ? 'active' : ''}" data-category="${c.name}">
-                ${c.image ? `<img src="${c.image}" style="width:20px;height:20px;border-radius:50%;object-fit:cover;">` : `<span class="emoji">${c.emoji || CATEGORY_EMOJIS[c.name] || '📦'}</span>`}
-                ${c.name}
-              </button>
-            `).join('')
-          : ['All', ...new Set(DB.getAll('products').map(p => p.category))].map(c => `
-              <button class="category-chip ${c === Shop.currentCategory ? 'active' : ''}" data-category="${c}">
-                <span class="emoji">${CATEGORY_EMOJIS[c] || '📦'}</span>
-                ${c}
-              </button>
-            `).join('');
-        catContainer.innerHTML = allChip + catChips;
-      }
-
       Shop.init();
     });
   </script>

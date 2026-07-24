@@ -6,6 +6,13 @@ const Shop = {
   sortBy: 'default',
 
   init() {
+    if (typeof SEED_DATA !== 'undefined' && DB.getAll('products').length === 0) {
+      localStorage.removeItem(DB._key('products'));
+      DB.seed('products', SEED_DATA.products);
+      DB.seed('catalogs', SEED_DATA.catalogs);
+      DB.seed('banners', SEED_DATA.banners);
+    }
+    this.currentPage = 1;
     this.renderCategories();
     this.renderProducts();
     this.initSearch();
