@@ -8,7 +8,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Product - Aravali Store</title>
   <meta name="description" content="View product details, reviews and price at Aravali Store.">
-  <link rel="canonical" href="https://aravali-store.vercel.app/product.html">
+  <link rel="canonical" href="https://aravali-store.vercel.app/product">
   <meta name="robots" content="noindex">
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
   <link rel="stylesheet" href="css/style.css">
@@ -141,8 +141,8 @@
     <button class="pd-back" onclick="history.back()">←</button>
     <div class="pd-topbar-title" id="pdTopTitle">Product</div>
     <div class="pd-topbar-actions">
-      <button onclick="window.location.href='wishlist.html'" title="Wishlist">❤️<span class="badge wishlist-count" style="display:none;">0</span></button>
-      <button onclick="window.location.href='cart.html'" title="Cart">🛒<span class="badge cart-count" style="display:none;">0</span></button>
+      <button onclick="window.location.href='/wishlist'" title="Wishlist">❤️<span class="badge wishlist-count" style="display:none;">0</span></button>
+      <button onclick="window.location.href='/cart'" title="Cart">🛒<span class="badge cart-count" style="display:none;">0</span></button>
     </div>
   </div>
 
@@ -160,10 +160,10 @@
       await App.updateWishlistBadge();
 
       const productId = App.getParam('id');
-      if (!productId) { window.location.href = 'shop.html'; return; }
+      if (!productId) { window.location.href = '/shop'; return; }
 
       const product = await DB.getById('products', productId);
-      if (!product) { window.location.href = 'shop.html'; return; }
+      if (!product) { window.location.href = '/shop'; return; }
 
       document.getElementById('pdTopTitle').textContent = product.name;
       document.title = product.name + ' - Aravali Store';
@@ -227,7 +227,7 @@
         similarProducts.forEach(sp => {
           const spInCart = cart.find(c => c.productId === sp.id);
           html += `
-            <a href="product.html?id=${sp.id}" class="similar-card">
+            <a href="/product?id=${sp.id}" class="similar-card">
               <div style="overflow:hidden;">
                 ${(sp.image || (sp.images && sp.images[0]))
                   ? `<img src="${sp.image || sp.images[0]}" class="similar-card-img" alt="${sp.name}">`

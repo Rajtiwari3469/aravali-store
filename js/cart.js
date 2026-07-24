@@ -16,7 +16,7 @@ const Cart = {
           <div class="empty-icon">🛒</div>
           <h3>Your cart is empty</h3>
           <p>Add some fresh groceries to get started!</p>
-          <a href="shop.html" class="btn btn-primary">Browse Products</a>
+          <a href="/shop" class="btn btn-primary">Browse Products</a>
         </div>`;
       if (summaryContainer) summaryContainer.innerHTML = '';
       return;
@@ -78,7 +78,7 @@ const Cart = {
         <span>Total</span>
         <span>${App.formatCurrency(total)}</span>
       </div>
-      <a href="checkout.html" class="btn btn-primary btn-lg" style="width:100%;justify-content:center;margin-top:16px;">
+      <a href="/checkout" class="btn btn-primary btn-lg" style="width:100%;justify-content:center;margin-top:16px;">
         Proceed to Checkout →
       </a>
     `;
@@ -120,7 +120,7 @@ const Checkout = {
     const items = await App.getCartItems();
 
     if (items.length === 0) {
-      window.location.href = 'cart.html';
+      window.location.href = '/cart';
       return;
     }
 
@@ -212,7 +212,7 @@ const Checkout = {
     const order = await App.placeOrder(address + ' - Phone: ' + phone + ' - ' + name, payment.value);
 
     if (order) {
-      window.location.href = 'order-success.html?id=' + (order.id || '');
+      window.location.href = '/order-success?id=' + (order.id || '');
     } else {
       App.showToast('Failed to place order', 'error');
     }

@@ -34,18 +34,18 @@
     </a>
     <ul class="nav-links">
       <li><a href="/" class="active">Home</a></li>
-      <li><a href="shop.html">Categories</a></li>
-      <li><a href="offers.html">Offers</a></li>
-      <li><a href="fresh-arrivals.html">Fresh Arrivals</a></li>
-      <li><a href="about.html">About Us</a></li>
-      <li><a href="contact.html">Contact Us</a></li>
+      <li><a href="/shop">Categories</a></li>
+      <li><a href="/offers">Offers</a></li>
+      <li><a href="/fresh-arrivals">Fresh Arrivals</a></li>
+      <li><a href="/about">About Us</a></li>
+      <li><a href="/contact">Contact Us</a></li>
     </ul>
     <div class="nav-actions">
-      <a href="wishlist.html" class="nav-icon-btn">
+      <a href="/wishlist" class="nav-icon-btn">
         <span>❤️</span>
         <span class="badge wishlist-count" style="display:none;">0</span>
       </a>
-      <a href="cart.html" class="nav-icon-btn">
+      <a href="/cart" class="nav-icon-btn">
         <span>🛒</span>
         <span class="badge cart-count" style="display:none;">0</span>
       </a>
@@ -61,8 +61,8 @@
       <h1>Fresh Groceries <br>Delivered to <span>Your Doorstep</span></h1>
       <p>Get the freshest fruits, vegetables, dairy and more delivered within minutes. Browse from the best brands at the best prices.</p>
       <div style="display:flex;gap:12px;flex-wrap:wrap;">
-        <a href="shop.html" class="btn btn-primary btn-lg">Shop Now 🛒</a>
-        <a href="about.html" class="btn btn-secondary btn-lg">Learn More</a>
+        <a href="/shop" class="btn btn-primary btn-lg">Shop Now 🛒</a>
+        <a href="/about" class="btn btn-secondary btn-lg">Learn More</a>
       </div>
     </div>
     <div class="hero-visual">
@@ -78,14 +78,14 @@
   <div class="search-container">
     <div class="search-bar">
       <input type="text" placeholder="" id="homeSearch">
-      <button class="search-btn" onclick="window.location.href='shop.html?q='+document.getElementById('homeSearch').value">Search</button>
+      <button class="search-btn" onclick="window.location.href='/shop?q='+document.getElementById('homeSearch').value">Search</button>
     </div>
   </div>
 
   <section class="section">
     <div class="section-header">
       <h2>Shop by Category</h2>
-      <a href="shop.html">View All →</a>
+      <a href="/shop">View All →</a>
     </div>
     <div class="categories-scroll" id="homeCategories"></div>
   </section>
@@ -97,7 +97,7 @@
   <section class="section">
     <div class="section-header">
       <h2>Top Rated</h2>
-      <a href="shop.html">View All →</a>
+      <a href="/shop">View All →</a>
     </div>
     <div class="product-grid" id="bestsellerGrid"></div>
   </section>
@@ -105,7 +105,7 @@
   <section class="section">
     <div class="section-header">
       <h2>Recent Products</h2>
-      <a href="shop.html">View All →</a>
+      <a href="/shop">View All →</a>
     </div>
     <div class="product-grid" id="recentGrid"></div>
   </section>
@@ -113,7 +113,7 @@
   <section class="section">
     <div class="section-header">
       <h2>Trending Now</h2>
-      <a href="shop.html">View All →</a>
+      <a href="/shop">View All →</a>
     </div>
     <div class="product-grid" id="trendingGrid"></div>
   </section>
@@ -121,7 +121,7 @@
   <section class="section">
     <div class="section-header">
       <h2>Deals & Combos</h2>
-      <a href="shop.html">View All →</a>
+      <a href="/shop">View All →</a>
     </div>
     <div class="product-grid" id="dealsGrid"></div>
   </section>
@@ -129,7 +129,7 @@
   <section class="section">
     <div class="section-header">
       <h2>Seasonal Picks</h2>
-      <a href="shop.html">View All →</a>
+      <a href="/shop">View All →</a>
     </div>
     <div class="product-grid" id="seasonalGrid"></div>
   </section>
@@ -202,22 +202,22 @@
         <h3>Quick Links</h3>
         <ul>
           <li><a href="/">Home</a></li>
-          <li><a href="shop.html">Categories</a></li>
-          <li><a href="offers.html">Offers</a></li>
-          <li><a href="fresh-arrivals.html">Fresh Arrivals</a></li>
-          <li><a href="about.html">About Us</a></li>
-          <li><a href="contact.html">Contact Us</a></li>
+          <li><a href="/shop">Categories</a></li>
+          <li><a href="/offers">Offers</a></li>
+          <li><a href="/fresh-arrivals">Fresh Arrivals</a></li>
+          <li><a href="/about">About Us</a></li>
+          <li><a href="/contact">Contact Us</a></li>
         </ul>
       </div>
       <div>
         <h3>Policies</h3>
         <ul>
-          <li><a href="privacy-policy.html">Privacy Policy</a></li>
-          <li><a href="terms-conditions.html">Terms & Conditions</a></li>
-          <li><a href="refund-return.html">Refund & Return</a></li>
-          <li><a href="shipping-policy.html">Shipping Policy</a></li>
-          <li><a href="cookie-policy.html">Cookie Policy</a></li>
-          <li><a href="faq.html">FAQ</a></li>
+          <li><a href="/privacy-policy">Privacy Policy</a></li>
+          <li><a href="/terms-conditions">Terms & Conditions</a></li>
+          <li><a href="/refund-return">Refund & Return</a></li>
+          <li><a href="/shipping-policy">Shipping Policy</a></li>
+          <li><a href="/cookie-policy">Cookie Policy</a></li>
+          <li><a href="/faq">FAQ</a></li>
         </ul>
       </div>
       <div>
@@ -289,7 +289,7 @@
       const catContainer = document.getElementById('homeCategories');
       if (catContainer && catalogs.length > 0) {
         catContainer.innerHTML = catalogs.map(cat => `
-          <a href="shop.html?cat=${cat.name}" class="category-chip">
+          <a href="/shop?cat=${cat.name}" class="category-chip">
             ${cat.image ? `<img src="${cat.image}" style="width:24px;height:24px;border-radius:50%;object-fit:cover;">` : `<span class="emoji">${cat.emoji || CATEGORY_EMOJIS[cat.name] || '📦'}</span>`}
             ${cat.name}
           </a>
@@ -298,7 +298,7 @@
         const products = await DB.getAll('products');
         const categories = [...new Set(products.map(p => p.category))];
         catContainer.innerHTML = categories.map(cat => `
-          <a href="shop.html?cat=${cat}" class="category-chip">
+          <a href="/shop?cat=${cat}" class="category-chip">
             <span class="emoji">${CATEGORY_EMOJIS[cat] || '📦'}</span>
             ${cat}
           </a>

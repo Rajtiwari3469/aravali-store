@@ -83,16 +83,16 @@ const App = {
               <div style="padding:10px 14px;font-weight:600;font-size:0.88rem;border-bottom:1px solid var(--border-color);margin-bottom:4px;">
                 ${this.currentUser.name}
               </div>
-              <a href="dashboard.html">👤 My Profile</a>
-              <a href="orders.html">📦 My Orders</a>
-              <a href="wishlist.html">❤️ Wishlist</a>
-              <a href="dashboard.html?section=addresses">📍 Addresses</a>
-              <a href="dashboard.html?section=settings">⚙️ Settings</a>
+              <a href="/dashboard">👤 My Profile</a>
+              <a href="/orders">📦 My Orders</a>
+              <a href="/wishlist">❤️ Wishlist</a>
+              <a href="/dashboard?section=addresses">📍 Addresses</a>
+              <a href="/dashboard?section=settings">⚙️ Settings</a>
               <button onclick="App.logout()" style="color:var(--danger);">🚪 Logout</button>
             </div>
           </div>`;
       } else {
-        el.innerHTML = `<a href="login.html" class="btn btn-primary btn-sm">Login</a>`;
+        el.innerHTML = `<a href="/login" class="btn btn-primary btn-sm">Login</a>`;
       }
     });
 
@@ -171,7 +171,7 @@ const App = {
     this.currentUser = null;
     const path = window.location.pathname;
     if (path.includes('/admin/')) {
-      window.location.href = 'login.html';
+      window.location.href = '/admin/login';
     } else {
       window.location.href = '/';
     }
@@ -200,7 +200,7 @@ const App = {
   async requireAuth() {
     await this.init();
     if (!this.isLoggedIn()) {
-      window.location.href = 'login.html';
+      window.location.href = '/login';
       return false;
     }
     return true;
@@ -209,7 +209,7 @@ const App = {
   async requireAdmin() {
     await this.init();
     if (!this.currentUser || !this.currentUser.isAdmin) {
-      window.location.href = window.location.pathname.includes('/admin/') ? 'login.html' : '../admin/login.html';
+      window.location.href = window.location.pathname.includes('/admin/') ? '/admin/login' : '/admin/login';
       return false;
     }
     return true;

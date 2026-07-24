@@ -3,12 +3,51 @@
   "buildCommand": "echo 'static - no build needed'",
   "outputDirectory": ".",
   "installCommand": "npm install",
+  "cleanUrls": true,
   "functions": {
     "api/**/*.js": {
       "maxDuration": 30
     }
   },
   "rewrites": [
-    { "source": "/api/:path*", "destination": "/api/[[...slug]]" }
+    { "source": "/api/:path*", "destination": "/api/[[...slug]]" },
+    { "source": "/login", "destination": "/login.html" },
+    { "source": "/register", "destination": "/register.html" },
+    { "source": "/shop", "destination": "/shop.html" },
+    { "source": "/cart", "destination": "/cart.html" },
+    { "source": "/checkout", "destination": "/checkout.html" },
+    { "source": "/dashboard", "destination": "/dashboard.html" },
+    { "source": "/orders", "destination": "/orders.html" },
+    { "source": "/wishlist", "destination": "/wishlist.html" },
+    { "source": "/about", "destination": "/about.html" },
+    { "source": "/contact", "destination": "/contact.html" },
+    { "source": "/offers", "destination": "/offers.html" },
+    { "source": "/forgot-password", "destination": "/forgot-password.html" },
+    { "source": "/order-success", "destination": "/order-success.html" },
+    { "source": "/product", "destination": "/product.html" },
+    { "source": "/fresh-arrivals", "destination": "/fresh-arrivals.html" },
+    { "source": "/categories", "destination": "/categories.html" },
+    { "source": "/deals", "destination": "/deals.html" },
+    { "source": "/trending", "destination": "/trending.html" },
+    { "source": "/bestsellers", "destination": "/bestsellers.html" },
+    { "source": "/seasonal", "destination": "/seasonal.html" },
+    { "source": "/faq", "destination": "/faq.html" },
+    { "source": "/privacy-policy", "destination": "/privacy-policy.html" },
+    { "source": "/terms-conditions", "destination": "/terms-conditions.html" },
+    { "source": "/refund-return", "destination": "/refund-return.html" },
+    { "source": "/shipping-policy", "destination": "/shipping-policy.html" },
+    { "source": "/cookie-policy", "destination": "/cookie-policy.html" },
+    { "source": "/admin", "destination": "/admin/index.html" },
+    { "source": "/admin/login", "destination": "/admin/login.html" },
+    { "source": "/admin/products", "destination": "/admin/products.html" },
+    { "source": "/admin/catalogs", "destination": "/admin/catalogs.html" },
+    { "source": "/admin/orders", "destination": "/admin/orders.html" },
+    { "source": "/admin/banners", "destination": "/admin/banners.html" },
+    { "source": "/admin/offers", "destination": "/admin/offers.html" },
+    { "source": "/admin/returns", "destination": "/admin/returns.html" },
+    { "source": "/admin/users", "destination": "/admin/users.html" },
+    { "source": "/admin/admins", "destination": "/admin/admins.html" },
+    { "source": "/admin/stock-logs", "destination": "/admin/stock-logs.html" },
+    { "source": "/admin/settings", "destination": "/admin/settings.html" }
   ]
 }

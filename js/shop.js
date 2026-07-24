@@ -164,7 +164,7 @@ const Shop = {
     const isLowStock = (p.stock || 0) > 0 && (p.stock || 0) <= 5;
 
     return `
-      <div class="product-card" data-id="${p.id}" onclick="${isOutOfStock ? '' : `window.location.href='product.html?id=${p.id}'`}" style="cursor:${isOutOfStock ? 'default' : 'pointer'}; ${isOutOfStock ? 'opacity:0.7;' : ''}">
+      <div class="product-card" data-id="${p.id}" onclick="${isOutOfStock ? '' : `window.location.href='/product?id=${p.id}'`}" style="cursor:${isOutOfStock ? 'default' : 'pointer'}; ${isOutOfStock ? 'opacity:0.7;' : ''}">
         <button class="wishlist-btn ${inWishlist ? 'active' : ''}" data-wishlist="${p.id}" onclick="event.stopPropagation();">
           ${inWishlist ? '❤️' : '🤍'}
         </button>
