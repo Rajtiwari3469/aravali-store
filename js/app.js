@@ -429,12 +429,15 @@ const App = {
     this.updateCartBadge();
   },
 
-  // Wishlist - server-side for logged-in users
+  // Wishlist - server-side for logged-in users, localStorage for guests
   async getWishlist() {
     if (this.currentUser) {
       try {
         const res = await fetch('/api/wishlist', { credentials: 'include' });
-        if (res.ok) return await res.json();
+        if (res.ok) {
+          const data = await res.json();
+          return data.map(item => item.product_id || item.productId || item);
+        }
       } catch {}
     }
     return JSON.parse(localStorage.getItem('aravali_wishlist') || '[]');
@@ -442,36 +445,40 @@ const App = {
 
   async toggleWishlist(productId) {
     if (this.currentUser) {
-      try {
-        const res = await fetch('/api/wishlist', {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ productId }),
-        });
-        if (res.ok) {
-          this.showToast('Removed from wishlist', 'info');
-          this.updateWishlistBadge();
-          return false;
-        }
-      } catch {}
-      try {
-        const res = await fetch('/api/wishlist', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({ productId }),
-        });
-        if (res.ok) {
-          this.showToast('Added to wishlist!', 'success');
-          this.updateWishlistBadge();
-          return true;
-        }
-      } catch {}
+      const inWishlist = await this.isInWishlist(productId);
+      if (inWishlist) {
+        try {
+          const res = await fetch('/api/wishlist', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ productId }),
+          });
+          if (res.ok) {
+            this.showToast('Removed from wishlist', 'info');
+            this.updateWishlistBadge();
+            return false;
+          }
+        } catch {}
+      } else {
+        try {
+          const res = await fetch('/api/wishlist', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ productId }),
+          });
+          if (res.ok) {
+            this.showToast('Added to wishlist!', 'success');
+            this.updateWishlistBadge();
+            return true;
+          }
+        } catch {}
+      }
       return false;
     }
 
-    let wishlist = await this.getWishlist();
+    let wishlist = JSON.parse(localStorage.getItem('aravali_wishlist') || '[]');
     const index = wishlist.indexOf(productId);
     if (index > -1) {
       wishlist.splice(index, 1);
