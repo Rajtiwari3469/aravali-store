@@ -1,4 +1,5 @@
 {
+  "framework": null,
   "buildCommand": "echo 'static - no build needed'",
   "outputDirectory": ".",
   "installCommand": "npm install",
