@@ -75,7 +75,11 @@ const App = {
 
   updateNav() {
     document.querySelectorAll('.nav-user-section').forEach(el => {
-      if (this.currentUser) {
+      if (this.currentUser && this.currentUser.isAdmin) {
+        el.innerHTML = `
+          <a href="/admin" class="btn btn-primary btn-sm" style="font-weight:700;">Admin Panel</a>
+          <button onclick="App.logout()" class="btn btn-sm" style="border:1px solid var(--border-color);color:var(--danger);font-size:0.78rem;padding:5px 12px;border-radius:8px;background:transparent;cursor:pointer;font-family:var(--font);">Logout</button>`;
+      } else if (this.currentUser) {
         const avatarHtml = this.currentUser.avatar
           ? `<img src="${this.currentUser.avatar}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid var(--white);box-shadow:0 2px 8px var(--shadow-sm);">`
           : `<span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--secondary));color:white;font-weight:800;font-size:0.85rem;border:2px solid var(--white);box-shadow:0 2px 8px var(--shadow-sm);">${(this.currentUser.name || 'U').charAt(0).toUpperCase()}</span>`;
