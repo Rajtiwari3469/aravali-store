@@ -72,9 +72,9 @@ const App = {
         this.currentUser = data.user;
         return { success: true, user: data.user };
       }
-      return { success: false, message: data.message || 'Invalid email or password' };
+      return { success: false, error: data.error || data.message || 'Invalid email or password' };
     } catch (e) {
-      return { success: false, message: 'Login failed. Please try again.' };
+      return { success: false, error: 'Login failed. Please try again.' };
     }
   },
 
@@ -90,9 +90,9 @@ const App = {
         this.currentUser = { ...data.admin, isAdmin: true };
         return { success: true };
       }
-      return { success: false, message: data.message || 'Invalid admin credentials' };
+      return { success: false, error: data.error || data.message || 'Invalid admin credentials' };
     } catch (e) {
-      return { success: false, message: 'Login failed. Please try again.' };
+      return { success: false, error: 'Login failed. Please try again.' };
     }
   },
 
@@ -108,9 +108,9 @@ const App = {
         this.currentUser = data.user;
         return { success: true, user: data.user };
       }
-      return { success: false, message: data.message || 'Registration failed' };
+      return { success: false, error: data.error || data.message || 'Registration failed' };
     } catch (e) {
-      return { success: false, message: 'Registration failed. Please try again.' };
+      return { success: false, error: 'Registration failed. Please try again.' };
     }
   },
 

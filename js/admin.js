@@ -80,7 +80,7 @@ const Admin = {
         } else {
           const errorEl = document.getElementById('loginError');
           if (errorEl) {
-            errorEl.textContent = result.message || 'Invalid credentials. Use admin@gmail.com';
+            errorEl.textContent = result.error || result.message || 'Invalid credentials. Use admin@gmail.com';
             errorEl.style.display = 'block';
           }
         }

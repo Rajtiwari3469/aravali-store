@@ -91,27 +91,12 @@
             setTimeout(() => { window.location.href = 'index.html'; }, 500);
           } else {
             if (errorEl) {
-              errorEl.textContent = result.message;
+              errorEl.textContent = result.error || result.message || 'Invalid email or password';
               errorEl.style.display = 'block';
             }
           }
         });
       }
-
-      document.querySelectorAll('.password-toggle').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          e.preventDefault();
-          const input = btn.closest('.password-wrapper').querySelector('input');
-          if (!input) return;
-          if (input.type === 'password') {
-            input.type = 'text';
-            btn.textContent = '🙈';
-          } else {
-            input.type = 'password';
-            btn.textContent = '👁️';
-          }
-        });
-      });
     });
   </script>
 </body>
