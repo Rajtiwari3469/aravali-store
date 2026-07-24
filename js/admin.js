@@ -464,7 +464,7 @@ const Admin = {
     modal.classList.add('active');
     const prevContainer = document.getElementById('pImagesPreview');
     if (prevContainer) prevContainer._images = [];
-    App.handleMultiImageUpload('pImages', 'pImagesPreview', 300);
+    App.handleMultiImageUpload('pImages', 'pImagesPreview', 5);
   },
 
   async editProduct(id) {
@@ -1261,7 +1261,7 @@ const Admin = {
         <button type="submit" class="btn btn-primary btn-lg" style="width:100%;justify-content:center;">Save Banner</button>
       </form>`;
     modal.classList.add('active');
-    App.handleImageUpload('bImage', 'bImagePreview', 500);
+    App.handleImageUpload('bImage', 'bImagePreview', 5);
   },
 
   async editBanner(id) {
@@ -1402,7 +1402,7 @@ const Admin = {
         <button type="submit" class="btn btn-primary btn-lg" style="width:100%;justify-content:center;">Save Catalog</button>
       </form>`;
     modal.classList.add('active');
-    App.handleImageUpload('cImage', 'cImagePreview', 300);
+    App.handleImageUpload('cImage', 'cImagePreview', 5);
   },
 
   async editCatalog(id) {

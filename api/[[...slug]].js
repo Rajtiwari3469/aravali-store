@@ -3,6 +3,19 @@ const bcrypt = require('bcryptjs');
 
 const sql = neon(process.env.NEON_DATABASE_URL);
 const SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'aravali-store-secret-key-2024');
+
+let cloudinary = null;
+async function getCloudinary() {
+  if (!cloudinary) {
+    cloudinary = (await import('cloudinary')).v2;
+    cloudinary.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET
+    });
+  }
+  return cloudinary;
+}
 let jose = null;
 async function getJose() {
   if (!jose) jose = await import('jose');
@@ -556,6 +569,17 @@ module.exports = async function handler(req, res) {
         }
       }
       return ok(res, { success: true });
+    }
+
+    // ===== UPLOAD (Cloudinary) =====
+    if (slug === 'upload' && method === 'POST') {
+      const user = await getUser(req);
+      if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
+      const { file } = body;
+      if (!file) return err(res, 'No file provided');
+      const c = await getCloudinary();
+      const result = await c.uploader.upload(file, { folder: 'aravali-store', resource_type: 'auto' });
+      return ok(res, { url: result.secure_url, public_id: result.public_id });
     }
 
     return err(res, 'Not found: ' + slug, 404);

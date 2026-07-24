@@ -443,27 +443,53 @@ const App = {
     return null;
   },
 
-  // Image upload to base64
-  handleImageUpload(inputId, previewId, maxSizeKB = 200) {
+  // Image upload to Cloudinary via API
+  async uploadFile(file, maxSizeMB = 5) {
+    if (file.size > maxSizeMB * 1024 * 1024) {
+      App.showToast(`Image too large. Max ${maxSizeMB}MB.`, 'error');
+      return null;
+    }
+    const base64 = await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target.result);
+      reader.readAsDataURL(file);
+    });
+    try {
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file: base64 })
+      });
+      const data = await res.json();
+      if (data.url) return data.url;
+      App.showToast(data.error || 'Upload failed', 'error');
+      return null;
+    } catch (e) {
+      App.showToast('Upload failed: ' + e.message, 'error');
+      return null;
+    }
+  },
+
+  handleImageUpload(inputId, previewId, maxSizeMB = 5) {
     const input = document.getElementById(inputId);
     const preview = document.getElementById(previewId);
     if (!input || !preview) return;
 
-    input.addEventListener('change', (e) => {
+    input.addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;
-      if (file.size > maxSizeKB * 1024) {
-        App.showToast(`Image too large. Max ${maxSizeKB}KB.`, 'error');
-        input.value = '';
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        preview.src = ev.target.result;
+      preview.src = '';
+      preview.style.display = 'none';
+      App.showToast('Uploading...', 'info');
+      const url = await App.uploadFile(file, maxSizeMB);
+      if (url) {
+        preview.src = url;
         preview.style.display = 'block';
-        input.dataset.imageData = ev.target.result;
-      };
-      reader.readAsDataURL(file);
+        input.dataset.imageData = url;
+        App.showToast('Image uploaded!', 'success');
+      } else {
+        input.value = '';
+      }
     });
   },
 
@@ -472,14 +498,14 @@ const App = {
     return input && input.dataset.imageData ? input.dataset.imageData : '';
   },
 
-  handleMultiImageUpload(inputId, previewContainerId, maxSizeKB = 300) {
+  handleMultiImageUpload(inputId, previewContainerId, maxSizeMB = 5) {
     const input = document.getElementById(inputId);
     const container = document.getElementById(previewContainerId);
     if (!input || !container) return;
 
     container._images = container._images || [];
 
-    input.addEventListener('change', (e) => {
+    input.addEventListener('change', async (e) => {
       const files = Array.from(e.target.files);
       if (files.length === 0) return;
 
@@ -491,19 +517,16 @@ const App = {
       }
 
       const toProcess = files.slice(0, remaining);
-      toProcess.forEach(file => {
-        if (file.size > maxSizeKB * 1024) {
-          App.showToast(`${file.name} too large. Max ${maxSizeKB}KB.`, 'error');
-          return;
-        }
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          container._images.push(ev.target.result);
+      for (const file of toProcess) {
+        App.showToast(`Uploading ${file.name}...`, 'info');
+        const url = await App.uploadFile(file, maxSizeMB);
+        if (url) {
+          container._images.push(url);
           Admin.renderImagePreviews();
-        };
-        reader.readAsDataURL(file);
-      });
+        }
+      }
       input.value = '';
+      App.showToast('All images uploaded!', 'success');
     });
   },
 
