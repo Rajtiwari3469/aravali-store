@@ -119,7 +119,7 @@ const App = {
     this.currentUser = null;
     const path = window.location.pathname;
     if (path.includes('/admin/')) {
-      window.location.href = '../login.html';
+      window.location.href = 'login.html';
     } else {
       window.location.href = 'index.html';
     }
@@ -737,9 +737,11 @@ const CATEGORY_EMOJIS = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-  App.init().then(() => {
-    App.initGlobalClick();
-    App.updateCartBadge();
-    App.updateWishlistBadge();
-  });
+  if (!window.location.pathname.includes('/admin')) {
+    App.init().then(() => {
+      App.initGlobalClick();
+      App.updateCartBadge();
+      App.updateWishlistBadge();
+    });
+  }
 });

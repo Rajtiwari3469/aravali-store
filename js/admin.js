@@ -113,7 +113,8 @@ const Admin = {
     const totalRevenue = orders.reduce((sum, o) => sum + (o.total || 0), 0);
     const pendingOrders = orders.filter(o => o.status === 'pending').length;
     const deliveredOrders = orders.filter(o => o.status === 'delivered').length;
-    const pendingReturns = await DB.getAll('returns').filter(r => r.status === 'pending').length;
+    const allReturnsDash = await DB.getAll('returns');
+    const pendingReturns = allReturnsDash.filter(r => r.status === 'pending').length;
     const outOfStockProducts = await DB.getOutOfStockProducts();
     const lowStockProducts = await DB.getLowStockProducts(5);
 
@@ -208,7 +209,7 @@ const Admin = {
 
       const monthRevenues = months.map(m => {
         const monthOrders = orders.filter(o => {
-          const d = new Date(o.orderDate || o.createdAt);
+          const d = new Date(o.order_date || o.orderDate || o.created_at || o.createdAt);
           return d.getMonth() === m.month && d.getFullYear() === m.year;
         });
         return monthOrders.reduce((sum, o) => sum + (o.total || 0), 0);
@@ -240,8 +241,13 @@ const Admin = {
         { name: 'settings', icon: '⚙️', label: 'Settings', link: 'settings.html', color: '#6c757d' }
       ];
 
+      const tableCounts = {};
+      await Promise.all(tables.map(async t => {
+        const data = await DB.getAll(t.name);
+        tableCounts[t.name] = data.length;
+      }));
       dbmsGrid.innerHTML = tables.map(t => {
-        const count = await DB.getAll(t.name).length;
+        const count = tableCounts[t.name];
         const isActive = count > 0;
         const clickAttr = t.link ? `onclick="window.location.href='${t.link}'" style="cursor:pointer;"` : '';
         return `
@@ -259,7 +265,7 @@ const Admin = {
     // Recent orders (sorted by date, newest first)
     const recentContainer = document.querySelector('.recent-orders-list');
     if (recentContainer) {
-      const sorted = [...orders].sort((a, b) => new Date(b.orderDate || b.createdAt) - new Date(a.orderDate || a.createdAt));
+      const sorted = [...orders].sort((a, b) => new Date(b.order_date || b.orderDate || b.created_at || b.createdAt) - new Date(a.order_date || a.orderDate || a.created_at || a.createdAt));
       const recent = sorted.slice(0, 5);
       if (recent.length === 0) {
         recentContainer.innerHTML = '<p style="color:var(--text-muted);padding:16px;">No orders yet.</p>';
@@ -268,7 +274,7 @@ const Admin = {
           <div class="recent-order-item">
             <div class="order-info">
               <span class="order-id">#${o.id.slice(-6).toUpperCase()}</span>
-              <span class="order-date">${o.userName || 'Guest'} • ${App.formatDate(o.orderDate || o.createdAt)}</span>
+              <span class="order-date">${o.user_name || o.userName || 'Guest'} • ${App.formatDate(o.order_date || o.orderDate || o.created_at || o.createdAt)}</span>
             </div>
             <span class="order-status ${o.status}">${o.status}</span>
             <span style="font-weight:600;">${App.formatCurrency(o.total)}</span>
@@ -338,8 +344,8 @@ const Admin = {
       <tr style="${stock <= 0 ? 'background:rgba(230,57,70,0.03);' : stock <= 5 ? 'background:rgba(244,140,6,0.03);' : ''}">
         <td>
           <div style="display:flex;align-items:center;gap:10px;">
-            ${p.image || (p.images && p.images[0])
-              ? `<img src="${p.image || p.images[0]}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;">`
+            ${p.image
+              ? `<img src="${p.image}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;">`
               : `<div style="width:40px;height:40px;border-radius:8px;background:rgba(45,106,79,0.08);display:flex;align-items:center;justify-content:center;font-size:0.65rem;color:var(--text-muted);">No Img</div>`
             }
             <div>
@@ -389,7 +395,8 @@ const Admin = {
   async showAddProduct() {
     const modal = document.getElementById('productModal');
     const content = document.getElementById('productModalContent');
-    const categories = await DB.getAll('catalogs').filter(c => c.active).map(c => c.name);
+    const allCatalogsRaw = await DB.getAll('catalogs');
+    const categories = allCatalogsRaw.filter(c => c.active).map(c => c.name);
     if (categories.length === 0) {
       categories.push('Dairy','Fruits','Vegetables','Snacks','Beverages','Grains','Bakery','Frozen');
     }
@@ -484,7 +491,7 @@ const Admin = {
     document.getElementById('pOffer').value = product.offer || '';
     document.getElementById('pEditId').value = id;
 
-    const existingImages = (product.images && product.images.length > 0) ? product.images : (product.image ? [product.image] : []);
+    const existingImages = product.image ? [product.image] : [];
     document.getElementById('pExistingImages').value = JSON.stringify(existingImages);
 
     const prevContainer = document.getElementById('pImagesPreview');
@@ -529,7 +536,6 @@ const Admin = {
       description: document.getElementById('pDesc').value.trim(),
       badge: document.getElementById('pBadge').value.trim(),
       offer: document.getElementById('pOffer').value,
-      images: allImages,
       image: allImages[0] || ''
     };
 
@@ -558,7 +564,8 @@ const Admin = {
     const main = document.querySelector('.admin-content');
     if (!main) return;
 
-    const allOrders = await DB.getAll('orders').reverse();
+    const allOrdersRaw = await DB.getAll('orders');
+    const allOrders = allOrdersRaw.reverse();
     const statusCounts = { all: allOrders.length, pending: 0, confirmed: 0, delivered: 0, cancelled: 0 };
     allOrders.forEach(o => {
       if (statusCounts[o.status] !== undefined) statusCounts[o.status]++;
@@ -621,7 +628,7 @@ const Admin = {
     const phone = phoneMatch ? phoneMatch[1] : '';
     const parts = addr.split(' - ').map(s => s.trim()).filter(Boolean);
     let cleanAddress = addr;
-    let customerName = order.userName || 'Guest';
+    let customerName = order.user_name || order.userName || 'Guest';
     if (parts.length >= 3) {
       cleanAddress = parts[0];
       customerName = parts[parts.length - 1];
@@ -656,7 +663,7 @@ const Admin = {
             ${o.status === 'refunded' ? '<option value="refunded" selected>💰 Refunded</option>' : ''}
           </select>
         </td>
-        <td style="font-size:0.82rem;">${App.formatDate(o.orderDate || o.createdAt)}</td>
+        <td style="font-size:0.82rem;">${App.formatDate(o.order_date || o.orderDate || o.created_at || o.createdAt)}</td>
         <td>
           <div class="action-btns">
             <button class="action-btn view" onclick="Admin.viewOrder('${o.id}')">View</button>
@@ -668,13 +675,14 @@ const Admin = {
   },
 
   async filterOrders(term) {
-    let orders = await DB.getAll('orders').reverse();
+    const allOrdersRaw2 = await DB.getAll('orders');
+    let orders = allOrdersRaw2.reverse();
     if (term) {
       const t = term.toLowerCase();
       orders = orders.filter(o => {
         const parsed = this.parseOrderAddress(o);
         return o.id.toLowerCase().includes(t) ||
-          (o.userName && o.userName.toLowerCase().includes(t)) ||
+          ((o.user_name || o.userName) && (o.user_name || o.userName).toLowerCase().includes(t)) ||
           o.status.toLowerCase().includes(t) ||
           parsed.phone.includes(t) ||
           parsed.cleanAddress.toLowerCase().includes(t) ||
@@ -697,7 +705,8 @@ const Admin = {
   },
 
   async deleteAllOrders() {
-    const count = await DB.getAll('orders').length;
+    const allOrdersRaw3 = await DB.getAll('orders');
+    const count = allOrdersRaw3.length;
     if (!confirm(`Delete ALL ${count} orders? This cannot be undone.`)) return;
     if (!confirm('Are you absolutely sure? This is permanent.')) return;
     await DB.clearTable('orders');
@@ -714,7 +723,7 @@ const Admin = {
     const content = document.getElementById('productModalContent');
     const parsed = this.parseOrderAddress(order);
 
-    const user = await DB.getById('users', order.userId);
+    const user = await DB.getById('users', order.user_id || order.userId);
     const userPhone = user ? user.phone : parsed.phone;
     const userName = user ? user.name : parsed.customerName;
     const userEmail = user ? user.email : '';
@@ -738,7 +747,7 @@ const Admin = {
         </div>` : ''}
         <div style="padding:12px;background:rgba(82,183,136,0.05);border-radius:10px;">
           <p style="font-size:0.72rem;color:var(--text-muted);margin:0 0 3px;">Date</p>
-          <p style="font-weight:600;margin:0;font-size:0.85rem;">${App.formatDate(order.orderDate || order.createdAt)}</p>
+          <p style="font-weight:600;margin:0;font-size:0.85rem;">${App.formatDate(order.order_date || order.orderDate || order.created_at || order.createdAt)}</p>
         </div>
       </div>
 
@@ -753,7 +762,7 @@ const Admin = {
         </div>
         <div style="flex:1;padding:10px;text-align:center;background:rgba(82,183,136,0.06);border-radius:8px;">
           <span style="font-size:0.78rem;color:var(--text-muted);">Payment</span><br>
-          <span style="font-weight:600;font-size:0.85rem;">${order.paymentMethod === 'cod' ? '💵 COD' : '📱 UPI'}</span>
+          <span style="font-weight:600;font-size:0.85rem;">${(order.payment_method || order.paymentMethod) === 'cod' ? '💵 COD' : '📱 UPI'}</span>
         </div>
       </div>
 
@@ -820,13 +829,13 @@ const Admin = {
       </div>`;
   },
 
-  renderUserRows(users, orders) {
+  async renderUserRows(users, orders) {
     if (!orders) orders = await DB.getAll('orders');
     if (users.length === 0) {
       return '<tr><td colspan="7" style="text-align:center;padding:40px;">No users registered yet.</td></tr>';
     }
     return users.map(u => {
-      const userOrders = orders.filter(o => o.userId === u.id);
+      const userOrders = orders.filter(o => (o.user_id || o.userId) === u.id);
       const totalSpent = userOrders.reduce((sum, o) => sum + (o.total || 0), 0);
       return `
         <tr>
@@ -835,7 +844,7 @@ const Admin = {
           <td>${u.phone || 'N/A'}</td>
           <td>${userOrders.length}</td>
           <td style="font-weight:600;color:var(--primary);">${totalSpent > 0 ? App.formatCurrency(totalSpent) : '-'}</td>
-          <td style="font-size:0.82rem;">${App.formatDate(u.createdAt)}</td>
+          <td style="font-size:0.82rem;">${App.formatDate(u.created_at || u.createdAt)}</td>
           <td>
             <div class="action-btns">
               <button class="action-btn view" onclick="Admin.viewUser('${u.id}')">View</button>
@@ -864,7 +873,8 @@ const Admin = {
     if (!user) return;
     const modal = document.getElementById('productModal');
     const content = document.getElementById('productModalContent');
-    const orders = await DB.getAll('orders').filter(o => o.userId === userId).sort((a, b) => new Date(b.orderDate || b.createdAt) - new Date(a.orderDate || a.createdAt));
+    const allOrdersForUser = await DB.getAll('orders');
+    const orders = allOrdersForUser.filter(o => (o.user_id || o.userId) === userId).sort((a, b) => new Date(b.order_date || b.orderDate || b.created_at || b.createdAt) - new Date(a.order_date || a.orderDate || a.created_at || a.createdAt));
     const totalSpent = orders.reduce((sum, o) => sum + (o.total || 0), 0);
     const deliveredCount = orders.filter(o => o.status === 'delivered').length;
     const pendingCount = orders.filter(o => o.status === 'pending').length;
@@ -886,7 +896,7 @@ const Admin = {
         </div>
         <div style="padding:14px;background:rgba(82,183,136,0.05);border-radius:10px;">
           <p style="font-size:0.75rem;color:var(--text-muted);margin:0 0 4px;">Joined</p>
-          <p style="font-weight:600;margin:0;font-size:0.88rem;">${App.formatDate(user.createdAt)}</p>
+          <p style="font-weight:600;margin:0;font-size:0.88rem;">${App.formatDate(user.created_at || user.createdAt)}</p>
         </div>
         <div style="padding:14px;background:rgba(82,183,136,0.05);border-radius:10px;">
           <p style="font-size:0.75rem;color:var(--text-muted);margin:0 0 4px;">Total Spent</p>
@@ -927,7 +937,7 @@ const Admin = {
             <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid rgba(45,106,79,0.06);gap:10px;">
               <div style="flex:1;">
                 <span style="font-weight:600;font-size:0.85rem;">#${o.id.slice(-6).toUpperCase()}</span>
-                <span style="font-size:0.75rem;color:var(--text-muted);margin-left:8px;">${App.formatDate(o.orderDate || o.createdAt)}</span>
+                <span style="font-size:0.75rem;color:var(--text-muted);margin-left:8px;">${App.formatDate(o.order_date || o.orderDate || o.created_at || o.createdAt)}</span>
                 <div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px;">${(o.items || []).length} items</div>
               </div>
               <span class="order-status ${o.status}" style="font-size:0.72rem;">${o.status}</span>
@@ -953,7 +963,8 @@ const Admin = {
     const main = document.querySelector('.admin-content');
     if (!main) return;
 
-    const admin = await DB.getAll('admins')[0];
+    const adminsArr = await DB.getAll('admins');
+    const admin = adminsArr[0];
     const settings = await DB.getSettings();
     main.innerHTML = `
       <div style="max-width:500px;">
@@ -1169,7 +1180,8 @@ const Admin = {
   async renderBanners() {
     const main = document.querySelector('.admin-content');
     if (!main) return;
-    const banners = await DB.getAll('banners').sort((a, b) => (a.order || 0) - (b.order || 0));
+    const allBannersRaw = await DB.getAll('banners');
+    const banners = allBannersRaw.sort((a, b) => ((a.sort_order || a.order) || 0) - ((b.sort_order || b.order) || 0));
 
     main.innerHTML = `
       <div class="admin-table-wrapper">
@@ -1195,7 +1207,7 @@ const Admin = {
                   <td style="font-size:0.82rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${b.subtitle}</td>
                   <td style="font-size:0.82rem;">${b.link}</td>
                   <td><span style="color:${b.active ? 'var(--success)' : 'var(--danger)'};font-weight:600;">${b.active ? 'Active' : 'Hidden'}</span></td>
-                  <td>${b.order || '-'}</td>
+                  <td>${b.sort_order || b.order || '-'}</td>
                   <td>
                     <div class="action-btns">
                       <button class="action-btn edit" onclick="Admin.editBanner('${b.id}')">Edit</button>
@@ -1273,7 +1285,7 @@ const Admin = {
     document.getElementById('bSubtitle').value = banner.subtitle;
     document.getElementById('bLink').value = banner.link;
     document.getElementById('bGradient').value = banner.gradient;
-    document.getElementById('bOrder').value = banner.order || 1;
+    document.getElementById('bOrder').value = banner.sort_order || banner.order || 1;
     document.getElementById('bActive').checked = banner.active;
     document.getElementById('bEditId').value = id;
     document.getElementById('bExistingImage').value = banner.image || '';
@@ -1295,6 +1307,7 @@ const Admin = {
       link: document.getElementById('bLink').value.trim(),
       gradient: document.getElementById('bGradient').value,
       order: parseInt(document.getElementById('bOrder').value) || 1,
+      sort_order: parseInt(document.getElementById('bOrder').value) || 1,
       active: document.getElementById('bActive').checked,
       image: imageData || existingImage || ''
     };
@@ -1321,8 +1334,10 @@ const Admin = {
   async renderCatalogs() {
     const main = document.querySelector('.admin-content');
     if (!main) return;
-    const catalogs = await DB.getAll('catalogs').sort((a, b) => (a.order || 0) - (b.order || 0));
+    const allCatalogsRaw2 = await DB.getAll('catalogs');
+    const catalogs = allCatalogsRaw2.sort((a, b) => ((a.sort_order || a.order) || 0) - ((b.sort_order || b.order) || 0));
 
+    const allProdsForCat = await DB.getAll('products');
     main.innerHTML = `
       <div class="admin-table-wrapper">
         <div class="admin-table-header">
@@ -1337,7 +1352,7 @@ const Admin = {
             ${catalogs.length === 0
               ? '<tr><td colspan="7" style="text-align:center;padding:40px;">No catalogs yet.</td></tr>'
               : catalogs.map(c => {
-                  const productCount = await DB.getAll('products').filter(p => p.category === c.name).length;
+                  const productCount = allProdsForCat.filter(p => p.category === c.name).length;
                   return `
                     <tr>
                       <td style="font-size:2rem;text-align:center;">
@@ -1346,7 +1361,7 @@ const Admin = {
                       <td style="font-weight:600;">${c.name}</td>
                       <td style="font-size:0.82rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${c.description}</td>
                       <td><span style="color:${c.active ? 'var(--success)' : 'var(--danger)'};font-weight:600;">${c.active ? 'Active' : 'Hidden'}</span></td>
-                      <td>${c.order || '-'}</td>
+                      <td>${c.sort_order || c.order || '-'}</td>
                       <td>${productCount}</td>
                       <td>
                         <div class="action-btns">
@@ -1413,7 +1428,7 @@ const Admin = {
     document.getElementById('cName').value = catalog.name;
     document.getElementById('cEmoji').value = catalog.emoji || '';
     document.getElementById('cDesc').value = catalog.description || '';
-    document.getElementById('cOrder').value = catalog.order || 1;
+    document.getElementById('cOrder').value = catalog.sort_order || catalog.order || 1;
     document.getElementById('cActive').checked = catalog.active;
     document.getElementById('cEditId').value = id;
     document.getElementById('cExistingImage').value = catalog.image || '';
@@ -1434,6 +1449,7 @@ const Admin = {
       emoji: document.getElementById('cEmoji').value.trim() || '📦',
       description: document.getElementById('cDesc').value.trim(),
       order: parseInt(document.getElementById('cOrder').value) || 1,
+      sort_order: parseInt(document.getElementById('cOrder').value) || 1,
       active: document.getElementById('cActive').checked,
       image: imageData || existingImage || ''
     };
@@ -1535,7 +1551,8 @@ const Admin = {
   async showStockHistory() {
     const modal = document.getElementById('productModal');
     const content = document.getElementById('productModalContent');
-    const logs = await DB.getAll('stock_logs').slice(0, 50);
+    const allLogsRaw = await DB.getAll('stock_logs');
+    const logs = allLogsRaw.slice(0, 50);
 
     content.innerHTML = `
       <button class="modal-close" onclick="Admin.closeModal()">✕</button>
@@ -1546,11 +1563,11 @@ const Admin = {
             ${logs.map(log => `
               <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(45,106,79,0.06);">
                 <div>
-                  <div style="font-weight:600;font-size:0.88rem;">${log.productName}</div>
+                  <div style="font-weight:600;font-size:0.88rem;">${log.product_name || log.productName}</div>
                   <div style="font-size:0.75rem;color:var(--text-muted);">${log.reason} • ${App.formatDate(log.timestamp)}</div>
                 </div>
-                <span style="font-weight:700;font-size:0.9rem;color:${log.change > 0 ? 'var(--success)' : 'var(--danger)'};">
-                  ${log.change > 0 ? '+' : ''}${log.change}
+                <span style="font-weight:700;font-size:0.9rem;color:${(log.change_val || log.change) > 0 ? 'var(--success)' : 'var(--danger)'};">
+                  ${(log.change_val || log.change) > 0 ? '+' : ''}${log.change_val || log.change}
                 </span>
               </div>
             `).join('')}
@@ -1569,8 +1586,13 @@ const Admin = {
       { key: 'catalogs', label: 'Catalogs', icon: '📂', color: '#9b5de5' },
       { key: 'stock_logs', label: 'Stock Logs', icon: '📋', color: '#8d99ae' }
     ];
+    const checkboxCounts = {};
+    await Promise.all(tables.map(async t => {
+      const data = await DB.getAll(t.key);
+      checkboxCounts[t.key] = data.length;
+    }));
     return tables.map((t, i) => {
-      const count = await DB.getAll(t.key).length;
+      const count = checkboxCounts[t.key];
       const isLast = i === tables.length - 1;
       return `<label class="data-row" style="display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;user-select:none;transition:background 0.15s;${!isLast ? 'border-bottom:1px solid rgba(45,106,79,0.06);' : ''}" onmouseover="this.style.background='rgba(45,106,79,0.04)'" onmouseout="this.style.background='transparent'">
         <input type="checkbox" class="data-checkbox" value="${t.key}" style="width:18px;height:18px;accent-color:var(--primary);" onchange="Admin.onCheckboxChange()">
@@ -1601,10 +1623,12 @@ const Admin = {
       return;
     }
     const selected = Array.from(checked).map(cb => cb.value);
-    const labels = selected.map(s => {
-      const count = await DB.getAll(s).length;
-      return `${s} (${count})`;
-    }).join(', ');
+    const labelParts = [];
+    for (const s of selected) {
+      const sData = await DB.getAll(s);
+      labelParts.push(`${s} (${sData.length})`);
+    }
+    const labels = labelParts.join(', ');
     if (!confirm(`⚠️ Are you sure you want to delete:\n\n${labels}?\n\nThis cannot be undone.`)) return;
 
     for (const table of selected) {
@@ -1867,7 +1891,8 @@ const Admin = {
     const main = document.querySelector('.admin-content');
     if (!main) return;
 
-    const allReturns = await DB.getAll('returns').reverse();
+    const allReturnsRaw = await DB.getAll('returns');
+    const allReturns = allReturnsRaw.reverse();
     const statusCounts = { all: allReturns.length, pending: 0, approved: 0, rejected: 0, refunded: 0 };
     allReturns.forEach(r => {
       if (statusCounts[r.status] !== undefined) statusCounts[r.status]++;
@@ -1929,13 +1954,13 @@ const Admin = {
     return returns.map(r => `
       <tr>
         <td style="font-weight:600;">#${r.id.slice(-6).toUpperCase()}</td>
-        <td style="font-weight:600;color:var(--primary);">#${(r.orderId || '').slice(-6).toUpperCase()}</td>
-        <td style="font-size:0.85rem;">${r.customerName || 'Guest'}</td>
-        <td style="font-size:0.85rem;">${r.productName || 'N/A'} ${r.qty > 1 ? '× ' + r.qty : ''}</td>
+        <td style="font-weight:600;color:var(--primary);">#${((r.order_id || r.orderId) || '').slice(-6).toUpperCase()}</td>
+        <td style="font-size:0.85rem;">${r.customer_name || r.customerName || 'Guest'}</td>
+        <td style="font-size:0.85rem;">${r.product_name || r.productName || 'N/A'} ${r.qty > 1 ? '× ' + r.qty : ''}</td>
         <td style="font-size:0.78rem;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${r.reason}">${r.reason || 'N/A'}</td>
-        <td style="font-weight:700;color:var(--danger);">${App.formatCurrency(r.refundAmount || 0)}</td>
+        <td style="font-weight:700;color:var(--danger);">${App.formatCurrency(r.refund_amount || r.refundAmount || 0)}</td>
         <td><span style="display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.75rem;font-weight:600;background:${statusColors[r.status] || '#999'}20;color:${statusColors[r.status] || '#999'};">${r.status}</span></td>
-        <td style="font-size:0.82rem;">${App.formatDate(r.createdAt)}</td>
+        <td style="font-size:0.82rem;">${App.formatDate(r.created_at || r.createdAt)}</td>
         <td>
           <div class="action-btns">
             ${r.status === 'pending' ? `
@@ -1953,14 +1978,15 @@ const Admin = {
   },
 
   async filterReturns(term) {
-    let returns = await DB.getAll('returns').reverse();
+    const allReturnsRaw2 = await DB.getAll('returns');
+    let returns = allReturnsRaw2.reverse();
     if (term) {
       const t = term.toLowerCase();
       returns = returns.filter(r =>
         r.id.toLowerCase().includes(t) ||
-        (r.orderId && r.orderId.toLowerCase().includes(t)) ||
-        (r.customerName && r.customerName.toLowerCase().includes(t)) ||
-        (r.productName && r.productName.toLowerCase().includes(t)) ||
+        ((r.order_id || r.orderId) && (r.order_id || r.orderId).toLowerCase().includes(t)) ||
+        ((r.customer_name || r.customerName) && (r.customer_name || r.customerName).toLowerCase().includes(t)) ||
+        ((r.product_name || r.productName) && (r.product_name || r.productName).toLowerCase().includes(t)) ||
         (r.reason && r.reason.toLowerCase().includes(t))
       );
     }
@@ -1971,9 +1997,10 @@ const Admin = {
     if (!confirm('Approve this return request? The order status will be updated.')) return;
     const ret = await DB.getById('returns', returnId);
     if (!ret) return;
-    await DB.update('returns', returnId, { status: 'approved', reviewedAt: new Date().toISOString() });
-    if (ret.orderId) {
-      await DB.update('orders', ret.orderId, { status: 'return_approved' });
+    await DB.update('returns', returnId, { status: 'approved', reviewed_at: new Date().toISOString(), reviewedAt: new Date().toISOString() });
+    const retOrderId1 = ret.order_id || ret.orderId;
+    if (retOrderId1) {
+      await DB.update('orders', retOrderId1, { status: 'return_approved' });
     }
     App.showToast('Return approved!', 'success');
     this.renderReturns('pending');
@@ -1984,11 +2011,12 @@ const Admin = {
     if (reason === null) return;
     const ret = await DB.getById('returns', returnId);
     if (!ret) return;
-    await DB.update('returns', returnId, { status: 'rejected', rejectReason: reason, reviewedAt: new Date().toISOString() });
-    if (ret.orderId) {
-      const order = await DB.getById('orders', ret.orderId);
+    await DB.update('returns', returnId, { status: 'rejected', reject_reason: reason, rejectReason: reason, reviewed_at: new Date().toISOString(), reviewedAt: new Date().toISOString() });
+    const retOrderId2 = ret.order_id || ret.orderId;
+    if (retOrderId2) {
+      const order = await DB.getById('orders', retOrderId2);
       if (order && order.status === 'return_requested') {
-        await DB.update('orders', ret.orderId, { status: 'delivered' });
+        await DB.update('orders', retOrderId2, { status: 'delivered' });
       }
     }
     App.showToast('Return rejected', 'info');
@@ -1998,19 +2026,21 @@ const Admin = {
   async processRefund(returnId) {
     const ret = await DB.getById('returns', returnId);
     if (!ret) return;
-    if (!confirm(`Process refund of ${App.formatCurrency(ret.refundAmount || 0)}? This cannot be undone.`)) return;
-    await DB.update('returns', returnId, { status: 'refunded', refundedAt: new Date().toISOString() });
-    if (ret.orderId) {
-      await DB.update('orders', ret.orderId, { status: 'refunded' });
+    if (!confirm(`Process refund of ${App.formatCurrency(ret.refund_amount || ret.refundAmount || 0)}? This cannot be undone.`)) return;
+    await DB.update('returns', returnId, { status: 'refunded', refunded_at: new Date().toISOString(), refundedAt: new Date().toISOString() });
+    const retOrderId3 = ret.order_id || ret.orderId;
+    if (retOrderId3) {
+      await DB.update('orders', retOrderId3, { status: 'refunded' });
     }
-    App.showToast(`Refund of ${App.formatCurrency(ret.refundAmount || 0)} processed!`, 'success');
+    App.showToast(`Refund of ${App.formatCurrency(ret.refund_amount || ret.refundAmount || 0)} processed!`, 'success');
     await this.renderReturns('approved');
   },
 
   async viewReturn(returnId) {
     const ret = await DB.getById('returns', returnId);
     if (!ret) return;
-    const order = ret.orderId ? await DB.getById('orders', ret.orderId) : null;
+    const retOrderId4 = ret.order_id || ret.orderId;
+    const order = retOrderId4 ? await DB.getById('orders', retOrderId4) : null;
     const statusColors = { pending: '#ff9800', approved: '#2196f3', rejected: '#f44336', refunded: '#9c27b0' };
 
     const modal = document.getElementById('productModal');
@@ -2026,15 +2056,15 @@ const Admin = {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;">
         <div style="padding:12px;background:rgba(82,183,136,0.05);border-radius:10px;">
           <p style="font-size:0.72rem;color:var(--text-muted);margin:0 0 3px;">Customer</p>
-          <p style="font-weight:700;margin:0;font-size:0.9rem;">${ret.customerName || 'Guest'}</p>
+          <p style="font-weight:700;margin:0;font-size:0.9rem;">${ret.customer_name || ret.customerName || 'Guest'}</p>
         </div>
         <div style="padding:12px;background:rgba(82,183,136,0.05);border-radius:10px;">
           <p style="font-size:0.72rem;color:var(--text-muted);margin:0 0 3px;">Order</p>
-          <p style="font-weight:700;margin:0;font-size:0.9rem;color:var(--primary);">#${(ret.orderId || '').slice(-6).toUpperCase()}</p>
+          <p style="font-weight:700;margin:0;font-size:0.9rem;color:var(--primary);">#${((ret.order_id || ret.orderId) || '').slice(-6).toUpperCase()}</p>
         </div>
         <div style="padding:12px;background:rgba(82,183,136,0.05);border-radius:10px;">
           <p style="font-size:0.72rem;color:var(--text-muted);margin:0 0 3px;">Product</p>
-          <p style="font-weight:700;margin:0;font-size:0.9rem;">${ret.productName || 'N/A'}</p>
+          <p style="font-weight:700;margin:0;font-size:0.9rem;">${ret.product_name || ret.productName || 'N/A'}</p>
         </div>
         <div style="padding:12px;background:rgba(82,183,136,0.05);border-radius:10px;">
           <p style="font-size:0.72rem;color:var(--text-muted);margin:0 0 3px;">Quantity</p>
@@ -2047,28 +2077,28 @@ const Admin = {
         <p style="font-weight:600;margin:0;font-size:0.9rem;">${ret.reason || 'No reason provided'}</p>
       </div>
 
-      ${ret.additionalInfo ? `
+      ${(ret.additional_info || ret.additionalInfo) ? `
       <div style="padding:14px;background:rgba(45,106,79,0.04);border-radius:10px;border-left:3px solid var(--primary);margin-bottom:16px;">
         <p style="font-size:0.72rem;color:var(--text-muted);margin:0 0 3px;">Additional Details</p>
-        <p style="font-weight:600;margin:0;font-size:0.88rem;">${ret.additionalInfo}</p>
+        <p style="font-weight:600;margin:0;font-size:0.88rem;">${ret.additional_info || ret.additionalInfo}</p>
       </div>` : ''}
 
       <div style="display:flex;gap:12px;margin-bottom:16px;">
         <div style="flex:1;padding:12px;text-align:center;background:rgba(244,67,54,0.06);border-radius:10px;">
           <span style="font-size:0.75rem;color:var(--text-muted);">Refund Amount</span><br>
-          <span style="font-weight:800;font-size:1.15rem;color:var(--danger);">${App.formatCurrency(ret.refundAmount || 0)}</span>
+          <span style="font-weight:800;font-size:1.15rem;color:var(--danger);">${App.formatCurrency(ret.refund_amount || ret.refundAmount || 0)}</span>
         </div>
         <div style="flex:1;padding:12px;text-align:center;background:rgba(45,106,79,0.06);border-radius:10px;">
           <span style="font-size:0.75rem;color:var(--text-muted);">Payment Method</span><br>
-          <span style="font-weight:700;font-size:0.95rem;">${order ? (order.paymentMethod === 'cod' ? '💵 COD' : '📱 UPI') : 'N/A'}</span>
+          <span style="font-weight:700;font-size:0.95rem;">${order ? ((order.payment_method || order.paymentMethod) === 'cod' ? '💵 COD' : '📱 UPI') : 'N/A'}</span>
         </div>
       </div>
 
       <div style="font-size:0.78rem;color:var(--text-muted);">
-        <p style="margin:4px 0;">Requested: ${App.formatDate(ret.createdAt)}</p>
-        ${ret.reviewedAt ? `<p style="margin:4px 0;">Reviewed: ${App.formatDate(ret.reviewedAt)}</p>` : ''}
-        ${ret.refundedAt ? `<p style="margin:4px 0;color:var(--primary);font-weight:600;">Refunded: ${App.formatDate(ret.refundedAt)}</p>` : ''}
-        ${ret.rejectReason ? `<p style="margin:4px 0;color:var(--danger);">Rejection reason: ${ret.rejectReason}</p>` : ''}
+        <p style="margin:4px 0;">Requested: ${App.formatDate(ret.created_at || ret.createdAt)}</p>
+        ${(ret.reviewed_at || ret.reviewedAt) ? `<p style="margin:4px 0;">Reviewed: ${App.formatDate(ret.reviewed_at || ret.reviewedAt)}</p>` : ''}
+        ${(ret.refunded_at || ret.refundedAt) ? `<p style="margin:4px 0;color:var(--primary);font-weight:600;">Refunded: ${App.formatDate(ret.refunded_at || ret.refundedAt)}</p>` : ''}
+        ${(ret.reject_reason || ret.rejectReason) ? `<p style="margin:4px 0;color:var(--danger);">Rejection reason: ${ret.reject_reason || ret.rejectReason}</p>` : ''}
       </div>
 
       ${ret.status === 'pending' ? `
@@ -2078,7 +2108,7 @@ const Admin = {
       </div>` : ''}
       ${ret.status === 'approved' ? `
       <div style="margin-top:20px;">
-        <button class="btn btn-primary" style="width:100%;" onclick="Admin.processRefund('${ret.id}');Admin.closeModal();">💰 Process Refund — ${App.formatCurrency(ret.refundAmount || 0)}</button>
+        <button class="btn btn-primary" style="width:100%;" onclick="Admin.processRefund('${ret.id}');Admin.closeModal();">💰 Process Refund — ${App.formatCurrency(ret.refund_amount || ret.refundAmount || 0)}</button>
       </div>` : ''}`;
 
     modal.classList.add('active');
@@ -2104,7 +2134,8 @@ const Admin = {
     const main = document.querySelector('.admin-content');
     if (!main) return;
 
-    const logs = await DB.getAll('stock_logs').sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    const allStockLogsRaw = await DB.getAll('stock_logs');
+    const logs = allStockLogsRaw.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
     if (logs.length === 0) {
       main.innerHTML = `
@@ -2134,10 +2165,10 @@ const Admin = {
           <tbody>
             ${logs.map(log => `
               <tr>
-                <td style="font-weight:600;">${log.productName || '-'}</td>
+                <td style="font-weight:600;">${log.product_name || log.productName || '-'}</td>
                 <td>
-                  <span style="font-weight:700;color:${log.change > 0 ? 'var(--primary)' : 'var(--danger)'};">
-                    ${log.change > 0 ? '+' : ''}${log.change}
+                  <span style="font-weight:700;color:${(log.change_val || log.change) > 0 ? 'var(--primary)' : 'var(--danger)'};">
+                    ${(log.change_val || log.change) > 0 ? '+' : ''}${log.change_val || log.change}
                   </span>
                 </td>
                 <td style="font-size:0.85rem;">${log.reason || '-'}</td>
@@ -2199,6 +2230,8 @@ const Admin = {
 };
 
 async function initAdminPage() {
+  await App.init();
+  App.initGlobalClick();
   await Admin.init();
 }
 

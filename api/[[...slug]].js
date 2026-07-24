@@ -412,10 +412,27 @@ module.exports = async function handler(req, res) {
       return ok(res, { success: true });
     }
 
+    if (slug.startsWith('banners/') && method === 'PUT') {
+      const user = await getUser(req);
+      if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
+      const id = slug.split('/')[1];
+      const { title, subtitle, gradient, link, image, active, sort_order } = body;
+      await sql`UPDATE banners SET title=${title || ''}, subtitle=${subtitle || ''}, gradient=${gradient || ''}, link=${link || ''}, image=${image || ''}, active=${active !== false}, sort_order=${sort_order || 0} WHERE id = ${id}`;
+      return ok(res, { success: true });
+    }
+
     if (slug === 'banners' && method === 'DELETE') {
       const user = await getUser(req);
       if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
       const { id } = body;
+      await sql`DELETE FROM banners WHERE id = ${id}`;
+      return ok(res, { success: true });
+    }
+
+    if (slug.startsWith('banners/') && method === 'DELETE') {
+      const user = await getUser(req);
+      if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
+      const id = slug.split('/')[1];
       await sql`DELETE FROM banners WHERE id = ${id}`;
       return ok(res, { success: true });
     }
@@ -443,10 +460,27 @@ module.exports = async function handler(req, res) {
       return ok(res, { success: true });
     }
 
+    if (slug.startsWith('catalogs/') && method === 'PUT') {
+      const user = await getUser(req);
+      if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
+      const id = slug.split('/')[1];
+      const { name, emoji, description, image, active, sort_order } = body;
+      await sql`UPDATE catalogs SET name=${name || ''}, emoji=${emoji || ''}, description=${description || ''}, image=${image || ''}, active=${active !== false}, sort_order=${sort_order || 0} WHERE id = ${id}`;
+      return ok(res, { success: true });
+    }
+
     if (slug === 'catalogs' && method === 'DELETE') {
       const user = await getUser(req);
       if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
       const { id } = body;
+      await sql`DELETE FROM catalogs WHERE id = ${id}`;
+      return ok(res, { success: true });
+    }
+
+    if (slug.startsWith('catalogs/') && method === 'DELETE') {
+      const user = await getUser(req);
+      if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
+      const id = slug.split('/')[1];
       await sql`DELETE FROM catalogs WHERE id = ${id}`;
       return ok(res, { success: true });
     }
@@ -522,10 +556,34 @@ module.exports = async function handler(req, res) {
       return ok(res, { success: true });
     }
 
+    if (slug.startsWith('admins/') && method === 'DELETE') {
+      const user = await getUser(req);
+      if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
+      const id = slug.split('/')[1];
+      const main = await sql`SELECT id FROM admins WHERE email = 'admin@gmail.com'`;
+      if (main.length > 0 && main[0].id === id) return err(res, 'Cannot delete main admin');
+      await sql`DELETE FROM admins WHERE id = ${id}`;
+      return ok(res, { success: true });
+    }
+
     if (slug === 'admins' && method === 'PUT') {
       const user = await getUser(req);
       if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
       const { id, name, email, password } = body;
+      if (password) {
+        const ph = await bcrypt.hash(password, 10);
+        await sql`UPDATE admins SET name=${name || ''}, email=${email || ''}, password_hash=${ph} WHERE id = ${id}`;
+      } else {
+        await sql`UPDATE admins SET name=${name || ''}, email=${email || ''} WHERE id = ${id}`;
+      }
+      return ok(res, { success: true });
+    }
+
+    if (slug.startsWith('admins/') && method === 'PUT') {
+      const user = await getUser(req);
+      if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
+      const id = slug.split('/')[1];
+      const { name, email, password } = body;
       if (password) {
         const ph = await bcrypt.hash(password, 10);
         await sql`UPDATE admins SET name=${name || ''}, email=${email || ''}, password_hash=${ph} WHERE id = ${id}`;
