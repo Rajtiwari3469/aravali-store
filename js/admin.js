@@ -1,14 +1,14 @@
 const Admin = {
   currentPage: 'dashboard',
 
-  init() {
+  async init() {
     const path = window.location.pathname;
     if (path.includes('login')) {
-      this.initLogin();
+      await this.initLogin();
       return;
     }
 
-    if (!App.requireAdmin()) {
+    if (!await App.requireAdmin()) {
       this.renderLoginRequired();
       return;
     }
@@ -17,37 +17,37 @@ const Admin = {
 
     if (path.includes('products')) {
       this.currentPage = 'products';
-      this.renderProducts();
+      await this.renderProducts();
     } else if (path.includes('orders')) {
       this.currentPage = 'orders';
-      this.renderOrders();
+      await this.renderOrders();
     } else if (path.includes('users')) {
       this.currentPage = 'users';
-      this.renderUsers();
+      await this.renderUsers();
     } else if (path.includes('banners')) {
       this.currentPage = 'banners';
-      this.renderBanners();
+      await this.renderBanners();
     } else if (path.includes('catalogs')) {
       this.currentPage = 'catalogs';
-      this.renderCatalogs();
+      await this.renderCatalogs();
     } else if (path.includes('settings')) {
       this.currentPage = 'settings';
-      this.initSettings();
+      await this.initSettings();
     } else if (path.includes('returns')) {
       this.currentPage = 'returns';
-      this.renderReturns();
+      await this.renderReturns();
     } else if (path.includes('offers')) {
       this.currentPage = 'offers';
-      this.renderOffers();
+      await this.renderOffers();
     } else if (path.includes('stock-logs')) {
       this.currentPage = 'stock-logs';
-      this.renderStockLogs();
+      await this.renderStockLogs();
     } else if (path.includes('admins')) {
       this.currentPage = 'admins';
-      this.renderAdmins();
+      await this.renderAdmins();
     } else {
       this.currentPage = 'dashboard';
-      this.renderDashboard();
+      await this.renderDashboard();
     }
 
     this.highlightNav();
@@ -66,15 +66,15 @@ const Admin = {
     }
   },
 
-  initLogin() {
+  async initLogin() {
     const form = document.getElementById('adminLoginForm');
     if (form) {
-      form.addEventListener('submit', (e) => {
+      form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const email = document.getElementById('adminEmail').value.trim();
         const password = document.getElementById('adminPassword').value.trim();
 
-        const result = App.loginAdmin(email, password);
+        const result = await App.loginAdmin(email, password);
         if (result.success) {
           window.location.href = 'index.html';
         } else {
@@ -103,19 +103,19 @@ const Admin = {
     if (activeLink) activeLink.classList.add('active');
   },
 
-  renderDashboard() {
+  async renderDashboard() {
     const main = document.querySelector('.admin-main');
     if (!main) return;
 
-    const products = DB.getAll('products');
-    const orders = DB.getAll('orders');
-    const users = DB.getAll('users');
+    const products = await DB.getAll('products');
+    const orders = await DB.getAll('orders');
+    const users = await DB.getAll('users');
     const totalRevenue = orders.reduce((sum, o) => sum + (o.total || 0), 0);
     const pendingOrders = orders.filter(o => o.status === 'pending').length;
     const deliveredOrders = orders.filter(o => o.status === 'delivered').length;
-    const pendingReturns = DB.getAll('returns').filter(r => r.status === 'pending').length;
-    const outOfStockProducts = DB.getOutOfStockProducts();
-    const lowStockProducts = DB.getLowStockProducts(5);
+    const pendingReturns = await DB.getAll('returns').filter(r => r.status === 'pending').length;
+    const outOfStockProducts = await DB.getOutOfStockProducts();
+    const lowStockProducts = await DB.getLowStockProducts(5);
 
     const statCards = document.querySelector('.stat-cards');
     if (statCards) {
@@ -241,7 +241,7 @@ const Admin = {
       ];
 
       dbmsGrid.innerHTML = tables.map(t => {
-        const count = DB.getAll(t.name).length;
+        const count = await DB.getAll(t.name).length;
         const isActive = count > 0;
         const clickAttr = t.link ? `onclick="window.location.href='${t.link}'" style="cursor:pointer;"` : '';
         return `
@@ -279,11 +279,11 @@ const Admin = {
   },
 
   // Products
-  renderProducts() {
+  async renderProducts() {
     const main = document.querySelector('.admin-content');
     if (!main) return;
 
-    const products = DB.getAll('products');
+    const products = await DB.getAll('products');
 
     main.innerHTML = `
       <div class="admin-table-wrapper">
@@ -374,8 +374,8 @@ const Admin = {
     }).join('');
   },
 
-  filterProducts(term) {
-    let products = DB.getAll('products');
+  async filterProducts(term) {
+    let products = await DB.getAll('products');
     if (term) {
       const t = term.toLowerCase();
       products = products.filter(p =>
@@ -386,10 +386,10 @@ const Admin = {
     document.getElementById('productsTableBody').innerHTML = this.renderProductRows(products);
   },
 
-  showAddProduct() {
+  async showAddProduct() {
     const modal = document.getElementById('productModal');
     const content = document.getElementById('productModalContent');
-    const categories = DB.getAll('catalogs').filter(c => c.active).map(c => c.name);
+    const categories = await DB.getAll('catalogs').filter(c => c.active).map(c => c.name);
     if (categories.length === 0) {
       categories.push('Dairy','Fruits','Vegetables','Snacks','Beverages','Grains','Bakery','Frozen');
     }
@@ -467,11 +467,11 @@ const Admin = {
     App.handleMultiImageUpload('pImages', 'pImagesPreview', 300);
   },
 
-  editProduct(id) {
-    const product = DB.getById('products', id);
+  async editProduct(id) {
+    const product = await DB.getById('products', id);
     if (!product) return;
 
-    this.showAddProduct();
+    await this.showAddProduct();
     document.getElementById('productModalContent').querySelector('h2').textContent = 'Edit Product';
     document.getElementById('pName').value = product.name;
     document.getElementById('pCategory').value = product.category;
@@ -507,7 +507,7 @@ const Admin = {
     `).join('');
   },
 
-  saveProduct(e) {
+  async saveProduct(e) {
     e.preventDefault();
     const editId = document.getElementById('pEditId').value;
     const newImages = App.getMultiImageData('pImagesPreview');
@@ -534,10 +534,10 @@ const Admin = {
     };
 
     if (editId) {
-      DB.update('products', editId, data);
+      await DB.update('products', editId, data);
       App.showToast('Product updated!', 'success');
     } else {
-      DB.insert('products', data);
+      await DB.insert('products', data);
       App.showToast('Product added!', 'success');
     }
 
@@ -545,20 +545,20 @@ const Admin = {
     this.renderProducts();
   },
 
-  deleteProduct(id) {
+  async deleteProduct(id) {
     if (confirm('Are you sure you want to delete this product?')) {
-      DB.delete('products', id);
+      await DB.delete('products', id);
       App.showToast('Product deleted', 'info');
-      this.renderProducts();
+      await this.renderProducts();
     }
   },
 
   // Orders
-  renderOrders(filterStatus) {
+  async renderOrders(filterStatus) {
     const main = document.querySelector('.admin-content');
     if (!main) return;
 
-    const allOrders = DB.getAll('orders').reverse();
+    const allOrders = await DB.getAll('orders').reverse();
     const statusCounts = { all: allOrders.length, pending: 0, confirmed: 0, delivered: 0, cancelled: 0 };
     allOrders.forEach(o => {
       if (statusCounts[o.status] !== undefined) statusCounts[o.status]++;
@@ -667,8 +667,8 @@ const Admin = {
     }).join('');
   },
 
-  filterOrders(term) {
-    let orders = DB.getAll('orders').reverse();
+  async filterOrders(term) {
+    let orders = await DB.getAll('orders').reverse();
     if (term) {
       const t = term.toLowerCase();
       orders = orders.filter(o => {
@@ -684,29 +684,29 @@ const Admin = {
     document.getElementById('ordersTableBody').innerHTML = this.renderOrderRows(orders);
   },
 
-  updateOrderStatus(orderId, status) {
-    DB.update('orders', orderId, { status });
+  async updateOrderStatus(orderId, status) {
+    await DB.update('orders', orderId, { status });
     App.showToast(`Order status updated to ${status}`, 'success');
   },
 
-  deleteOrder(orderId) {
+  async deleteOrder(orderId) {
     if (!confirm('Delete this order? This cannot be undone.')) return;
-    DB.delete('orders', orderId);
+    await DB.delete('orders', orderId);
     App.showToast('Order deleted', 'info');
     this.renderOrders();
   },
 
-  deleteAllOrders() {
-    const count = DB.getAll('orders').length;
+  async deleteAllOrders() {
+    const count = await DB.getAll('orders').length;
     if (!confirm(`Delete ALL ${count} orders? This cannot be undone.`)) return;
     if (!confirm('Are you absolutely sure? This is permanent.')) return;
-    DB.clearTable('orders');
+    await DB.clearTable('orders');
     App.showToast('All orders deleted', 'success');
-    this.renderOrders();
+    await this.renderOrders();
   },
 
-  viewOrder(orderId) {
-    const order = DB.getById('orders', orderId);
+  async viewOrder(orderId) {
+    const order = await DB.getById('orders', orderId);
     if (!order) return;
 
     const modal = document.getElementById('productModal');
@@ -714,7 +714,7 @@ const Admin = {
     const content = document.getElementById('productModalContent');
     const parsed = this.parseOrderAddress(order);
 
-    const user = DB.getById('users', order.userId);
+    const user = await DB.getById('users', order.userId);
     const userPhone = user ? user.phone : parsed.phone;
     const userName = user ? user.name : parsed.customerName;
     const userEmail = user ? user.email : '';
@@ -785,12 +785,12 @@ const Admin = {
   },
 
   // Users
-  renderUsers() {
+  async renderUsers() {
     const main = document.querySelector('.admin-content');
     if (!main) return;
 
-    const users = DB.getAll('users');
-    const orders = DB.getAll('orders');
+    const users = await DB.getAll('users');
+    const orders = await DB.getAll('orders');
 
     main.innerHTML = `
       <div class="admin-table-wrapper">
@@ -811,7 +811,7 @@ const Admin = {
             </tr>
           </thead>
           <tbody id="usersTableBody">
-            ${this.renderUserRows(users, orders)}
+            ${await this.renderUserRows(users, orders)}
           </tbody>
         </table>
       </div>
@@ -821,7 +821,7 @@ const Admin = {
   },
 
   renderUserRows(users, orders) {
-    if (!orders) orders = DB.getAll('orders');
+    if (!orders) orders = await DB.getAll('orders');
     if (users.length === 0) {
       return '<tr><td colspan="7" style="text-align:center;padding:40px;">No users registered yet.</td></tr>';
     }
@@ -846,8 +846,8 @@ const Admin = {
     }).join('');
   },
 
-  filterUsers(term) {
-    let users = DB.getAll('users');
+  async filterUsers(term) {
+    let users = await DB.getAll('users');
     if (term) {
       const t = term.toLowerCase();
       users = users.filter(u =>
@@ -856,15 +856,15 @@ const Admin = {
         (u.phone && u.phone.includes(t))
       );
     }
-    document.getElementById('usersTableBody').innerHTML = this.renderUserRows(users);
+    document.getElementById('usersTableBody').innerHTML = await this.renderUserRows(users);
   },
 
-  viewUser(userId) {
-    const user = DB.getById('users', userId);
+  async viewUser(userId) {
+    const user = await DB.getById('users', userId);
     if (!user) return;
     const modal = document.getElementById('productModal');
     const content = document.getElementById('productModalContent');
-    const orders = DB.getAll('orders').filter(o => o.userId === userId).sort((a, b) => new Date(b.orderDate || b.createdAt) - new Date(a.orderDate || a.createdAt));
+    const orders = await DB.getAll('orders').filter(o => o.userId === userId).sort((a, b) => new Date(b.orderDate || b.createdAt) - new Date(a.orderDate || a.createdAt));
     const totalSpent = orders.reduce((sum, o) => sum + (o.total || 0), 0);
     const deliveredCount = orders.filter(o => o.status === 'delivered').length;
     const pendingCount = orders.filter(o => o.status === 'pending').length;
@@ -940,21 +940,21 @@ const Admin = {
     modal.classList.add('active');
   },
 
-  deleteUser(id) {
+  async deleteUser(id) {
     if (confirm('Are you sure you want to delete this user?')) {
-      DB.delete('users', id);
+      await DB.delete('users', id);
       App.showToast('User deleted', 'info');
-      this.renderUsers();
+      await this.renderUsers();
     }
   },
 
   // Settings
-  initSettings() {
+  async initSettings() {
     const main = document.querySelector('.admin-content');
     if (!main) return;
 
-    const admin = DB.getAll('admins')[0];
-    const settings = DB.getSettings();
+    const admin = await DB.getAll('admins')[0];
+    const settings = await DB.getSettings();
     main.innerHTML = `
       <div style="max-width:500px;">
         <div class="glass-card" style="padding:30px;">
@@ -1063,7 +1063,7 @@ const Admin = {
               <span style="font-weight:700;font-size:0.9rem;">Select All</span>
             </label>
             <div id="dataCheckboxes" style="display:flex;flex-direction:column;">
-              ${Admin.renderDataCheckboxes()}
+              ${await this.renderDataCheckboxes()}
             </div>
           </div>
 
@@ -1084,18 +1084,18 @@ const Admin = {
         </div>
       </div>`;
 
-    document.getElementById('settingsForm').addEventListener('submit', (e) => {
+    document.getElementById('settingsForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      this.changePassword(admin.id);
+      await this.changePassword(admin.id);
     });
   },
 
-  changePassword(adminId) {
+  async changePassword(adminId) {
     const current = document.getElementById('currentPass').value;
     const newPass = document.getElementById('newPass').value;
     const confirm = document.getElementById('confirmPass').value;
 
-    const admin = DB.getById('admins', adminId);
+    const admin = await DB.getById('admins', adminId);
     if (admin.password !== current) {
       App.showToast('Current password is incorrect', 'error');
       return;
@@ -1109,35 +1109,35 @@ const Admin = {
       return;
     }
 
-    DB.update('admins', adminId, { password: newPass });
+    await DB.update('admins', adminId, { password: newPass });
     App.showToast('Password updated successfully!', 'success');
     document.getElementById('settingsForm').reset();
   },
 
-  saveUpiId() {
+  async saveUpiId() {
     const upi = document.getElementById('adminUpi').value.trim();
-    DB.saveSetting('upiId', upi);
+    await DB.saveSetting('upiId', upi);
     App.showToast(upi ? 'UPI ID saved — Online payment enabled' : 'UPI ID cleared — Only COD available', 'success');
   },
 
-  toggleBannerSwipe(enabled) {
-    DB.saveSetting('bannerSwipe', enabled);
+  async toggleBannerSwipe(enabled) {
+    await DB.saveSetting('bannerSwipe', enabled);
     App.showToast(enabled ? 'Banner auto-swipe enabled' : 'Banner auto-swipe disabled — banners fixed in grid', 'success');
   },
 
-  saveContactInfo() {
-    DB.saveSetting('contactStoreName', document.getElementById('contactStoreName').value.trim());
-    DB.saveSetting('contactAddress', document.getElementById('contactAddress').value.trim());
-    DB.saveSetting('contactPhone', document.getElementById('contactPhone').value.trim());
-    DB.saveSetting('contactEmail', document.getElementById('contactEmail').value.trim());
-    DB.saveSetting('contactSupportEmail', document.getElementById('contactSupportEmail').value.trim());
-    DB.saveSetting('contactWeekdayHours', document.getElementById('contactWeekdayHours').value.trim());
-    DB.saveSetting('contactSundayHours', document.getElementById('contactSundayHours').value.trim());
+  async saveContactInfo() {
+    await DB.saveSetting('contactStoreName', document.getElementById('contactStoreName').value.trim());
+    await DB.saveSetting('contactAddress', document.getElementById('contactAddress').value.trim());
+    await DB.saveSetting('contactPhone', document.getElementById('contactPhone').value.trim());
+    await DB.saveSetting('contactEmail', document.getElementById('contactEmail').value.trim());
+    await DB.saveSetting('contactSupportEmail', document.getElementById('contactSupportEmail').value.trim());
+    await DB.saveSetting('contactWeekdayHours', document.getElementById('contactWeekdayHours').value.trim());
+    await DB.saveSetting('contactSundayHours', document.getElementById('contactSundayHours').value.trim());
     App.showToast('Contact info saved! Public pages will update instantly.', 'success');
   },
 
-  exportData() {
-    const data = DB.exportAll();
+  async exportData() {
+    const data = await DB.exportAll();
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -1148,14 +1148,14 @@ const Admin = {
     App.showToast('Data exported successfully!', 'success');
   },
 
-  importData(event) {
+  async importData(event) {
     const file = event.target.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
         const data = JSON.parse(e.target.result);
-        DB.importAll(data);
+        await DB.importAll(data);
         App.showToast('Data imported successfully! Refreshing...', 'success');
         setTimeout(() => location.reload(), 1000);
       } catch {
@@ -1166,10 +1166,10 @@ const Admin = {
   },
 
   // Banners
-  renderBanners() {
+  async renderBanners() {
     const main = document.querySelector('.admin-content');
     if (!main) return;
-    const banners = DB.getAll('banners').sort((a, b) => (a.order || 0) - (b.order || 0));
+    const banners = await DB.getAll('banners').sort((a, b) => (a.order || 0) - (b.order || 0));
 
     main.innerHTML = `
       <div class="admin-table-wrapper">
@@ -1264,8 +1264,8 @@ const Admin = {
     App.handleImageUpload('bImage', 'bImagePreview', 500);
   },
 
-  editBanner(id) {
-    const banner = DB.getById('banners', id);
+  async editBanner(id) {
+    const banner = await DB.getById('banners', id);
     if (!banner) return;
     this.showAddBanner();
     document.getElementById('productModalContent').querySelector('h2').textContent = 'Edit Banner';
@@ -1284,7 +1284,7 @@ const Admin = {
     }
   },
 
-  saveBanner(e) {
+  async saveBanner(e) {
     e.preventDefault();
     const editId = document.getElementById('bEditId').value;
     const imageData = App.getImageData('bImage');
@@ -1299,29 +1299,29 @@ const Admin = {
       image: imageData || existingImage || ''
     };
     if (editId) {
-      DB.update('banners', editId, data);
+      await DB.update('banners', editId, data);
       App.showToast('Banner updated!', 'success');
     } else {
-      DB.insert('banners', data);
+      await DB.insert('banners', data);
       App.showToast('Banner added!', 'success');
     }
     this.closeModal();
     this.renderBanners();
   },
 
-  deleteBanner(id) {
+  async deleteBanner(id) {
     if (confirm('Delete this banner?')) {
-      DB.delete('banners', id);
+      await DB.delete('banners', id);
       App.showToast('Banner deleted', 'info');
-      this.renderBanners();
+      await this.renderBanners();
     }
   },
 
   // Catalogs
-  renderCatalogs() {
+  async renderCatalogs() {
     const main = document.querySelector('.admin-content');
     if (!main) return;
-    const catalogs = DB.getAll('catalogs').sort((a, b) => (a.order || 0) - (b.order || 0));
+    const catalogs = await DB.getAll('catalogs').sort((a, b) => (a.order || 0) - (b.order || 0));
 
     main.innerHTML = `
       <div class="admin-table-wrapper">
@@ -1337,7 +1337,7 @@ const Admin = {
             ${catalogs.length === 0
               ? '<tr><td colspan="7" style="text-align:center;padding:40px;">No catalogs yet.</td></tr>'
               : catalogs.map(c => {
-                  const productCount = DB.getAll('products').filter(p => p.category === c.name).length;
+                  const productCount = await DB.getAll('products').filter(p => p.category === c.name).length;
                   return `
                     <tr>
                       <td style="font-size:2rem;text-align:center;">
@@ -1405,8 +1405,8 @@ const Admin = {
     App.handleImageUpload('cImage', 'cImagePreview', 300);
   },
 
-  editCatalog(id) {
-    const catalog = DB.getById('catalogs', id);
+  async editCatalog(id) {
+    const catalog = await DB.getById('catalogs', id);
     if (!catalog) return;
     this.showAddCatalog();
     document.getElementById('productModalContent').querySelector('h2').textContent = 'Edit Catalog';
@@ -1424,7 +1424,7 @@ const Admin = {
     }
   },
 
-  saveCatalog(e) {
+  async saveCatalog(e) {
     e.preventDefault();
     const editId = document.getElementById('cEditId').value;
     const imageData = App.getImageData('cImage');
@@ -1438,59 +1438,59 @@ const Admin = {
       image: imageData || existingImage || ''
     };
     if (editId) {
-      DB.update('catalogs', editId, data);
+      await DB.update('catalogs', editId, data);
       App.showToast('Catalog updated!', 'success');
     } else {
-      DB.insert('catalogs', data);
+      await DB.insert('catalogs', data);
       App.showToast('Catalog added!', 'success');
     }
     this.closeModal();
     this.renderCatalogs();
   },
 
-  deleteCatalog(id) {
+  async deleteCatalog(id) {
     if (confirm('Delete this catalog? Products in this category will not be deleted.')) {
-      DB.delete('catalogs', id);
+      await DB.delete('catalogs', id);
       App.showToast('Catalog deleted', 'info');
-      this.renderCatalogs();
+      await this.renderCatalogs();
     }
   },
 
   // Stock Management
-  adjustStock(productId, delta) {
-    const product = DB.getById('products', productId);
+  async adjustStock(productId, delta) {
+    const product = await DB.getById('products', productId);
     if (!product) return;
     const newStock = Math.max(0, (product.stock || 0) + delta);
-    DB.update('products', productId, { stock: newStock });
-    DB.logStockChange(productId, product.name, delta, delta > 0 ? 'Admin restock' : 'Admin adjustment');
+    await DB.update('products', productId, { stock: newStock });
+    await DB.logStockChange(productId, product.name, delta, delta > 0 ? 'Admin restock' : 'Admin adjustment');
     App.showToast(`${product.name}: stock ${delta > 0 ? 'increased' : 'decreased'} to ${newStock}`, delta > 0 ? 'success' : 'info');
     if (this.currentPage === 'products') {
-      this.renderProducts();
+      await this.renderProducts();
     } else if (this.currentPage === 'dashboard') {
-      this.renderDashboard();
+      await this.renderDashboard();
     }
   },
 
-  setStock(productId, newStockVal) {
-    const product = DB.getById('products', productId);
+  async setStock(productId, newStockVal) {
+    const product = await DB.getById('products', productId);
     if (!product) return;
     const newStock = Math.max(0, parseInt(newStockVal) || 0);
     const oldStock = product.stock || 0;
     const change = newStock - oldStock;
-    DB.update('products', productId, { stock: newStock });
+    await DB.update('products', productId, { stock: newStock });
     if (change !== 0) {
-      DB.logStockChange(productId, product.name, change, 'Admin manual set');
+      await DB.logStockChange(productId, product.name, change, 'Admin manual set');
     }
     App.showToast(`${product.name}: stock set to ${newStock}`, 'success');
     if (this.currentPage === 'products') {
-      this.renderProducts();
+      await this.renderProducts();
     } else if (this.currentPage === 'dashboard') {
-      this.renderDashboard();
+      await this.renderDashboard();
     }
   },
 
-  editUnitInline(productId, el) {
-    const product = DB.getById('products', productId);
+  async editUnitInline(productId, el) {
+    const product = await DB.getById('products', productId);
     if (!product) return;
     const current = product.unit || '';
     el.outerHTML = `<input type="text" value="${current}" style="font-size:0.75rem;width:100px;padding:2px 6px;border:1px solid var(--primary);border-radius:4px;font-family:var(--font);" id="unitInput_${productId}" onblur="Admin.saveUnitInline('${productId}', this.value)" onkeydown="if(event.key==='Enter'){this.blur();}if(event.key==='Escape'){Admin.cancelUnitInline('${productId}','${current}');}">`;
@@ -1498,22 +1498,22 @@ const Admin = {
     if (input) { input.focus(); input.select(); }
   },
 
-  saveUnitInline(productId, newUnit) {
+  async saveUnitInline(productId, newUnit) {
     const trimmed = (newUnit || '').trim();
     if (!trimmed) { this.renderProducts(); return; }
-    const product = DB.getById('products', productId);
+    const product = await DB.getById('products', productId);
     if (!product) return;
-    DB.update('products', productId, { unit: trimmed });
+    await DB.update('products', productId, { unit: trimmed });
     App.showToast(`${product.name}: unit updated to "${trimmed}"`, 'success');
-    this.renderProducts();
+    await this.renderProducts();
   },
 
-  cancelUnitInline(productId, original) {
-    this.renderProducts();
+  async cancelUnitInline(productId, original) {
+    await this.renderProducts();
   },
 
-  quickRestock(productId) {
-    const product = DB.getById('products', productId);
+  async quickRestock(productId) {
+    const product = await DB.getById('products', productId);
     if (!product) return;
     const qty = prompt(`Restock "${product.name}"\nCurrent stock: ${product.stock}\nEnter quantity to add:`, '10');
     if (qty === null || qty === '') return;
@@ -1522,20 +1522,20 @@ const Admin = {
       App.showToast('Invalid quantity', 'error');
       return;
     }
-    DB.updateStock(productId, num);
-    DB.logStockChange(productId, product.name, num, 'Quick restock');
+    await DB.updateStock(productId, num);
+    await DB.logStockChange(productId, product.name, num, 'Quick restock');
     App.showToast(`${product.name}: +${num} units added (now ${(product.stock || 0) + num})`, 'success');
     if (this.currentPage === 'products') {
-      this.renderProducts();
+      await this.renderProducts();
     } else {
-      this.renderDashboard();
+      await this.renderDashboard();
     }
   },
 
-  showStockHistory() {
+  async showStockHistory() {
     const modal = document.getElementById('productModal');
     const content = document.getElementById('productModalContent');
-    const logs = DB.getAll('stock_logs').slice(0, 50);
+    const logs = await DB.getAll('stock_logs').slice(0, 50);
 
     content.innerHTML = `
       <button class="modal-close" onclick="Admin.closeModal()">✕</button>
@@ -1559,7 +1559,7 @@ const Admin = {
     modal.classList.add('active');
   },
 
-  renderDataCheckboxes() {
+  async renderDataCheckboxes() {
     const tables = [
       { key: 'orders', label: 'Orders', icon: '🛒', color: 'var(--accent)' },
       { key: 'returns', label: 'Returns', icon: '🔄', color: '#ff9800' },
@@ -1570,7 +1570,7 @@ const Admin = {
       { key: 'stock_logs', label: 'Stock Logs', icon: '📋', color: '#8d99ae' }
     ];
     return tables.map((t, i) => {
-      const count = DB.getAll(t.key).length;
+      const count = await DB.getAll(t.key).length;
       const isLast = i === tables.length - 1;
       return `<label class="data-row" style="display:flex;align-items:center;gap:12px;padding:12px 16px;cursor:pointer;user-select:none;transition:background 0.15s;${!isLast ? 'border-bottom:1px solid rgba(45,106,79,0.06);' : ''}" onmouseover="this.style.background='rgba(45,106,79,0.04)'" onmouseout="this.style.background='transparent'">
         <input type="checkbox" class="data-checkbox" value="${t.key}" style="width:18px;height:18px;accent-color:var(--primary);" onchange="Admin.onCheckboxChange()">
@@ -1594,7 +1594,7 @@ const Admin = {
     if (selectAll) selectAll.checked = allChecked;
   },
 
-  deleteSelectedData() {
+  async deleteSelectedData() {
     const checked = document.querySelectorAll('.data-checkbox:checked');
     if (checked.length === 0) {
       App.showToast('Please select at least one data type to delete', 'error');
@@ -1602,23 +1602,23 @@ const Admin = {
     }
     const selected = Array.from(checked).map(cb => cb.value);
     const labels = selected.map(s => {
-      const count = DB.getAll(s).length;
+      const count = await DB.getAll(s).length;
       return `${s} (${count})`;
     }).join(', ');
     if (!confirm(`⚠️ Are you sure you want to delete:\n\n${labels}?\n\nThis cannot be undone.`)) return;
 
-    selected.forEach(table => {
-      DB.clearTable(table);
-    });
+    for (const table of selected) {
+      await DB.clearTable(table);
+    }
     App.showToast(`Deleted ${selected.length} data type(s) successfully`, 'success');
     this.initSettings();
   },
 
-  deleteAllData() {
+  async deleteAllData() {
     if (!confirm('⚠️ DANGER ZONE ⚠️\n\nThis will DELETE ALL data:\n• Orders\n• Users\n• Products\n• Banners\n• Catalogs\n• Stock Logs\n• Settings\n\nOnly admin account will be kept.\n\nThis CANNOT be undone. Are you absolutely sure?')) return;
     if (!confirm('Last chance! Type OK to confirm deletion of ALL data.')) return;
 
-    DB.clearAllData();
+    await DB.clearAllData();
     App.showToast('All data deleted. Re-seeding products and catalogs...', 'success');
     setTimeout(() => location.reload(), 1200);
   },
@@ -1642,11 +1642,11 @@ const Admin = {
     { id: 'delivery', label: '🚚 Free Delivery on ₹499+', gradient: 'linear-gradient(135deg, #00cec9, #0984e3)', offerTag: '🚚 Free Delivery on ₹499+' }
   ],
 
-  renderOffers() {
+  async renderOffers() {
     const main = document.querySelector('.admin-content');
     if (!main) return;
 
-    const products = DB.getAll('products');
+    const products = await DB.getAll('products');
     const totalWithOffer = products.filter(p => p.offer).length;
 
     let html = `
@@ -1677,10 +1677,10 @@ const Admin = {
     main.innerHTML = html;
   },
 
-  showOfferCategory(categoryId) {
+  async showOfferCategory(categoryId) {
     const cat = this.OFFER_CATEGORIES.find(c => c.id === categoryId);
     if (!cat) return;
-    const products = DB.getAll('products');
+    const products = await DB.getAll('products');
     const catProducts = products.filter(p => p.offer === cat.offerTag);
     const allProducts = products.filter(p => !p.offer);
 
@@ -1734,7 +1734,7 @@ const Admin = {
     modal.classList.add('active');
   },
 
-  assignProductToOffer(categoryId) {
+  async assignProductToOffer(categoryId) {
     const cat = this.OFFER_CATEGORIES.find(c => c.id === categoryId);
     if (!cat) return;
     const select = document.getElementById('offerProductSelect');
@@ -1743,23 +1743,23 @@ const Admin = {
       App.showToast('Please select a product', 'error');
       return;
     }
-    DB.update('products', productId, { offer: cat.offerTag });
+    await DB.update('products', productId, { offer: cat.offerTag });
     App.showToast('Product added to offer!', 'success');
-    this.showOfferCategory(categoryId);
-    this.renderOffers();
+    await this.showOfferCategory(categoryId);
+    await this.renderOffers();
   },
 
-  removeProductFromOffer(productId) {
-    DB.update('products', productId, { offer: '' });
+  async removeProductFromOffer(productId) {
+    await DB.update('products', productId, { offer: '' });
     App.showToast('Product removed from offer', 'info');
     // Re-open the modal by re-rendering current category
     const modal = document.getElementById('productModal');
     if (modal) modal.classList.remove('active');
-    this.renderOffers();
+    await this.renderOffers();
   },
 
-  showBulkOfferAssign() {
-    const products = DB.getAll('products');
+  async showBulkOfferAssign() {
+    const products = await DB.getAll('products');
     const categories = this.OFFER_CATEGORIES;
 
     const modal = document.getElementById('productModal');
@@ -1829,8 +1829,8 @@ const Admin = {
     `).join('');
   },
 
-  filterBulkProducts(term) {
-    const products = DB.getAll('products');
+  async filterBulkProducts(term) {
+    const products = await DB.getAll('products');
     const t = term.toLowerCase();
     const filtered = t ? products.filter(p => p.name.toLowerCase().includes(t) || p.category.toLowerCase().includes(t)) : products;
     document.getElementById('bulkProductList').innerHTML = this.renderBulkProductRows(filtered);
@@ -1842,7 +1842,7 @@ const Admin = {
     document.querySelectorAll('.bulk-product-cb').forEach(cb => cb.checked = checked);
   },
 
-  applyBulkOffer() {
+  async applyBulkOffer() {
     const category = document.getElementById('bulkOfferCategory').value;
     if (!category) {
       App.showToast('Please select an offer category', 'error');
@@ -1854,18 +1854,20 @@ const Admin = {
       return;
     }
     const ids = Array.from(checked).map(cb => cb.value);
-    ids.forEach(id => DB.update('products', id, { offer: category }));
+    for (const id of ids) {
+      await DB.update('products', id, { offer: category });
+    }
     App.showToast(`${ids.length} product${ids.length > 1 ? 's' : ''} assigned to ${category}!`, 'success');
     this.closeModal();
     this.renderOffers();
   },
 
   // Returns & Refunds
-  renderReturns(filterStatus) {
+  async renderReturns(filterStatus) {
     const main = document.querySelector('.admin-content');
     if (!main) return;
 
-    const allReturns = DB.getAll('returns').reverse();
+    const allReturns = await DB.getAll('returns').reverse();
     const statusCounts = { all: allReturns.length, pending: 0, approved: 0, rejected: 0, refunded: 0 };
     allReturns.forEach(r => {
       if (statusCounts[r.status] !== undefined) statusCounts[r.status]++;
@@ -1950,8 +1952,8 @@ const Admin = {
     `).join('');
   },
 
-  filterReturns(term) {
-    let returns = DB.getAll('returns').reverse();
+  async filterReturns(term) {
+    let returns = await DB.getAll('returns').reverse();
     if (term) {
       const t = term.toLowerCase();
       returns = returns.filter(r =>
@@ -1965,50 +1967,50 @@ const Admin = {
     document.getElementById('returnsTableBody').innerHTML = this.renderReturnRows(returns);
   },
 
-  approveReturn(returnId) {
+  async approveReturn(returnId) {
     if (!confirm('Approve this return request? The order status will be updated.')) return;
-    const ret = DB.getById('returns', returnId);
+    const ret = await DB.getById('returns', returnId);
     if (!ret) return;
-    DB.update('returns', returnId, { status: 'approved', reviewedAt: new Date().toISOString() });
+    await DB.update('returns', returnId, { status: 'approved', reviewedAt: new Date().toISOString() });
     if (ret.orderId) {
-      DB.update('orders', ret.orderId, { status: 'return_approved' });
+      await DB.update('orders', ret.orderId, { status: 'return_approved' });
     }
     App.showToast('Return approved!', 'success');
     this.renderReturns('pending');
   },
 
-  rejectReturn(returnId) {
+  async rejectReturn(returnId) {
     const reason = prompt('Reason for rejection (optional):');
     if (reason === null) return;
-    const ret = DB.getById('returns', returnId);
+    const ret = await DB.getById('returns', returnId);
     if (!ret) return;
-    DB.update('returns', returnId, { status: 'rejected', rejectReason: reason, reviewedAt: new Date().toISOString() });
+    await DB.update('returns', returnId, { status: 'rejected', rejectReason: reason, reviewedAt: new Date().toISOString() });
     if (ret.orderId) {
-      const order = DB.getById('orders', ret.orderId);
+      const order = await DB.getById('orders', ret.orderId);
       if (order && order.status === 'return_requested') {
-        DB.update('orders', ret.orderId, { status: 'delivered' });
+        await DB.update('orders', ret.orderId, { status: 'delivered' });
       }
     }
     App.showToast('Return rejected', 'info');
-    this.renderReturns('pending');
+    await this.renderReturns('pending');
   },
 
-  processRefund(returnId) {
-    const ret = DB.getById('returns', returnId);
+  async processRefund(returnId) {
+    const ret = await DB.getById('returns', returnId);
     if (!ret) return;
     if (!confirm(`Process refund of ${App.formatCurrency(ret.refundAmount || 0)}? This cannot be undone.`)) return;
-    DB.update('returns', returnId, { status: 'refunded', refundedAt: new Date().toISOString() });
+    await DB.update('returns', returnId, { status: 'refunded', refundedAt: new Date().toISOString() });
     if (ret.orderId) {
-      DB.update('orders', ret.orderId, { status: 'refunded' });
+      await DB.update('orders', ret.orderId, { status: 'refunded' });
     }
     App.showToast(`Refund of ${App.formatCurrency(ret.refundAmount || 0)} processed!`, 'success');
-    this.renderReturns('approved');
+    await this.renderReturns('approved');
   },
 
-  viewReturn(returnId) {
-    const ret = DB.getById('returns', returnId);
+  async viewReturn(returnId) {
+    const ret = await DB.getById('returns', returnId);
     if (!ret) return;
-    const order = ret.orderId ? DB.getById('orders', ret.orderId) : null;
+    const order = ret.orderId ? await DB.getById('orders', ret.orderId) : null;
     const statusColors = { pending: '#ff9800', approved: '#2196f3', rejected: '#f44336', refunded: '#9c27b0' };
 
     const modal = document.getElementById('productModal');
@@ -2098,11 +2100,11 @@ const Admin = {
   },
 
   // Stock Logs
-  renderStockLogs() {
+  async renderStockLogs() {
     const main = document.querySelector('.admin-content');
     if (!main) return;
 
-    const logs = DB.getAll('stock_logs').sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    const logs = await DB.getAll('stock_logs').sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
     if (logs.length === 0) {
       main.innerHTML = `
@@ -2148,11 +2150,11 @@ const Admin = {
   },
 
   // Admins
-  renderAdmins() {
+  async renderAdmins() {
     const main = document.querySelector('.admin-content');
     if (!main) return;
 
-    const admins = DB.getAll('admins');
+    const admins = await DB.getAll('admins');
 
     if (admins.length === 0) {
       main.innerHTML = `
@@ -2196,8 +2198,8 @@ const Admin = {
   }
 };
 
-function initAdminPage() {
-  Admin.init();
+async function initAdminPage() {
+  await Admin.init();
 }
 
 document.addEventListener('DOMContentLoaded', () => {

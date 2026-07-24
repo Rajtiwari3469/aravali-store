@@ -116,8 +116,8 @@
   <script src="DBMS/database.js"></script>
   <script src="js/app.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const settings = DB.getSettings();
+    document.addEventListener('DOMContentLoaded', async () => {
+      const settings = await DB.getSettings();
 
       // Load contact info from admin settings
       if (settings.contactAddress) document.getElementById('displayAddress').textContent = settings.contactAddress;

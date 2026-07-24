@@ -5,26 +5,20 @@ const Shop = {
   perPage: 12,
   sortBy: 'default',
 
-  init() {
-    if (typeof SEED_DATA !== 'undefined' && DB.getAll('products').length === 0) {
-      localStorage.removeItem(DB._key('products'));
-      DB.seed('products', SEED_DATA.products);
-      DB.seed('catalogs', SEED_DATA.catalogs);
-      DB.seed('banners', SEED_DATA.banners);
-    }
+  async init() {
     this.currentPage = 1;
-    this.renderCategories();
-    this.renderProducts();
+    await this.renderCategories();
+    await this.renderProducts();
     this.initSearch();
     this.initCategoryChips();
     this.initSort();
   },
 
-  renderCategories() {
+  async renderCategories() {
     const container = document.querySelector('.categories-scroll');
     if (!container) return;
 
-    const catalogs = DB.getAll('catalogs').filter(c => c.active).sort((a, b) => (a.order || 0) - (b.order || 0));
+    const catalogs = (await DB.getAll('catalogs')).filter(c => c.active).sort((a, b) => (a.sort_order || a.order || 0) - (b.sort_order || b.order || 0));
 
     if (catalogs.length > 0) {
       const allActive = !this.currentCategory || this.currentCategory === 'All';
@@ -41,7 +35,7 @@ const Shop = {
         `).join('')}
       `;
     } else {
-      const products = DB.getAll('products');
+      const products = await DB.getAll('products');
       const categories = ['All', ...new Set(products.map(p => p.category))];
       container.innerHTML = categories.map(cat => `
         <button class="category-chip ${cat === this.currentCategory ? 'active' : ''}" data-category="${cat}">
@@ -107,8 +101,8 @@ const Shop = {
     }
   },
 
-  getFilteredProducts() {
-    let products = DB.getAll('products');
+  async getFilteredProducts() {
+    let products = await DB.getAll('products');
 
     if (this.currentCategory !== 'All') {
       products = products.filter(p => p.category === this.currentCategory);
@@ -119,7 +113,7 @@ const Shop = {
       products = products.filter(p =>
         p.name.toLowerCase().includes(term) ||
         p.category.toLowerCase().includes(term) ||
-        p.description.toLowerCase().includes(term)
+        (p.description && p.description.toLowerCase().includes(term))
       );
     }
 
@@ -133,12 +127,12 @@ const Shop = {
     return products;
   },
 
-  renderProducts() {
+  async renderProducts() {
     const container = document.querySelector('.product-grid');
     const countEl = document.querySelector('.product-count');
     if (!container) return;
 
-    const products = this.getFilteredProducts();
+    const products = await this.getFilteredProducts();
     const total = products.length;
     const totalPages = Math.ceil(total / this.perPage);
     const start = (this.currentPage - 1) * this.perPage;
@@ -164,9 +158,8 @@ const Shop = {
   },
 
   renderProductCard(p) {
-    const inWishlist = App.isInWishlist(p.id);
-    const cart = App.getCart();
-    const inCart = cart.find(c => c.productId === p.id);
+    const inWishlist = this._wishlistIds && this._wishlistIds.includes(p.id);
+    const inCart = this._cartItems && this._cartItems.find(c => c.productId === p.id);
     const isOutOfStock = (p.stock || 0) <= 0;
     const isLowStock = (p.stock || 0) > 0 && (p.stock || 0) <= 5;
 
@@ -212,18 +205,18 @@ const Shop = {
       </div>`;
   },
 
-  changeQty(productId, delta) {
-    const cart = App.getCart();
+  async changeQty(productId, delta) {
+    const cart = await App.getCart();
     const item = cart.find(c => c.productId === productId);
     if (item) {
-      App.updateCartQty(productId, item.qty + delta);
-      this.renderProducts();
+      await App.updateCartQty(productId, item.qty + delta);
+      await this.renderProducts();
     }
   },
 
-  addToCart(productId) {
-    App.addToCart(productId);
-    this.renderProducts();
+  async addToCart(productId) {
+    await App.addToCart(productId);
+    await this.renderProducts();
   },
 
   renderPagination(totalPages) {
@@ -268,10 +261,10 @@ const Shop = {
 
   attachCardEvents() {
     document.querySelectorAll('.wishlist-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
+      btn.addEventListener('click', async (e) => {
         e.stopPropagation();
-        App.toggleWishlist(btn.dataset.wishlist);
-        this.renderProducts();
+        await App.toggleWishlist(btn.dataset.wishlist);
+        await this.renderProducts();
       });
     });
   }

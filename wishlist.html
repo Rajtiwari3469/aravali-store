@@ -51,9 +51,9 @@
   <script src="js/app.js"></script>
   <script src="js/shop.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       const grid = document.getElementById('wishlistGrid');
-      const wishlist = App.getWishlist();
+      const wishlist = await App.getWishlist();
 
       if (wishlist.length === 0) {
         grid.innerHTML = `
@@ -66,10 +66,10 @@
         return;
       }
 
-      const products = wishlist.map(id => DB.getById('products', id)).filter(Boolean);
+      const products = (await Promise.all(wishlist.map(id => DB.getById('products', id)))).filter(Boolean);
 
       grid.innerHTML = products.map(p => {
-        const inCart = App.getCart().find(c => c.productId === p.id);
+        const inCart = (await App.getCart()).find(c => c.productId === p.id);
         return `
           <div class="product-card" data-id="${p.id}">
             <button class="wishlist-btn active" onclick="removeFromWishlist('${p.id}')">❤️</button>
@@ -89,8 +89,8 @@
           </div>`;
       }).join('');
 
-      window.removeFromWishlist = function(id) {
-        App.toggleWishlist(id);
+      window.removeFromWishlist = async function(id) {
+        await App.toggleWishlist(id);
         location.reload();
       };
     });

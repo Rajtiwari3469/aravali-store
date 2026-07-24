@@ -229,11 +229,11 @@
   <script src="js/app.js"></script>
   <script src="js/shop.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       // Banners from admin with auto-swipe support
-      const banners = DB.getAll('banners').filter(b => b.active).sort((a, b) => (a.order || 0) - (b.order || 0));
+      const banners = (await DB.getAll('banners')).filter(b => b.active).sort((a, b) => (a.order || 0) - (b.order || 0));
       const promoGrid = document.getElementById('promoGrid');
-      const swipeEnabled = DB.getSettings().bannerSwipe !== false;
+      const swipeEnabled = (await DB.getSettings()).bannerSwipe !== false;
       if (promoGrid && banners.length > 0) {
         if (swipeEnabled && banners.length > 1) {
           promoGrid.classList.add('swipe-mode');
@@ -274,7 +274,7 @@
       }
 
       // Catalogs from admin
-      const catalogs = DB.getAll('catalogs').filter(c => c.active).sort((a, b) => (a.order || 0) - (b.order || 0));
+      const catalogs = (await DB.getAll('catalogs')).filter(c => c.active).sort((a, b) => (a.order || 0) - (b.order || 0));
       const catContainer = document.getElementById('homeCategories');
       if (catContainer && catalogs.length > 0) {
         catContainer.innerHTML = catalogs.map(cat => `
@@ -284,7 +284,7 @@
           </a>
         `).join('');
       } else if (catContainer) {
-        const products = DB.getAll('products');
+        const products = await DB.getAll('products');
         const categories = [...new Set(products.map(p => p.category))];
         catContainer.innerHTML = categories.map(cat => `
           <a href="shop.html?cat=${cat}" class="category-chip">
@@ -295,7 +295,7 @@
       }
 
       // All products
-      const products = DB.getAll('products');
+      const products = await DB.getAll('products');
 
       // Recent
       const recent = products.slice(-16).reverse();

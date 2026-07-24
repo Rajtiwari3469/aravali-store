@@ -75,7 +75,7 @@
 
       const form = document.getElementById('registerForm');
       if (form) {
-        form.addEventListener('submit', (e) => {
+        form.addEventListener('submit', async (e) => {
           e.preventDefault();
           const name = document.getElementById('regName').value.trim();
           const email = document.getElementById('regEmail').value.trim();
@@ -99,7 +99,7 @@
             return;
           }
 
-          const result = App.register(name, email, password, phone);
+          const result = await App.register(name, email, password, phone);
           if (result.success) {
             if (errorEl) errorEl.style.display = 'none';
             App.showToast('Account created successfully!', 'success');

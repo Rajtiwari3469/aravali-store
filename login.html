@@ -70,7 +70,7 @@
 
       const form = document.getElementById('loginForm');
       if (form) {
-        form.addEventListener('submit', (e) => {
+        form.addEventListener('submit', async (e) => {
           e.preventDefault();
           const email = document.getElementById('loginEmail').value.trim();
           const password = document.getElementById('loginPassword').value;
@@ -84,7 +84,7 @@
             return;
           }
 
-          const result = App.login(email, password);
+          const result = await App.login(email, password);
           if (result.success) {
             if (errorEl) errorEl.style.display = 'none';
             App.showToast('Login successful!', 'success');

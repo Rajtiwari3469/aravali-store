@@ -1,8 +1,14 @@
 const App = {
   currentUser: null,
 
-  init() {
-    this.currentUser = JSON.parse(localStorage.getItem('aravali_currentUser') || 'null');
+  async init() {
+    try {
+      const res = await fetch('/api/auth/me');
+      if (res.ok) {
+        const data = await res.json();
+        this.currentUser = data.user || data.admin || null;
+      }
+    } catch {}
     this.updateNav();
     this.initSearchCycle();
     this.initHamburger();
@@ -50,42 +56,63 @@ const App = {
     if (dd) dd.classList.toggle('active');
   },
 
-  login(email, password) {
-    const users = DB.getAll('users');
-    const user = users.find(u => u.email === email && u.password === password);
-    if (user) {
-      this.currentUser = user;
-      localStorage.setItem('aravali_currentUser', JSON.stringify(user));
-      return { success: true, user };
+  async login(email, password) {
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        this.currentUser = data.user;
+        return { success: true, user: data.user };
+      }
+      return { success: false, message: data.message || 'Invalid email or password' };
+    } catch (e) {
+      return { success: false, message: 'Login failed. Please try again.' };
     }
-    return { success: false, message: 'Invalid email or password' };
   },
 
-  loginAdmin(email, password) {
-    const admins = DB.getAll('admins');
-    const admin = admins.find(a => a.email === email && a.password === password);
-    if (admin) {
-      this.currentUser = { ...admin, isAdmin: true };
-      localStorage.setItem('aravali_currentUser', JSON.stringify(this.currentUser));
-      return { success: true };
+  async loginAdmin(email, password) {
+    try {
+      const res = await fetch('/api/auth/admin-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        this.currentUser = { ...data.admin, isAdmin: true };
+        return { success: true };
+      }
+      return { success: false, message: data.message || 'Invalid admin credentials' };
+    } catch (e) {
+      return { success: false, message: 'Login failed. Please try again.' };
     }
-    return { success: false, message: 'Invalid admin credentials' };
   },
 
-  register(name, email, password, phone) {
-    const users = DB.getAll('users');
-    if (users.find(u => u.email === email)) {
-      return { success: false, message: 'Email already registered' };
+  async register(name, email, password, phone) {
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password, phone }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        this.currentUser = data.user;
+        return { success: true, user: data.user };
+      }
+      return { success: false, message: data.message || 'Registration failed' };
+    } catch (e) {
+      return { success: false, message: 'Registration failed. Please try again.' };
     }
-    const user = DB.insert('users', { name, email, password, phone });
-    this.currentUser = user;
-    localStorage.setItem('aravali_currentUser', JSON.stringify(user));
-    return { success: true, user };
   },
 
-  logout() {
+  async logout() {
+    try { await fetch('/api/auth/logout', { method: 'POST' }); } catch {}
     this.currentUser = null;
-    localStorage.removeItem('aravali_currentUser');
     const path = window.location.pathname;
     if (path.includes('/admin/')) {
       window.location.href = '../login.html';
@@ -102,21 +129,19 @@ const App = {
     return this.currentUser && this.currentUser.isAdmin;
   },
 
-  updateCurrentUser(data) {
+  async updateCurrentUser(data) {
     this.currentUser = { ...this.currentUser, ...data };
-    localStorage.setItem('aravali_currentUser', JSON.stringify(this.currentUser));
-    // Also update in users DB
     if (this.currentUser.id && !this.currentUser.isAdmin) {
-      DB.update('users', this.currentUser.id, data);
+      await DB.update('users', this.currentUser.id, data);
     }
   },
 
-  getOrders() {
+  async getOrders() {
     if (!this.currentUser) return [];
-    return DB.query('orders', o => o.userId === this.currentUser.id);
+    return await DB.query('orders', o => o.user_id === this.currentUser.id || o.userId === this.currentUser.id);
   },
 
-  requireAuth() {
+  async requireAuth() {
     if (!this.isLoggedIn()) {
       window.location.href = 'login.html';
       return false;
@@ -124,31 +149,53 @@ const App = {
     return true;
   },
 
-  requireAdmin() {
-    const user = JSON.parse(localStorage.getItem('aravali_currentUser') || 'null');
-    if (!user || !user.isAdmin) {
+  async requireAdmin() {
+    if (!this.currentUser || !this.currentUser.isAdmin) {
       window.location.href = window.location.pathname.includes('/admin/') ? 'login.html' : '../admin/login.html';
       return false;
     }
     return true;
   },
 
-  // Cart
-  getCart() {
+  // Cart - server-side for logged-in users, localStorage fallback for guests
+  async getCart() {
+    if (this.currentUser) {
+      try {
+        const res = await fetch('/api/cart');
+        if (res.ok) return await res.json();
+      } catch {}
+    }
     return JSON.parse(localStorage.getItem('aravali_cart') || '[]');
   },
 
-  saveCart(cart) {
+  async saveCart(cart) {
     localStorage.setItem('aravali_cart', JSON.stringify(cart));
     this.updateCartBadge();
   },
 
-  addToCart(productId, qty = 1) {
-    const product = DB.getById('products', productId);
+  async addToCart(productId, qty = 1) {
+    if (this.currentUser) {
+      try {
+        const res = await fetch('/api/cart', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ productId, qty }),
+        });
+        if (res.ok) {
+          this.showToast('Added to cart!', 'success');
+          this.updateCartBadge();
+          return;
+        }
+        const data = await res.json();
+        this.showToast(data.error || 'Failed to add to cart', 'error');
+        return;
+      } catch {}
+    }
+
+    const product = await DB.getById('products', productId);
     if (!product) return;
 
-    // Check stock
-    const cart = this.getCart();
+    const cart = await this.getCart();
     const existing = cart.find(c => c.productId === productId);
     const currentQty = existing ? existing.qty : 0;
     const requestedQty = currentQty + qty;
@@ -167,80 +214,156 @@ const App = {
     } else {
       cart.push({ productId, qty });
     }
-    this.saveCart(cart);
+    await this.saveCart(cart);
     this.showToast('Added to cart!', 'success');
   },
 
-  removeFromCart(productId) {
-    let cart = this.getCart();
+  async removeFromCart(productId) {
+    if (this.currentUser) {
+      try {
+        await fetch('/api/cart', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ productId }),
+        });
+        this.updateCartBadge();
+        return;
+      } catch {}
+    }
+    let cart = await this.getCart();
     cart = cart.filter(c => c.productId !== productId);
-    this.saveCart(cart);
+    await this.saveCart(cart);
   },
 
-  updateCartQty(productId, qty) {
-    const cart = this.getCart();
+  async updateCartQty(productId, qty) {
+    if (this.currentUser) {
+      if (qty <= 0) {
+        return this.removeFromCart(productId);
+      }
+      try {
+        await fetch('/api/cart', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ productId, qty }),
+        });
+        this.updateCartBadge();
+        return;
+      } catch {}
+    }
+
+    const cart = await this.getCart();
     const item = cart.find(c => c.productId === productId);
     if (item) {
       if (qty <= 0) {
-        this.removeFromCart(productId);
+        await this.removeFromCart(productId);
       } else {
-        const product = DB.getById('products', productId);
+        const product = await DB.getById('products', productId);
         if (product && qty > (product.stock || 0)) {
           this.showToast(`Only ${product.stock} units available for ${product.name}`, 'error');
           qty = product.stock || 0;
           if (qty <= 0) {
-            this.removeFromCart(productId);
+            await this.removeFromCart(productId);
             return;
           }
         }
         item.qty = qty;
-        this.saveCart(cart);
+        await this.saveCart(cart);
       }
     }
   },
 
-  getCartCount() {
-    return this.getCart().reduce((sum, c) => sum + c.qty, 0);
+  async getCartCount() {
+    const cart = await this.getCart();
+    return cart.reduce((sum, c) => sum + c.qty, 0);
   },
 
-  getCartTotal() {
-    const cart = this.getCart();
+  async getCartTotal() {
+    const cart = await this.getCart();
     let total = 0;
-    cart.forEach(c => {
-      const product = DB.getById('products', c.productId);
+    for (const c of cart) {
+      const product = await DB.getById('products', c.productId);
       if (product) total += product.price * c.qty;
-    });
+    }
     return total;
   },
 
-  getCartItems() {
-    const cart = this.getCart();
-    return cart.map(c => {
-      const product = DB.getById('products', c.productId);
-      return { ...c, product };
-    }).filter(c => c.product);
+  async getCartItems() {
+    const cart = await this.getCart();
+    const items = [];
+    for (const c of cart) {
+      const product = await DB.getById('products', c.productId);
+      if (product) items.push({ ...c, product });
+    }
+    return items;
   },
 
   updateCartBadge() {
-    const count = this.getCartCount();
-    document.querySelectorAll('.cart-count').forEach(el => {
-      el.textContent = count;
-      el.style.display = count > 0 ? 'flex' : 'none';
+    this.getCartCount().then(count => {
+      document.querySelectorAll('.cart-count').forEach(el => {
+        el.textContent = count;
+        el.style.display = count > 0 ? 'flex' : 'none';
+      });
     });
   },
 
-  clearCart() {
+  async clearCart() {
+    if (this.currentUser) {
+      try {
+        const cart = await this.getCart();
+        for (const item of cart) {
+          await fetch('/api/cart', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ productId: item.productId }),
+          });
+        }
+      } catch {}
+    }
     localStorage.removeItem('aravali_cart');
     this.updateCartBadge();
   },
 
-  // Wishlist
-  getWishlist() {
+  // Wishlist - server-side for logged-in users
+  async getWishlist() {
+    if (this.currentUser) {
+      try {
+        const res = await fetch('/api/wishlist');
+        if (res.ok) return await res.json();
+      } catch {}
+    }
     return JSON.parse(localStorage.getItem('aravali_wishlist') || '[]');
   },
 
-  toggleWishlist(productId) {
-    let wishlist = this.getWishlist();
+  async toggleWishlist(productId) {
+    if (this.currentUser) {
+      try {
+        const res = await fetch('/api/wishlist', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ productId }),
+        });
+        if (res.ok) {
+          this.showToast('Removed from wishlist', 'info');
+          this.updateWishlistBadge();
+          return false;
+        }
+      } catch {}
+      try {
+        const res = await fetch('/api/wishlist', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ productId }),
+        });
+        if (res.ok) {
+          this.showToast('Added to wishlist!', 'success');
+          this.updateWishlistBadge();
+          return true;
+        }
+      } catch {}
+      return false;
+    }
+
+    let wishlist = await this.getWishlist();
     const index = wishlist.indexOf(productId);
     if (index > -1) {
       wishlist.splice(index, 1);
@@ -254,28 +377,30 @@ const App = {
     return wishlist.includes(productId);
   },
 
-  isInWishlist(productId) {
-    return this.getWishlist().includes(productId);
+  async isInWishlist(productId) {
+    const wishlist = await this.getWishlist();
+    return wishlist.includes(productId);
   },
 
-  getWishlistCount() {
-    return this.getWishlist().length;
+  async getWishlistCount() {
+    const wishlist = await this.getWishlist();
+    return wishlist.length;
   },
 
   updateWishlistBadge() {
-    const count = this.getWishlistCount();
-    document.querySelectorAll('.wishlist-count').forEach(el => {
-      el.textContent = count;
-      el.style.display = count > 0 ? 'flex' : 'none';
+    this.getWishlistCount().then(count => {
+      document.querySelectorAll('.wishlist-count').forEach(el => {
+        el.textContent = count;
+        el.style.display = count > 0 ? 'flex' : 'none';
+      });
     });
   },
 
   // Orders
-  placeOrder(address, paymentMethod) {
-    const cartItems = this.getCartItems();
+  async placeOrder(address, paymentMethod) {
+    const cartItems = await this.getCartItems();
     if (cartItems.length === 0) return null;
 
-    // Check stock for all items
     for (const item of cartItems) {
       if ((item.product.stock || 0) < item.qty) {
         App.showToast(`${item.product.name} is out of stock (only ${item.product.stock} left)`, 'error');
@@ -283,37 +408,39 @@ const App = {
       }
     }
 
-    const subtotal = this.getCartTotal();
+    const subtotal = cartItems.reduce((sum, c) => sum + c.product.price * c.qty, 0);
     const delivery = subtotal > 200 ? 0 : 30;
     const total = subtotal + delivery;
 
-    const order = DB.insert('orders', {
-      userId: this.currentUser ? this.currentUser.id : 'guest',
-      userName: this.currentUser ? this.currentUser.name : 'Guest',
-      items: cartItems.map(c => ({
-        productId: c.productId,
-        name: c.product.name,
-        price: c.product.price,
-        qty: c.qty,
-        unit: c.product.unit
-      })),
-      address,
-      paymentMethod,
-      subtotal,
-      delivery,
-      total,
-      status: 'pending',
-      orderDate: new Date().toISOString()
-    });
+    try {
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: cartItems.map(c => ({
+            productId: c.productId,
+            name: c.product.name,
+            price: c.product.price,
+            qty: c.qty,
+            unit: c.product.unit
+          })),
+          address,
+          paymentMethod,
+          subtotal,
+          delivery,
+          total,
+          status: 'pending',
+          orderDate: new Date().toISOString()
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        await this.clearCart();
+        return data.record || data;
+      }
+    } catch {}
 
-    // Deduct stock for each product
-    for (const item of cartItems) {
-      DB.updateStock(item.productId, -(item.qty));
-      DB.logStockChange(item.productId, item.product.name, -(item.qty), `Order #${order.id.slice(-6).toUpperCase()}`);
-    }
-
-    this.clearCart();
-    return order;
+    return null;
   },
 
   // Image upload to base64
@@ -393,7 +520,6 @@ const App = {
     }
   },
 
-  // Product image (emoji fallback)
   getProductEmoji(category) {
     return CATEGORY_EMOJIS[category] || '🛒';
   },
@@ -402,7 +528,7 @@ const App = {
     return CATEGORY_EMOJIS[category] || '🛒';
   },
 
-  // Search placeholder auto-cycle (Blinkit-style slow swipe)
+  // Search placeholder auto-cycle
   initSearchCycle() {
     const searchInput = document.querySelector('.search-bar input');
     if (!searchInput) return;
@@ -484,7 +610,6 @@ const App = {
     showNextPlaceholder();
   },
 
-  // Hamburger
   initHamburger() {
     const hamburger = document.querySelector('.hamburger');
     const navLinks = document.querySelector('.nav-links');
@@ -495,7 +620,6 @@ const App = {
     }
   },
 
-  // Toast
   initToast() {
     if (!document.querySelector('.toast-container')) {
       const container = document.createElement('div');
@@ -519,7 +643,6 @@ const App = {
     }, 2500);
   },
 
-  // URL params
   getParam(name) {
     const params = new URLSearchParams(window.location.search);
     return params.get(name);
@@ -545,10 +668,9 @@ const App = {
   },
 
   formatCurrency(amount) {
-    return '₹' + amount.toFixed(0);
+    return '₹' + Number(amount).toFixed(0);
   },
 
-  // Close dropdowns on outside click
   initGlobalClick() {
     document.addEventListener('click', (e) => {
       if (!e.target.closest('.user-dropdown')) {
@@ -559,7 +681,6 @@ const App = {
   }
 };
 
-// Category emojis map
 const CATEGORY_EMOJIS = {
   'All': '🏪',
   'Fresh Fruits': '🍎',
@@ -589,8 +710,9 @@ const CATEGORY_EMOJIS = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-  App.init();
-  App.initGlobalClick();
-  App.updateCartBadge();
-  App.updateWishlistBadge();
+  App.init().then(() => {
+    App.initGlobalClick();
+    App.updateCartBadge();
+    App.updateWishlistBadge();
+  });
 });

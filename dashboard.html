@@ -324,22 +324,22 @@
   <script src="DBMS/database.js"></script>
   <script src="js/app.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       if (!App.requireAuth()) return;
 
       const Dash = {
         currentSection: 'profile',
         editingAddrId: null,
 
-        init() {
+        async init() {
           const params = new URLSearchParams(window.location.search);
           const section = params.get('section') || 'profile';
-          this.go(section);
-          this.loadProfile();
+          await this.go(section);
+          await this.loadProfile();
           this.initAvatar();
         },
 
-        go(name) {
+        async go(name) {
           this.currentSection = name;
           document.querySelectorAll('.dash-section').forEach(el => el.classList.remove('active'));
           const sec = document.getElementById('sec-' + name);
@@ -347,13 +347,13 @@
           document.querySelectorAll('.sidebar-menu a[data-section]').forEach(a => {
             a.classList.toggle('active-link', a.dataset.section === name);
           });
-          if (name === 'orders') this.loadOrders();
-          if (name === 'addresses') this.loadAddresses();
-          if (name === 'profile') this.loadProfile();
+          if (name === 'orders') await this.loadOrders();
+          if (name === 'addresses') await this.loadAddresses();
+          if (name === 'profile') await this.loadProfile();
         },
 
         // ===== PROFILE =====
-        loadProfile() {
+        async loadProfile() {
           const user = App.currentUser;
           if (!user) return;
           document.getElementById('pf-name').value = user.name || '';
@@ -372,8 +372,8 @@
             document.getElementById('avatarEmoji').textContent = (user.name || 'U').charAt(0).toUpperCase();
           }
 
-          const orders = App.getOrders();
-          const addresses = JSON.parse(localStorage.getItem('aravali_addresses') || '[]');
+          const orders = await App.getOrders();
+          const addresses = await this.getAddresses();
           document.getElementById('profileStats').innerHTML = `
             <div class="stat-mini"><h4>${orders.length}</h4><p>Total Orders</p></div>
             <div class="stat-mini"><h4>${App.formatCurrency(orders.reduce((s,o) => s + (o.total||0), 0))}</h4><p>Total Spent</p></div>
@@ -390,9 +390,9 @@
               return;
             }
             const reader = new FileReader();
-            reader.onload = (ev) => {
+            reader.onload = async (ev) => {
               App.updateCurrentUser({ avatar: ev.target.result });
-              this.loadProfile();
+              await this.loadProfile();
               App.updateNav();
               App.showToast('Profile photo updated!', 'success');
             };
@@ -400,7 +400,7 @@
           });
         },
 
-        saveProfile(e) {
+        async saveProfile(e) {
           e.preventDefault();
           const name = document.getElementById('pf-name').value.trim();
           const email = document.getElementById('pf-email').value.trim();
@@ -409,7 +409,7 @@
             App.showToast('Name and email are required', 'error');
             return;
           }
-          const users = DB.getAll('users');
+          const users = await DB.getAll('users');
           const duplicate = users.find(u => u.email === email && u.id !== App.currentUser.id);
           if (duplicate) {
             App.showToast('Email is already registered', 'error');
@@ -422,9 +422,9 @@
         },
 
         // ===== ORDERS =====
-        loadOrders() {
+        async loadOrders() {
           const container = document.getElementById('ordersList');
-          const orders = App.getOrders().reverse();
+          const orders = (await App.getOrders()).reverse();
           if (orders.length === 0) {
             container.innerHTML = `
               <div class="empty-state" style="padding:40px;">
@@ -456,8 +456,8 @@
           `).join('');
         },
 
-        showOrderDetail(orderId) {
-          const allOrders = App.getOrders();
+        async showOrderDetail(orderId) {
+          const allOrders = await App.getOrders();
           const order = allOrders.find(o => o.id === orderId);
           if (!order) return;
 
@@ -563,7 +563,7 @@
           document.getElementById('dashOrderModal').classList.add('active');
         },
 
-        requestReturn(orderId) {
+        async requestReturn(orderId) {
           const reasonSelect = document.getElementById('returnReason-' + orderId);
           const infoEl = document.getElementById('returnInfo-' + orderId);
           const reason = reasonSelect ? reasonSelect.value : '';
@@ -574,11 +574,11 @@
             return;
           }
 
-          const allOrders = App.getOrders();
+          const allOrders = await App.getOrders();
           const order = allOrders.find(o => o.id === orderId);
           if (!order) return;
 
-          const existingReturns = DB.getAll('returns');
+          const existingReturns = await DB.getAll('returns');
           const alreadyReturned = existingReturns.find(r => r.orderId === orderId && r.status !== 'rejected');
           if (alreadyReturned) {
             App.showToast('A return request already exists for this order', 'error');
@@ -588,7 +588,7 @@
           const firstItem = (order.items || [])[0] || {};
           const refundAmount = order.total || 0;
 
-          DB.insert('returns', {
+          await DB.insert('returns', {
             orderId: orderId,
             userId: App.currentUser ? App.currentUser.id : null,
             customerName: App.currentUser ? App.currentUser.name : 'Guest',
@@ -601,7 +601,7 @@
             status: 'pending'
           });
 
-          DB.update('orders', orderId, { status: 'return_requested' });
+          await DB.update('orders', orderId, { status: 'return_requested' });
 
           App.showToast('Return request submitted! Admin will review it shortly.', 'success');
 
@@ -613,16 +613,22 @@
         },
 
         // ===== ADDRESSES =====
-        getAddresses() {
-          return JSON.parse(localStorage.getItem('aravali_addresses') || '[]');
+        async getAddresses() {
+          return await DB.getAll('addresses');
         },
 
-        saveAddresses(addrs) {
-          localStorage.setItem('aravali_addresses', JSON.stringify(addrs));
+        async saveAddresses(addrs) {
+          const existing = await DB.getAll('addresses');
+          for (const addr of existing) {
+            if (addr.id) await DB.delete('addresses', addr.id);
+          }
+          for (const addr of addrs) {
+            await DB.insert('addresses', addr);
+          }
         },
 
-        loadAddresses() {
-          const addrs = this.getAddresses();
+        async loadAddresses() {
+          const addrs = await this.getAddresses();
           const container = document.getElementById('addrList');
           if (addrs.length === 0) {
             container.innerHTML = '<p style="color:var(--text-muted);padding:12px 0;">No saved addresses yet. Add one below.</p>';
@@ -646,9 +652,9 @@
           }).join('');
         },
 
-        saveAddress(e) {
+        async saveAddress(e) {
           e.preventDefault();
-          const addrs = this.getAddresses();
+          const addrs = await this.getAddresses();
           const data = {
             name: document.getElementById('af-name').value.trim(),
             phone: document.getElementById('af-phone').value.trim(),
@@ -671,14 +677,14 @@
             App.showToast('Address added!', 'success');
           }
 
-          this.saveAddresses(addrs);
+          await this.saveAddresses(addrs);
           this.cancelEdit();
-          this.loadAddresses();
-          this.loadProfile();
+          await this.loadAddresses();
+          await this.loadProfile();
         },
 
-        editAddress(index) {
-          const addrs = this.getAddresses();
+        async editAddress(index) {
+          const addrs = await this.getAddresses();
           const a = addrs[index];
           if (!a) return;
           document.getElementById('af-name').value = a.name;
@@ -703,23 +709,23 @@
           document.getElementById('addrCancelBtn').style.display = 'none';
         },
 
-        deleteAddress(index) {
+        async deleteAddress(index) {
           if (!confirm('Delete this address?')) return;
-          const addrs = this.getAddresses();
+          const addrs = await this.getAddresses();
           const wasDefault = addrs[index].isDefault;
           addrs.splice(index, 1);
           if (wasDefault && addrs.length > 0) addrs[0].isDefault = true;
-          this.saveAddresses(addrs);
-          this.loadAddresses();
-          this.loadProfile();
+          await this.saveAddresses(addrs);
+          await this.loadAddresses();
+          await this.loadProfile();
           App.showToast('Address removed', 'info');
         },
 
-        setDefault(index) {
-          const addrs = this.getAddresses();
+        async setDefault(index) {
+          const addrs = await this.getAddresses();
           addrs.forEach((a, i) => a.isDefault = (i === index));
-          this.saveAddresses(addrs);
-          this.loadAddresses();
+          await this.saveAddresses(addrs);
+          await this.loadAddresses();
           App.showToast('Default address updated', 'success');
         },
 
@@ -749,11 +755,11 @@
           App.showToast('Password updated successfully!', 'success');
         },
 
-        deleteAccount() {
+        async deleteAccount() {
           if (!confirm('Are you sure you want to delete your account? This cannot be undone.')) return;
           if (!confirm('All your data will be permanently removed. Continue?')) return;
           const userId = App.currentUser.id;
-          DB.delete('users', userId);
+          await DB.delete('users', userId);
           App.currentUser = null;
           localStorage.removeItem('aravali_currentUser');
           App.showToast('Account deleted. Redirecting...', 'info');

@@ -69,11 +69,11 @@
   <script src="js/app.js"></script>
   <script src="js/shop.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       if (!App.requireAuth()) return;
 
       const container = document.getElementById('ordersContainer');
-      const orders = DB.query('orders', o => o.userId === App.currentUser.id).reverse();
+      const orders = (await DB.query('orders', o => o.userId === App.currentUser.id)).reverse();
 
       if (orders.length === 0) {
         container.innerHTML = `
@@ -116,8 +116,8 @@
           </div>`;
       }).join('');
 
-      window.showOrderDetail = function(orderId) {
-        const allOrders = DB.query('orders', o => o.userId === App.currentUser.id);
+      window.showOrderDetail = async function(orderId) {
+        const allOrders = await DB.query('orders', o => o.userId === App.currentUser.id);
         const order = allOrders.find(o => o.id === orderId);
         if (!order) return;
 

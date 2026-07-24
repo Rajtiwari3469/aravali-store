@@ -52,8 +52,8 @@
   <script src="js/app.js"></script>
   <script src="js/shop.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const products = DB.getAll('products').sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 12);
+    document.addEventListener('DOMContentLoaded', async () => {
+      const products = (await DB.getAll('products')).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 12);
       const grid = document.getElementById('freshGrid');
       if (products.length === 0) {
         grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon">🆕</div><h3>No new arrivals yet</h3></div>';

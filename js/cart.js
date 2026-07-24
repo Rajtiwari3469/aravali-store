@@ -1,14 +1,14 @@
 const Cart = {
-  init() {
-    this.renderCart();
+  async init() {
+    await this.renderCart();
   },
 
-  renderCart() {
+  async renderCart() {
     const container = document.querySelector('.cart-items');
     const summaryContainer = document.querySelector('.cart-summary-content');
     if (!container) return;
 
-    const items = App.getCartItems();
+    const items = await App.getCartItems();
 
     if (items.length === 0) {
       container.innerHTML = `
@@ -47,15 +47,15 @@ const Cart = {
       </div>`;
     }).join('');
 
-    this.renderSummary();
+    await this.renderSummary();
   },
 
-  renderSummary() {
+  async renderSummary() {
     const summaryContainer = document.querySelector('.cart-summary-content');
     if (!summaryContainer) return;
 
-    const subtotal = App.getCartTotal();
-    const cartItems = App.getCartItems();
+    const subtotal = await App.getCartTotal();
+    const cartItems = await App.getCartItems();
     const totalMrp = cartItems.reduce((sum, c) => sum + ((c.product.mrp && c.product.mrp > c.product.price ? c.product.mrp : c.product.price) * c.qty), 0);
     const savings = totalMrp - subtotal;
     const delivery = subtotal > 200 ? 0 : 30;
@@ -84,40 +84,40 @@ const Cart = {
     `;
   },
 
-  changeQty(productId, delta) {
-    const cart = App.getCart();
+  async changeQty(productId, delta) {
+    const cart = await App.getCart();
     const item = cart.find(c => c.productId === productId);
     if (item) {
       const newQty = item.qty + delta;
       if (newQty <= 0) {
-        App.removeFromCart(productId);
+        await App.removeFromCart(productId);
       } else {
-        App.updateCartQty(productId, newQty);
+        await App.updateCartQty(productId, newQty);
       }
-      this.renderCart();
+      await this.renderCart();
     }
   },
 
-  removeItem(productId) {
-    App.removeFromCart(productId);
-    this.renderCart();
+  async removeItem(productId) {
+    await App.removeFromCart(productId);
+    await this.renderCart();
     App.showToast('Item removed from cart', 'info');
   }
 };
 
 const Checkout = {
-  init() {
-    if (!App.requireAuth()) return;
-    this.renderOrderSummary();
+  async init() {
+    if (!await App.requireAuth()) return;
+    await this.renderOrderSummary();
     this.initPayment();
     this.initForm();
   },
 
-  renderOrderSummary() {
+  async renderOrderSummary() {
     const container = document.querySelector('.checkout-items');
     if (!container) return;
 
-    const items = App.getCartItems();
+    const items = await App.getCartItems();
 
     if (items.length === 0) {
       window.location.href = 'cart.html';
@@ -135,7 +135,7 @@ const Checkout = {
       </div>
     `).join('');
 
-    const subtotal = App.getCartTotal();
+    const subtotal = await App.getCartTotal();
     const delivery = subtotal > 200 ? 0 : 30;
     const total = subtotal + delivery;
 
@@ -167,14 +167,14 @@ const Checkout = {
   initForm() {
     const form = document.getElementById('checkoutForm');
     if (form) {
-      form.addEventListener('submit', (e) => {
+      form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        this.placeOrder();
+        await this.placeOrder();
       });
     }
   },
 
-  placeOrder() {
+  async placeOrder() {
     const name = document.getElementById('checkoutName').value.trim();
     const address = document.getElementById('checkoutAddress').value.trim();
     const phone = document.getElementById('checkoutPhone').value.trim();
@@ -190,25 +190,24 @@ const Checkout = {
       return;
     }
 
-    const settings = DB.getSettings();
+    const settings = await DB.getSettings();
     const hasUpi = !!(settings.upiId && settings.upiId.trim());
     if (!hasUpi && payment.value !== 'Cash on Delivery') {
       App.showToast('Online payment is not available. Please select Cash on Delivery.', 'error');
       return;
     }
 
-    // Check for out-of-stock items in cart
-    const cartItems = App.getCartItems();
+    const cartItems = await App.getCartItems();
     const outOfStockItems = cartItems.filter(c => (c.product.stock || 0) <= 0);
     if (outOfStockItems.length > 0) {
       App.showToast(`${outOfStockItems[0].product.name} is out of stock. Please remove it from cart.`, 'error');
       return;
     }
 
-    const order = App.placeOrder(address + ' - Phone: ' + phone + ' - ' + name, payment.value);
+    const order = await App.placeOrder(address + ' - Phone: ' + phone + ' - ' + name, payment.value);
 
     if (order) {
-      window.location.href = 'order-success.html?id=' + order.id;
+      window.location.href = 'order-success.html?id=' + (order.id || '');
     } else {
       App.showToast('Failed to place order', 'error');
     }

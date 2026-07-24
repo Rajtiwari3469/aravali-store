@@ -55,10 +55,10 @@
   <script src="js/app.js"></script>
   <script src="js/shop.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       const grid = document.getElementById('categoriesGrid');
-      const catalogs = DB.getAll('catalogs').filter(c => c.active).sort((a,b) => (a.order||0) - (b.order||0));
-      const products = DB.getAll('products');
+      const catalogs = (await DB.getAll('catalogs')).filter(c => c.active).sort((a,b) => (a.order||0) - (b.order||0));
+      const products = await DB.getAll('products');
 
       if (catalogs.length === 0) {
         grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon">📂</div><h3>No categories available</h3></div>';

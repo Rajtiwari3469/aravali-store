@@ -149,27 +149,27 @@
   <script src="js/app.js"></script>
   <script src="js/shop.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      App.updateCartBadge();
-      App.updateWishlistBadge();
+    document.addEventListener('DOMContentLoaded', async () => {
+      await App.updateCartBadge();
+      await App.updateWishlistBadge();
 
       const productId = App.getParam('id');
       if (!productId) { window.location.href = 'shop.html'; return; }
 
-      const product = DB.getById('products', productId);
+      const product = await DB.getById('products', productId);
       if (!product) { window.location.href = 'shop.html'; return; }
 
       document.getElementById('pdTopTitle').textContent = product.name;
       document.title = product.name + ' - Aravali Store';
 
-      const inWishlist = App.isInWishlist(product.id);
-      const cart = App.getCart();
+      const inWishlist = await App.isInWishlist(product.id);
+      const cart = await App.getCart();
       const cartItem = cart.find(c => c.productId === product.id);
       const qty = cartItem ? cartItem.qty : 0;
       const isOutOfStock = (product.stock || 0) <= 0;
 
       // Similar products (same category, exclude current)
-      const allProducts = DB.getAll('products');
+      const allProducts = await DB.getAll('products');
       const similar = allProducts.filter(p => p.category === product.category && p.id !== product.id);
       // Also grab a few from other categories if not enough
       const extra = allProducts.filter(p => p.category !== product.category && p.id !== product.id).slice(0, 4);
@@ -269,27 +269,27 @@
       `);
 
       // Functions
-      window.addToCart = function() {
-        App.addToCart(product.id);
+      window.addToCart = async function() {
+        await App.addToCart(product.id);
         location.reload();
       };
 
-      window.updateQty = function(delta) {
-        const cart = App.getCart();
+      window.updateQty = async function(delta) {
+        const cart = await App.getCart();
         const item = cart.find(c => c.productId === product.id);
         if (item) {
           const newQty = item.qty + delta;
           if (newQty <= 0) {
-            App.removeFromCart(product.id);
+            await App.removeFromCart(product.id);
           } else {
-            App.updateCartQty(product.id, newQty);
+            await App.updateCartQty(product.id, newQty);
           }
           location.reload();
         }
       };
 
-      window.addSimilarToCart = function(id) {
-        App.addToCart(id);
+      window.addSimilarToCart = async function(id) {
+        await App.addToCart(id);
         location.reload();
       };
     });

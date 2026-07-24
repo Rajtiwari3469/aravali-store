@@ -77,10 +77,10 @@
   <script src="js/app.js"></script>
   <script src="js/shop.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       App.init();
-      App.updateCartBadge();
-      App.updateWishlistBadge();
+      await App.updateCartBadge();
+      await App.updateWishlistBadge();
       App.initSearchCycle();
 
       let currentCategory = 'All';
@@ -88,16 +88,16 @@
       const perPage = 12;
       let sortBy = 'default';
 
-      function getBaseProducts() {
-        const all = DB.getAll('products');
+      async function getBaseProducts() {
+        const all = await DB.getAll('products');
         const seasonal = ['Fresh Fruits', 'Fresh Vegetables'];
         const seasonalProducts = all.filter(p => seasonal.includes(p.category));
         const otherProducts = all.filter(p => !seasonal.includes(p.category));
         return [...seasonalProducts, ...otherProducts];
       }
 
-      function getFiltered() {
-        let products = getBaseProducts();
+      async function getFiltered() {
+        let products = await getBaseProducts();
         if (currentCategory !== 'All') {
           products = products.filter(p => p.category === currentCategory);
         }
@@ -110,8 +110,8 @@
         return products;
       }
 
-      function renderProducts() {
-        const products = getFiltered();
+      async function renderProducts() {
+        const products = await getFiltered();
         const total = products.length;
         const totalPages = Math.ceil(total / perPage);
         const start = (currentPage - 1) * perPage;
@@ -136,21 +136,21 @@
         pag.innerHTML = html;
 
         grid.querySelectorAll('.wishlist-btn').forEach(btn => {
-          btn.addEventListener('click', e => { e.stopPropagation(); App.toggleWishlist(btn.dataset.wishlist); renderProducts(); });
+          btn.addEventListener('click', e => { e.stopPropagation(); App.toggleWishlist(btn.dataset.wishlist).then(() => renderProducts()); });
         });
       }
 
       window.goPage = (page) => { currentPage = page; renderProducts(); window.scrollTo({top:300,behavior:'smooth'}); };
 
       // Category chips
-      const catalogs = DB.getAll('catalogs').filter(c => c.active).sort((a, b) => (a.order || 0) - (b.order || 0));
+      const catalogs = (await DB.getAll('catalogs')).filter(c => c.active).sort((a, b) => (a.order || 0) - (b.order || 0));
       const catContainer = document.getElementById('seasonalCategories');
       if (catContainer) {
         let html = `<button class="category-chip active" data-category="All"><span class="emoji">🏪</span> All</button>`;
         if (catalogs.length > 0) {
           html += catalogs.map(c => `<button class="category-chip" data-category="${c.name}">${c.image ? `<img src="${c.image}" style="width:20px;height:20px;border-radius:50%;object-fit:cover;">` : `<span class="emoji">${c.emoji || CATEGORY_EMOJIS[c.name] || '📦'}</span>`} ${c.name}</button>`).join('');
         } else {
-          const cats = [...new Set(DB.getAll('products').map(p => p.category))];
+          const cats = [...new Set((await DB.getAll('products')).map(p => p.category))];
           html += cats.map(c => `<button class="category-chip" data-category="${c}"><span class="emoji">${CATEGORY_EMOJIS[c] || '📦'}</span> ${c}</button>`).join('');
         }
         catContainer.innerHTML = html;
