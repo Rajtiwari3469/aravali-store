@@ -74,7 +74,7 @@
   <script src="js/shop.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
-      if (!App.requireAuth()) return;
+      if (!(await App.requireAuth())) return;
 
       const container = document.getElementById('ordersContainer');
       const orders = (await DB.query('orders', o => o.userId === App.currentUser.id)).reverse();

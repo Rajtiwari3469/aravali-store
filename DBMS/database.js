@@ -2,6 +2,7 @@ const DB = {
   async _fetch(url, opts = {}) {
     const res = await fetch(url, {
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
       ...opts,
       body: opts.body ? JSON.stringify(opts.body) : undefined,
     });

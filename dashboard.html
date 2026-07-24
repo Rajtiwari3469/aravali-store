@@ -329,7 +329,7 @@
   <script src="js/app.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
-      if (!App.requireAuth()) return;
+      if (!(await App.requireAuth())) return;
 
       const Dash = {
         currentSection: 'profile',

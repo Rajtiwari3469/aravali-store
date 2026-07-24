@@ -1,5 +1,7 @@
 const App = {
   currentUser: null,
+  _initDone: false,
+  _initPromise: null,
 
   initTheme() {
     const saved = localStorage.getItem('aravali-theme') || 'light';
@@ -43,21 +45,27 @@ const App = {
   },
 
   async init() {
-    try {
-      const res = await fetch('/api/auth/me');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.admin) {
-          this.currentUser = { ...data.admin, isAdmin: true };
-        } else {
-          this.currentUser = data.user || null;
+    if (this._initDone) return;
+    if (this._initPromise) { await this._initPromise; return; }
+    this._initPromise = (async () => {
+      try {
+        const res = await fetch('/api/auth/me', { credentials: 'include' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.admin) {
+            this.currentUser = { ...data.admin, isAdmin: true };
+          } else {
+            this.currentUser = data.user || null;
+          }
         }
-      }
-    } catch {}
-    this.updateNav();
-    this.initSearchCycle();
-    this.initHamburger();
-    this.initToast();
+      } catch {}
+      this._initDone = true;
+      this.updateNav();
+      this.initSearchCycle();
+      this.initHamburger();
+      this.initToast();
+    })();
+    await this._initPromise;
   },
 
   updateNav() {
@@ -106,6 +114,7 @@ const App = {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
@@ -124,6 +133,7 @@ const App = {
       const res = await fetch('/api/auth/admin-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
@@ -142,6 +152,7 @@ const App = {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ name, email, password, phone }),
       });
       const data = await res.json();
@@ -156,7 +167,7 @@ const App = {
   },
 
   async logout() {
-    try { await fetch('/api/auth/logout', { method: 'POST' }); } catch {}
+    try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }); } catch {}
     this.currentUser = null;
     const path = window.location.pathname;
     if (path.includes('/admin/')) {
@@ -187,6 +198,7 @@ const App = {
   },
 
   async requireAuth() {
+    await this.init();
     if (!this.isLoggedIn()) {
       window.location.href = 'login.html';
       return false;
@@ -195,6 +207,7 @@ const App = {
   },
 
   async requireAdmin() {
+    await this.init();
     if (!this.currentUser || !this.currentUser.isAdmin) {
       window.location.href = window.location.pathname.includes('/admin/') ? 'login.html' : '../admin/login.html';
       return false;
@@ -206,7 +219,7 @@ const App = {
   async getCart() {
     if (this.currentUser) {
       try {
-        const res = await fetch('/api/cart');
+        const res = await fetch('/api/cart', { credentials: 'include' });
         if (res.ok) return await res.json();
       } catch {}
     }
@@ -224,6 +237,7 @@ const App = {
         const res = await fetch('/api/cart', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({ productId, qty }),
         });
         if (res.ok) {
@@ -269,6 +283,7 @@ const App = {
         await fetch('/api/cart', {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({ productId }),
         });
         this.updateCartBadge();
@@ -289,6 +304,7 @@ const App = {
         await fetch('/api/cart', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({ productId, qty }),
         });
         this.updateCartBadge();
@@ -359,6 +375,7 @@ const App = {
           await fetch('/api/cart', {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
             body: JSON.stringify({ productId: item.productId }),
           });
         }
@@ -372,7 +389,7 @@ const App = {
   async getWishlist() {
     if (this.currentUser) {
       try {
-        const res = await fetch('/api/wishlist');
+        const res = await fetch('/api/wishlist', { credentials: 'include' });
         if (res.ok) return await res.json();
       } catch {}
     }
@@ -385,6 +402,7 @@ const App = {
         const res = await fetch('/api/wishlist', {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({ productId }),
         });
         if (res.ok) {
@@ -397,6 +415,7 @@ const App = {
         const res = await fetch('/api/wishlist', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({ productId }),
         });
         if (res.ok) {
@@ -461,6 +480,7 @@ const App = {
       const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           items: cartItems.map(c => ({
             productId: c.productId,
@@ -503,6 +523,7 @@ const App = {
       const res = await fetch('/api/upload', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ file: base64 })
       });
       const data = await res.json();
