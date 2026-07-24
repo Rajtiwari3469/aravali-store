@@ -1,9 +1,13 @@
 const { neon } = require('@neondatabase/serverless');
 const bcrypt = require('bcryptjs');
-const { SignJWT, jwtVerify } = require('jose');
 
 const sql = neon(process.env.NEON_DATABASE_URL);
 const SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'aravali-store-secret-key-2024');
+let jose = null;
+async function getJose() {
+  if (!jose) jose = await import('jose');
+  return jose;
+}
 let dbReady = false;
 
 async function initDB() {
@@ -33,7 +37,11 @@ function parseCookies(h) {
 async function getUser(req) {
   const token = parseCookies(req.headers.cookie || '').aravali_token;
   if (!token) return null;
-  try { const { payload } = await jwtVerify(token, SECRET); return payload; } catch { return null; }
+  try {
+    const j = await getJose();
+    const { payload } = await j.jwtVerify(token, SECRET);
+    return payload;
+  } catch { return null; }
 }
 
 function ok(res, data) { return new Response(JSON.stringify(data), { status: 200, headers: { 'Content-Type': 'application/json' } }); }
@@ -41,6 +49,11 @@ function err(res, msg, s = 400) { return new Response(JSON.stringify({ error: ms
 function getId(res, id) { return ok(res, { id }); }
 
 const gid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+
+async function signToken(payload) {
+  const j = await getJose();
+  return new j.SignJWT(payload).setProtectedHeader({ alg: 'HS256' }).setIssuedAt().setExpirationTime('30d').sign(SECRET);
+}
 
 module.exports = async function handler(req, res) {
   await initDB();
@@ -63,7 +76,7 @@ module.exports = async function handler(req, res) {
       const id = gid();
       const ph = await bcrypt.hash(password, 10);
       await sql`INSERT INTO users (id, name, email, password_hash, phone) VALUES (${id}, ${name}, ${email}, ${ph}, ${phone || ''})`;
-      const token = await new SignJWT({ id, name, email, role: 'user' }).setProtectedHeader({ alg: 'HS256' }).setIssuedAt().setExpirationTime('30d').sign(SECRET);
+      const token = await signToken({ id, name, email, role: 'user' });
       res.setHeader('Set-Cookie', `aravali_token=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000`);
       return ok(res, { success: true, user: { id, name, email, phone } });
     }
@@ -75,7 +88,7 @@ module.exports = async function handler(req, res) {
       if (users.length === 0) return err(res, 'Invalid email or password', 401);
       const u = users[0];
       if (!(await bcrypt.compare(password, u.password_hash))) return err(res, 'Invalid email or password', 401);
-      const token = await new SignJWT({ id: u.id, name: u.name, email: u.email, role: 'user' }).setProtectedHeader({ alg: 'HS256' }).setIssuedAt().setExpirationTime('30d').sign(SECRET);
+      const token = await signToken({ id: u.id, name: u.name, email: u.email, role: 'user' });
       res.setHeader('Set-Cookie', `aravali_token=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000`);
       return ok(res, { success: true, user: { id: u.id, name: u.name, email: u.email, phone: u.phone } });
     }
@@ -87,7 +100,7 @@ module.exports = async function handler(req, res) {
       if (admins.length === 0) return err(res, 'Invalid admin credentials', 401);
       const a = admins[0];
       if (!(await bcrypt.compare(password, a.password_hash))) return err(res, 'Invalid admin credentials', 401);
-      const token = await new SignJWT({ id: a.id, name: a.name, email: a.email, role: 'admin' }).setProtectedHeader({ alg: 'HS256' }).setIssuedAt().setExpirationTime('30d').sign(SECRET);
+      const token = await signToken({ id: a.id, name: a.name, email: a.email, role: 'admin' });
       res.setHeader('Set-Cookie', `aravali_token=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000`);
       return ok(res, { success: true, admin: { id: a.id, name: a.name, email: a.email, role: a.role } });
     }
