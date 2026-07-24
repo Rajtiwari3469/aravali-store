@@ -224,7 +224,7 @@ const App = {
     return true;
   },
 
-  // Cart - always include localStorage items so nothing is lost
+  // Cart - server-authoritative for logged-in users, localStorage for guests
   async getCart() {
     const localCart = JSON.parse(localStorage.getItem('aravali_cart') || '[]');
     if (this.currentUser) {
@@ -233,10 +233,13 @@ const App = {
         if (res.ok) {
           const serverCart = await res.json();
           const merged = [...serverCart];
+          const addedLocal = [];
           for (const lc of localCart) {
             const exists = merged.find(m => m.productId === lc.productId);
-            if (!exists) merged.push(lc);
+            if (!exists) addedLocal.push(lc);
           }
+          merged.push(...addedLocal);
+          localStorage.setItem('aravali_cart', JSON.stringify(merged));
           return merged;
         }
       } catch {}
@@ -299,17 +302,19 @@ const App = {
   async removeFromCart(productId) {
     if (this.currentUser) {
       try {
-        await fetch('/api/cart', {
+        const res = await fetch('/api/cart', {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
           body: JSON.stringify({ productId }),
         });
-        let localCart = JSON.parse(localStorage.getItem('aravali_cart') || '[]');
-        localCart = localCart.filter(c => c.productId !== productId);
-        localStorage.setItem('aravali_cart', JSON.stringify(localCart));
-        this.updateCartBadge();
-        return;
+        if (res.ok) {
+          let localCart = JSON.parse(localStorage.getItem('aravali_cart') || '[]');
+          localCart = localCart.filter(c => c.productId !== productId);
+          localStorage.setItem('aravali_cart', JSON.stringify(localCart));
+          this.updateCartBadge();
+          return;
+        }
       } catch {}
     }
     let cart = await this.getCart();
@@ -386,16 +391,17 @@ const App = {
   },
 
   updateCartBadge() {
-    const cart = JSON.parse(localStorage.getItem('aravali_cart') || '[]');
     if (this.currentUser) {
       fetch('/api/cart', { credentials: 'include' })
         .then(r => r.ok ? r.json() : [])
         .catch(() => [])
         .then(serverCart => {
+          const freshLocal = JSON.parse(localStorage.getItem('aravali_cart') || '[]');
           const merged = [...(serverCart || [])];
-          for (const lc of cart) {
+          for (const lc of freshLocal) {
             if (!merged.find(m => m.productId === lc.productId)) merged.push(lc);
           }
+          localStorage.setItem('aravali_cart', JSON.stringify(merged));
           const count = merged.reduce((sum, c) => sum + (c.qty || 0), 0);
           document.querySelectorAll('.cart-count').forEach(el => {
             el.textContent = count;
@@ -403,6 +409,7 @@ const App = {
           });
         });
     } else {
+      const cart = JSON.parse(localStorage.getItem('aravali_cart') || '[]');
       const count = cart.reduce((sum, c) => sum + (c.qty || 0), 0);
       document.querySelectorAll('.cart-count').forEach(el => {
         el.textContent = count;

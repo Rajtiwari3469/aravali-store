@@ -9,6 +9,7 @@ const Cart = {
     if (!container) return;
 
     const items = await App.getCartItems();
+    App.updateCartBadge();
 
     if (items.length === 0) {
       container.innerHTML = `
