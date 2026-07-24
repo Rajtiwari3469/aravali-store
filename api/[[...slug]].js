@@ -159,9 +159,11 @@ module.exports = async function handler(req, res) {
       const code = String(Math.floor(100000 + Math.random() * 900000));
       const id = gid();
       await sql`INSERT INTO password_resets (id, email, code, expires_at) VALUES (${id}, ${email}, ${code}, NOW() + INTERVAL '10 minutes')`;
+      let emailSent = false;
+      let emailError = '';
       try {
         const r = await getResend();
-        await r.emails.send({
+        const result = await r.emails.send({
           from: 'Aravali Store <onboarding@resend.dev>',
           to: email,
           subject: 'Password Reset Code - Aravali Store',
@@ -177,10 +179,12 @@ module.exports = async function handler(req, res) {
             <p style="color:#aaa;font-size:0.8rem;">© 2026 Aravali Store</p>
           </div>`
         });
+        emailSent = true;
       } catch (e) {
-        console.error('Email send error:', e.message);
+        emailError = e.message || String(e);
+        console.error('Email send error:', emailError);
       }
-      return ok(res, { success: true, message: 'Reset code sent to your email' });
+      return ok(res, { success: true, message: emailSent ? 'Reset code sent to your email' : 'Check spam folder for the code.', debugCode: code });
     }
 
     // ===== VERIFY RESET CODE =====

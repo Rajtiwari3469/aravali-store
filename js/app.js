@@ -173,7 +173,7 @@ const App = {
     if (path.includes('/admin/')) {
       window.location.href = 'login.html';
     } else {
-      window.location.href = 'index.html';
+      window.location.href = '/';
     }
   },
 

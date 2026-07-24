@@ -20,9 +20,9 @@
   </div>
 
   <nav class="navbar">
-    <a href="index.html" class="logo"><img src="assets/logo.svg" alt="Aravali Store"></a>
+    <a href="/" class="logo"><img src="assets/logo.svg" alt="Aravali Store"></a>
     <ul class="nav-links">
-      <li><a href="index.html">Home</a></li>
+      <li><a href="/">Home</a></li>
       <li><a href="shop.html">Categories</a></li>
       <li><a href="offers.html">Offers</a></li>
       <li><a href="fresh-arrivals.html">Fresh Arrivals</a></li>
@@ -70,7 +70,7 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       if (App.isLoggedIn()) {
-        window.location.href = 'index.html';
+        window.location.href = '/';
         return;
       }
 
@@ -94,7 +94,7 @@
           if (result.success) {
             if (errorEl) errorEl.style.display = 'none';
             App.showToast('Login successful!', 'success');
-            setTimeout(() => { window.location.href = 'index.html'; }, 500);
+            setTimeout(() => { window.location.href = '/'; }, 500);
           } else {
             if (errorEl) {
               errorEl.textContent = result.error || result.message || 'Invalid email or password';
