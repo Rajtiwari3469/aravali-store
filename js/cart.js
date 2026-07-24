@@ -185,6 +185,11 @@ const Checkout = {
       return;
     }
 
+    if (!/^\d{10}$/.test(phone)) {
+      App.showToast('Phone number must be exactly 10 digits', 'error');
+      return;
+    }
+
     if (!payment || !payment.value) {
       App.showToast('Please select a valid payment method', 'error');
       return;

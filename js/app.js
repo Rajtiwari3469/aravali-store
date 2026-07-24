@@ -779,6 +779,11 @@ const CATEGORY_EMOJIS = {
 
 document.addEventListener('DOMContentLoaded', () => {
   App.initTheme();
+  document.addEventListener('input', (e) => {
+    if (e.target.matches('input[type="tel"][maxlength="10"]')) {
+      e.target.value = e.target.value.replace(/\D/g, '').slice(0, 10);
+    }
+  });
   if (!window.location.pathname.includes('/admin')) {
     App.init().then(() => {
       App.initGlobalClick();

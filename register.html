@@ -51,7 +51,7 @@
         </div>
         <div class="form-group">
           <label>Phone Number</label>
-          <input type="tel" id="regPhone" placeholder="Enter your phone number">
+          <input type="tel" id="regPhone" placeholder="Enter 10-digit phone number" maxlength="10" pattern="[0-9]{10}" inputmode="numeric">
         </div>
         <div class="form-group">
           <label>Password</label>
@@ -89,6 +89,14 @@
           if (!name || !email || !password) {
             if (errorEl) {
               errorEl.textContent = 'Please fill in all required fields';
+              errorEl.style.display = 'block';
+            }
+            return;
+          }
+
+          if (phone && !/^\d{10}$/.test(phone)) {
+            if (errorEl) {
+              errorEl.textContent = 'Phone number must be exactly 10 digits';
               errorEl.style.display = 'block';
             }
             return;
