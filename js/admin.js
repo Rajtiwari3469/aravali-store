@@ -491,7 +491,12 @@ const Admin = {
     document.getElementById('pOffer').value = product.offer || '';
     document.getElementById('pEditId').value = id;
 
-    const existingImages = product.image ? [product.image] : [];
+    const existingImages = [];
+    if (product.images && product.images.length > 0) {
+      existingImages.push(...product.images);
+    } else if (product.image) {
+      existingImages.push(product.image);
+    }
     document.getElementById('pExistingImages').value = JSON.stringify(existingImages);
 
     const prevContainer = document.getElementById('pImagesPreview');
@@ -536,7 +541,8 @@ const Admin = {
       description: document.getElementById('pDesc').value.trim(),
       badge: document.getElementById('pBadge').value.trim(),
       offer: document.getElementById('pOffer').value,
-      image: allImages[0] || ''
+      image: allImages[0] || '',
+      images: allImages
     };
 
     if (editId) {

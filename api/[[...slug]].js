@@ -212,6 +212,8 @@ module.exports = async function handler(req, res) {
 
     // ===== PRODUCTS =====
     if (slug === 'products' && method === 'GET') {
+      try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS images JSONB DEFAULT '[]'`; } catch {}
+      try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS mrp DECIMAL(10,2) DEFAULT 0`; } catch {}
       const search = url.searchParams.get('search') || '';
       const category = url.searchParams.get('category') || '';
       const page = parseInt(url.searchParams.get('page') || '1');
@@ -236,8 +238,8 @@ module.exports = async function handler(req, res) {
       if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
       const id = gid();
       const { name, description, category, price, mrp, stock, unit, image, badge, offer, images } = body;
-      await sql`INSERT INTO products (id, name, description, category, price, mrp, stock, unit, image, badge, offer) VALUES (${id}, ${name || ''}, ${description || ''}, ${category || ''}, ${price || 0}, ${mrp || 0}, ${stock || 0}, ${unit || ''}, ${image || ''}, ${badge || ''}, ${offer || ''})`;
-      return ok(res, { success: true, record: { id, name, description, category, price, mrp, stock, unit, image, badge, offer } });
+      await sql`INSERT INTO products (id, name, description, category, price, mrp, stock, unit, image, images, badge, offer) VALUES (${id}, ${name || ''}, ${description || ''}, ${category || ''}, ${price || 0}, ${mrp || 0}, ${stock || 0}, ${unit || ''}, ${image || ''}, ${JSON.stringify(images || [])}, ${badge || ''}, ${offer || ''})`;
+      return ok(res, { success: true, record: { id, name, description, category, price, mrp, stock, unit, image, images, badge, offer } });
     }
 
     if (slug.startsWith('products/') && method === 'GET') {
@@ -254,8 +256,8 @@ module.exports = async function handler(req, res) {
       const ex = await sql`SELECT * FROM products WHERE id = ${id}`;
       if (ex.length === 0) return err(res, 'Not found', 404);
       const e = ex[0];
-      const { name, description, category, price, mrp, stock, unit, image, badge, offer } = body;
-      await sql`UPDATE products SET name=${name !== undefined ? name : e.name}, description=${description !== undefined ? description : e.description}, category=${category !== undefined ? category : e.category}, price=${price !== undefined ? price : e.price}, mrp=${mrp !== undefined ? mrp : e.mrp}, stock=${stock !== undefined ? stock : e.stock}, unit=${unit !== undefined ? unit : e.unit}, image=${image !== undefined ? image : e.image}, badge=${badge !== undefined ? badge : e.badge}, offer=${offer !== undefined ? offer : e.offer}, updated_at=NOW() WHERE id = ${id}`;
+      const { name, description, category, price, mrp, stock, unit, image, badge, offer, images } = body;
+      await sql`UPDATE products SET name=${name !== undefined ? name : e.name}, description=${description !== undefined ? description : e.description}, category=${category !== undefined ? category : e.category}, price=${price !== undefined ? price : e.price}, mrp=${mrp !== undefined ? mrp : e.mrp}, stock=${stock !== undefined ? stock : e.stock}, unit=${unit !== undefined ? unit : e.unit}, image=${image !== undefined ? image : e.image}, images=${images !== undefined ? JSON.stringify(images) : (e.images ? JSON.stringify(e.images) : '[]')}, badge=${badge !== undefined ? badge : e.badge}, offer=${offer !== undefined ? offer : e.offer}, updated_at=NOW() WHERE id = ${id}`;
       return ok(res, { success: true });
     }
 
@@ -653,6 +655,8 @@ module.exports = async function handler(req, res) {
 
     // ===== INIT (seed data) =====
     if (slug === 'init' && method === 'POST') {
+      try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS images JSONB DEFAULT '[]'`; } catch {}
+      try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS mrp DECIMAL(10,2) DEFAULT 0`; } catch {}
       const productCount = await sql`SELECT COUNT(*) as cnt FROM products`;
       if (Number(productCount[0].cnt) === 0) {
         const { SEED_DATA } = require('../DBMS/data');
