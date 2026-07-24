@@ -224,15 +224,24 @@ const App = {
     return true;
   },
 
-  // Cart - server-side for logged-in users, localStorage fallback for guests
+  // Cart - always include localStorage items so nothing is lost
   async getCart() {
+    const localCart = JSON.parse(localStorage.getItem('aravali_cart') || '[]');
     if (this.currentUser) {
       try {
         const res = await fetch('/api/cart', { credentials: 'include' });
-        if (res.ok) return await res.json();
+        if (res.ok) {
+          const serverCart = await res.json();
+          const merged = [...serverCart];
+          for (const lc of localCart) {
+            const exists = merged.find(m => m.productId === lc.productId);
+            if (!exists) merged.push(lc);
+          }
+          return merged;
+        }
       } catch {}
     }
-    return JSON.parse(localStorage.getItem('aravali_cart') || '[]');
+    return localCart;
   },
 
   async saveCart(cart) {
@@ -250,13 +259,14 @@ const App = {
           body: JSON.stringify({ productId, qty }),
         });
         if (res.ok) {
+          const localCart = JSON.parse(localStorage.getItem('aravali_cart') || '[]');
+          const existing = localCart.find(c => c.productId === productId);
+          if (existing) { existing.qty += qty; } else { localCart.push({ productId, qty }); }
+          localStorage.setItem('aravali_cart', JSON.stringify(localCart));
           this.showToast('Added to cart!', 'success');
           this.updateCartBadge();
           return;
         }
-        const data = await res.json();
-        this.showToast(data.error || 'Failed to add to cart', 'error');
-        return;
       } catch {}
     }
 
@@ -295,6 +305,9 @@ const App = {
           credentials: 'include',
           body: JSON.stringify({ productId }),
         });
+        let localCart = JSON.parse(localStorage.getItem('aravali_cart') || '[]');
+        localCart = localCart.filter(c => c.productId !== productId);
+        localStorage.setItem('aravali_cart', JSON.stringify(localCart));
         this.updateCartBadge();
         return;
       } catch {}
@@ -316,6 +329,11 @@ const App = {
           credentials: 'include',
           body: JSON.stringify({ productId, qty }),
         });
+        let localCart = JSON.parse(localStorage.getItem('aravali_cart') || '[]');
+        const localItem = localCart.find(c => c.productId === productId);
+        if (localItem) localItem.qty = qty;
+        else localCart.push({ productId, qty });
+        localStorage.setItem('aravali_cart', JSON.stringify(localCart));
         this.updateCartBadge();
         return;
       } catch {}
