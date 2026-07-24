@@ -344,7 +344,7 @@ const Admin = {
             }
             <div>
               <div style="font-weight:600;">${p.name}</div>
-              <div style="font-size:0.75rem;color:var(--text-muted);">${p.unit}</div>
+              <div style="font-size:0.75rem;color:var(--text-muted);cursor:pointer;padding:2px 6px;border-radius:4px;border:1px dashed rgba(45,106,79,0.2);display:inline-block;" onclick="Admin.editUnitInline('${p.id}', this)" title="Click to edit unit">/${p.unit}</div>
               ${p.offer ? `<div style="font-size:0.68rem;margin-top:3px;display:inline-block;padding:2px 8px;background:rgba(230,57,70,0.08);color:var(--danger);border-radius:8px;font-weight:600;">${p.offer}</div>` : ''}
             </div>
           </div>
@@ -1487,6 +1487,29 @@ const Admin = {
     } else if (this.currentPage === 'dashboard') {
       this.renderDashboard();
     }
+  },
+
+  editUnitInline(productId, el) {
+    const product = DB.getById('products', productId);
+    if (!product) return;
+    const current = product.unit || '';
+    el.outerHTML = `<input type="text" value="${current}" style="font-size:0.75rem;width:100px;padding:2px 6px;border:1px solid var(--primary);border-radius:4px;font-family:var(--font);" id="unitInput_${productId}" onblur="Admin.saveUnitInline('${productId}', this.value)" onkeydown="if(event.key==='Enter'){this.blur();}if(event.key==='Escape'){Admin.cancelUnitInline('${productId}','${current}');}">`;
+    const input = document.getElementById(`unitInput_${productId}`);
+    if (input) { input.focus(); input.select(); }
+  },
+
+  saveUnitInline(productId, newUnit) {
+    const trimmed = (newUnit || '').trim();
+    if (!trimmed) { this.renderProducts(); return; }
+    const product = DB.getById('products', productId);
+    if (!product) return;
+    DB.update('products', productId, { unit: trimmed });
+    App.showToast(`${product.name}: unit updated to "${trimmed}"`, 'success');
+    this.renderProducts();
+  },
+
+  cancelUnitInline(productId, original) {
+    this.renderProducts();
   },
 
   quickRestock(productId) {
