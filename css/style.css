@@ -1915,6 +1915,105 @@ img {
   transform: rotate(30deg);
 }
 
+/* ===== DARK MODE: Global overrides for inline-styled elements ===== */
+
+[data-theme="dark"] body { background: #0d1117; }
+[data-theme="dark"] .modal { background: var(--modal-bg); color: var(--text); }
+[data-theme="dark"] .modal-close { background: rgba(255,255,255,0.1); }
+[data-theme="dark"] select { background: var(--input-bg); color: var(--text); border-color: var(--border-color); }
+[data-theme="dark"] textarea { background: var(--input-bg); color: var(--text); border-color: var(--border-color); }
+[data-theme="dark"] input { background: var(--input-bg); color: var(--text); border-color: var(--border-color); }
+
 [data-theme="dark"] .theme-toggle-btn {
   border-color: rgba(48, 54, 61, 0.6);
 }
+
+/* ===== DARK MODE: All hardcoded colors across public pages ===== */
+
+/* Product page */
+[data-theme="dark"] .pd-topbar { background: rgba(13,17,23,0.92); border-bottom-color: rgba(48,54,61,0.4); }
+[data-theme="dark"] .pd-back { background: rgba(82,183,136,0.12); color: var(--text); }
+[data-theme="dark"] .pd-back:hover { background: rgba(82,183,136,0.2); }
+[data-theme="dark"] .pd-topbar-actions button { background: rgba(82,183,136,0.12); }
+[data-theme="dark"] .pd-topbar-actions button:hover { background: rgba(82,183,136,0.2); }
+[data-theme="dark"] .pd-image-section { background: var(--card-bg); }
+[data-theme="dark"] .pd-image-placeholder { background: linear-gradient(135deg, rgba(82,183,136,0.08), rgba(82,183,136,0.15)); }
+[data-theme="dark"] .pd-category { background: rgba(82,183,136,0.18); }
+[data-theme="dark"] .pd-divider { background: rgba(48,54,61,0.4); }
+[data-theme="dark"] .pd-bottom-bar { background: rgba(13,17,23,0.95); border-top-color: rgba(48,54,61,0.4); }
+[data-theme="dark"] .similar-card { background: var(--card-bg); box-shadow: 0 2px 12px rgba(0,0,0,0.2); }
+[data-theme="dark"] .similar-card-img { background: var(--surface-1); }
+[data-theme="dark"] .similar-card-img-placeholder { background: linear-gradient(135deg, rgba(82,183,136,0.08), rgba(82,183,136,0.15)); }
+[data-theme="dark"] .similar-card-add { background: var(--card-bg); }
+
+/* Dashboard page */
+[data-theme="dark"] .profile-avatar { border-color: var(--bg); }
+[data-theme="dark"] .stat-mini { background: rgba(82,183,136,0.1); }
+[data-theme="dark"] .order-card-dash { background: rgba(22,27,34,0.7); }
+[data-theme="dark"] .addr-card { background: rgba(22,27,34,0.7); }
+[data-theme="dark"] .addr-actions button { background: var(--card-bg); border-color: var(--border-color); }
+
+/* Orders page */
+[data-theme="dark"] .orders-row { border-bottom-color: var(--border-color); }
+[data-theme="dark"] .orders-row:hover { background: var(--surface-1); }
+
+/* Sort dropdowns across shop, deals, trending, seasonal, bestsellers, offers */
+[data-theme="dark"] .sort-select,
+[data-theme="dark"] .shop-sort select { background: var(--input-bg); color: var(--text); border-color: var(--border-color); }
+
+/* Seasonal hero */
+[data-theme="dark"] .seasonal-hero { background: linear-gradient(135deg, rgba(34,139,34,0.75), rgba(60,179,113,0.75)); }
+
+/* Product cards (shop.js rendered) */
+[data-theme="dark"] .product-card { background: var(--card-bg); border-color: var(--border-color); }
+[data-theme="dark"] .product-card:hover { border-color: var(--primary); }
+
+/* Policy page links */
+[data-theme="dark"] a[href*="mailto:"],
+[data-theme="dark"] .policy-content a { color: var(--primary-light); }
+
+/* All card-like elements with white backgrounds */
+[data-theme="dark"] .card,
+[data-theme="dark"] .deal-card,
+[data-theme="dark"] .deal-card.active,
+[data-theme="dark"] .category-card { background: var(--card-bg); border-color: var(--border-color); }
+
+/* Login/Register error messages */
+[data-theme="dark"] .error-msg { background: rgba(248,81,73,0.12); }
+
+/* Wishlist placeholder */
+[data-theme="dark"] .wishlist-img-placeholder { background: var(--surface-1); }
+
+/* Address cards, stat cards */
+[data-theme="dark"] .stat-box { background: var(--card-bg); }
+[data-theme="dark"] .order-card { background: var(--card-bg); }
+
+/* App download section on homepage */
+[data-theme="dark"] .download-card { background: linear-gradient(135deg, rgba(45,106,79,0.8), rgba(82,183,136,0.8)); }
+
+/* Banner overlays */
+[data-theme="dark"] .hero-overlay { background: rgba(0,0,0,0.5); }
+
+/* Cart item image placeholder */
+[data-theme="dark"] .cart-item-img { background: var(--surface-1); }
+
+/* Generic: any remaining white backgrounds */
+[data-theme="dark"] .content-section { background: var(--card-bg); }
+[data-theme="dark"] .section-header { color: var(--text); }
+
+/* Footer */
+[data-theme="dark"] .footer { background: var(--surface-4); border-top-color: var(--border-color); }
+
+/* Contact form */
+[data-theme="dark"] .contact-form input,
+[data-theme="dark"] .contact-form textarea { background: var(--input-bg); color: var(--text); border-color: var(--border-color); }
+
+/* FAQ accordion */
+[data-theme="dark"] .faq-item { border-color: var(--border-color); }
+[data-theme="dark"] .faq-item.active { background: var(--card-bg); }
+
+/* Address form */
+[data-theme="dark"] .addr-form { background: var(--card-bg); border-color: var(--border-color); }
+
+/* Admin-only elements that leak into public pages */
+[data-theme="dark"] .admin-topbar { background: var(--surface-4); }
