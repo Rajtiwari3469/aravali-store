@@ -528,3 +528,4 @@ const SEED_DATA = {
     { id: "c024", name: "Health & Wellness", emoji: "💊", description: "Supplements, muesli and health foods", image: "", active: true, order: 24 }
   ]
 };
+if (typeof module !== 'undefined') module.exports = { SEED_DATA };
