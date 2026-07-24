@@ -44,8 +44,8 @@ async function getUser(req) {
   } catch { return null; }
 }
 
-function ok(res, data) { return new Response(JSON.stringify(data), { status: 200, headers: { 'Content-Type': 'application/json' } }); }
-function err(res, msg, s = 400) { return new Response(JSON.stringify({ error: msg }), { status: s, headers: { 'Content-Type': 'application/json' } }); }
+function ok(res, data) { res.setHeader('Content-Type', 'application/json'); res.statusCode = 200; res.end(JSON.stringify(data)); }
+function err(res, msg, s = 400) { res.setHeader('Content-Type', 'application/json'); res.statusCode = s; res.end(JSON.stringify({ error: msg })); }
 function getId(res, id) { return ok(res, { id }); }
 
 const gid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
