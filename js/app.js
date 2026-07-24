@@ -1,6 +1,47 @@
 const App = {
   currentUser: null,
 
+  initTheme() {
+    const saved = localStorage.getItem('aravali-theme') || 'light';
+    document.documentElement.setAttribute('data-theme', saved);
+    this.injectThemeToggle();
+  },
+
+  toggleTheme() {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('aravali-theme', next);
+    this.updateThemeIcon();
+  },
+
+  updateThemeIcon() {
+    const btns = document.querySelectorAll('.theme-toggle-btn');
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    btns.forEach(btn => { btn.textContent = isDark ? '\u2600\uFE0F' : '\uD83C\uDF19'; });
+  },
+
+  injectThemeToggle() {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const icon = isDark ? '\u2600\uFE0F' : '\uD83C\uDF19';
+    const html = `<button class="theme-toggle-btn" onclick="App.toggleTheme()" title="Toggle dark/light theme">${icon}</button>`;
+
+    document.querySelectorAll('.nav-actions').forEach(el => {
+      if (!el.querySelector('.theme-toggle-btn')) {
+        el.insertAdjacentHTML('afterbegin', html);
+      }
+    });
+    document.querySelectorAll('.topbar-actions').forEach(el => {
+      if (!el.querySelector('.theme-toggle-btn')) {
+        el.insertAdjacentHTML('afterbegin', html);
+      }
+    });
+    const loginToggle = document.getElementById('loginThemeToggle');
+    if (loginToggle && !loginToggle.querySelector('.theme-toggle-btn')) {
+      loginToggle.innerHTML = html;
+    }
+  },
+
   async init() {
     try {
       const res = await fetch('/api/auth/me');
@@ -23,15 +64,15 @@ const App = {
     document.querySelectorAll('.nav-user-section').forEach(el => {
       if (this.currentUser) {
         const avatarHtml = this.currentUser.avatar
-          ? `<img src="${this.currentUser.avatar}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid white;box-shadow:0 2px 8px rgba(45,106,79,0.3);">`
-          : `<span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--secondary));color:white;font-weight:800;font-size:0.85rem;border:2px solid white;box-shadow:0 2px 8px rgba(45,106,79,0.3);">${(this.currentUser.name || 'U').charAt(0).toUpperCase()}</span>`;
+          ? `<img src="${this.currentUser.avatar}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid var(--white);box-shadow:0 2px 8px var(--shadow-sm);">`
+          : `<span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--secondary));color:white;font-weight:800;font-size:0.85rem;border:2px solid var(--white);box-shadow:0 2px 8px var(--shadow-sm);">${(this.currentUser.name || 'U').charAt(0).toUpperCase()}</span>`;
         el.innerHTML = `
           <div class="user-dropdown">
             <button class="nav-icon-btn" onclick="App.toggleUserDropdown()" style="font-size:1rem;">
               ${avatarHtml}
             </button>
             <div class="user-dropdown-menu" id="userDropdown">
-              <div style="padding:10px 14px;font-weight:600;font-size:0.88rem;border-bottom:1px solid rgba(45,106,79,0.08);margin-bottom:4px;">
+              <div style="padding:10px 14px;font-weight:600;font-size:0.88rem;border-bottom:1px solid var(--border-color);margin-bottom:4px;">
                 ${this.currentUser.name}
               </div>
               <a href="dashboard.html">👤 My Profile</a>
@@ -737,6 +778,7 @@ const CATEGORY_EMOJIS = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+  App.initTheme();
   if (!window.location.pathname.includes('/admin')) {
     App.init().then(() => {
       App.initGlobalClick();

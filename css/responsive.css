@@ -35,13 +35,13 @@
     top: 72px;
     left: 0;
     right: 0;
-    background: rgba(255, 255, 255, 0.95);
+    background: var(--surface-4);
     backdrop-filter: blur(20px);
     flex-direction: column;
     padding: 16px;
     gap: 0;
-    border-bottom: 1px solid rgba(45, 106, 79, 0.1);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: 0 8px 24px var(--shadow-sm);
   }
   .nav-links.open { display: flex; }
   .nav-links a { padding: 12px 0; width: 100%; }

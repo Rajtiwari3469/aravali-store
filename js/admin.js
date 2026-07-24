@@ -251,7 +251,7 @@ const Admin = {
         const isActive = count > 0;
         const clickAttr = t.link ? `onclick="window.location.href='${t.link}'" style="cursor:pointer;"` : '';
         return `
-          <div class="dbms-table-card" ${clickAttr} style="background:white;border:1px solid rgba(0,0,0,0.06);border-radius:14px;padding:18px;display:flex;align-items:center;gap:14px;transition:all 0.25s;box-shadow:0 1px 3px rgba(0,0,0,0.04);" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 25px rgba(0,0,0,0.1)'" onmouseout="this.style.transform='none';this.style.boxShadow='0 1px 3px rgba(0,0,0,0.04)'">
+          <div class="dbms-table-card" ${clickAttr} style="background:var(--modal-bg);border:1px solid var(--border-color);border-radius:14px;padding:18px;display:flex;align-items:center;gap:14px;transition:all 0.25s;box-shadow:0 1px 3px var(--shadow-sm);" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 25px var(--shadow-md)'" onmouseout="this.style.transform='none';this.style.boxShadow='0 1px 3px var(--shadow-sm)'">
             <div style="width:48px;height:48px;border-radius:12px;background:${t.color}15;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;">${t.icon}</div>
             <div style="flex:1;min-width:0;">
               <div style="font-weight:700;font-size:0.95rem;color:var(--text);margin-bottom:2px;">${t.label}</div>
@@ -365,9 +365,9 @@ const Admin = {
         </td>
         <td>
           <div style="display:flex;align-items:center;gap:4px;">
-            <button onclick="Admin.adjustStock('${p.id}', -1)" style="width:24px;height:24px;border:1px solid rgba(45,106,79,0.15);border-radius:4px;background:white;cursor:pointer;font-size:0.8rem;display:flex;align-items:center;justify-content:center;" title="Decrease stock">−</button>
+                    <button onclick="Admin.adjustStock('${p.id}', -1)" style="width:24px;height:24px;border:1px solid var(--border-color);border-radius:4px;background:var(--input-bg);cursor:pointer;font-size:0.8rem;display:flex;align-items:center;justify-content:center;" title="Decrease stock">−</button>
             <input type="number" value="${stock}" min="0" style="width:50px;text-align:center;border:1px solid rgba(45,106,79,0.15);border-radius:4px;padding:2px;font-size:0.82rem;font-family:var(--font);" onchange="Admin.setStock('${p.id}', this.value)">
-            <button onclick="Admin.adjustStock('${p.id}', 1)" style="width:24px;height:24px;border:1px solid rgba(45,106,79,0.15);border-radius:4px;background:white;cursor:pointer;font-size:0.8rem;display:flex;align-items:center;justify-content:center;" title="Increase stock">+</button>
+                    <button onclick="Admin.adjustStock('${p.id}', 1)" style="width:24px;height:24px;border:1px solid var(--border-color);border-radius:4px;background:var(--input-bg);cursor:pointer;font-size:0.8rem;display:flex;align-items:center;justify-content:center;" title="Increase stock">+</button>
           </div>
         </td>
         <td>
@@ -585,7 +585,7 @@ const Admin = {
         </div>
 
         <div style="display:flex;gap:6px;padding:0 0 16px;flex-wrap:wrap;">
-          <button onclick="Admin.renderOrders('all')" style="padding:7px 16px;border-radius:20px;border:none;cursor:pointer;font-family:var(--font);font-size:0.8rem;font-weight:600;transition:0.2s;${activeTab==='all'?'background:var(--primary);color:white;':'background:rgba(45,106,79,0.06);color:var(--text-light);'}">All <span style="margin-left:4px;opacity:0.8;">${statusCounts.all}</span></button>
+          <button onclick="Admin.renderOrders('all')" style="padding:7px 16px;border-radius:20px;border:none;cursor:pointer;font-family:var(--font);font-size:0.8rem;font-weight:600;transition:0.2s;${activeTab==='all'?'background:var(--primary);color:white;':'background:var(--bubble-bg);color:var(--text-light);'}">All <span style="margin-left:4px;opacity:0.8;">${statusCounts.all}</span></button>
           <button onclick="Admin.renderOrders('pending')" style="padding:7px 16px;border-radius:20px;border:none;cursor:pointer;font-family:var(--font);font-size:0.8rem;font-weight:600;transition:0.2s;${activeTab==='pending'?'background:#ff9800;color:white;':'background:rgba(255,152,0,0.08);color:#e67e22;'}">⏳ Pending <span style="margin-left:4px;">${statusCounts.pending}</span></button>
           <button onclick="Admin.renderOrders('confirmed')" style="padding:7px 16px;border-radius:20px;border:none;cursor:pointer;font-family:var(--font);font-size:0.8rem;font-weight:600;transition:0.2s;${activeTab==='confirmed'?'background:#2196f3;color:white;':'background:rgba(33,150,243,0.08);color:#2196f3;'}">✅ Confirmed <span style="margin-left:4px;">${statusCounts.confirmed}</span></button>
           <button onclick="Admin.renderOrders('delivered')" style="padding:7px 16px;border-radius:20px;border:none;cursor:pointer;font-family:var(--font);font-size:0.8rem;font-weight:600;transition:0.2s;${activeTab==='delivered'?'background:#4caf50;color:white;':'background:rgba(76,175,80,0.08);color:#4caf50;'}">🚚 Delivered <span style="margin-left:4px;">${statusCounts.delivered}</span></button>
@@ -1687,7 +1687,7 @@ const Admin = {
     this.OFFER_CATEGORIES.forEach(cat => {
       const catProducts = products.filter(p => p.offer === cat.offerTag);
       html += `
-        <div onclick="Admin.showOfferCategory('${cat.id}')" style="background:rgba(255,255,255,0.55);backdrop-filter:blur(8px);border:2px solid rgba(45,106,79,0.06);border-radius:14px;padding:18px;cursor:pointer;transition:all 0.25s;position:relative;overflow:hidden;"
+        <div onclick="Admin.showOfferCategory('${cat.id}')" style="background:var(--surface-1);backdrop-filter:blur(8px);border:2px solid var(--border-color-2);border-radius:14px;padding:18px;cursor:pointer;transition:all 0.25s;position:relative;overflow:hidden;"
           onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(45,106,79,0.12)'"
           onmouseout="this.style.transform='';this.style.boxShadow=''">
           <div style="width:52px;height:52px;border-radius:14px;background:${cat.gradient};display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:10px;">${cat.label.split(' ')[0]}</div>
@@ -1909,7 +1909,7 @@ const Admin = {
         </div>
 
         <div style="display:flex;gap:6px;padding:0 0 16px;flex-wrap:wrap;">
-          <button onclick="Admin.renderReturns('all')" style="padding:7px 16px;border-radius:20px;border:none;cursor:pointer;font-family:var(--font);font-size:0.8rem;font-weight:600;transition:0.2s;${activeTab==='all'?'background:var(--primary);color:white;':'background:rgba(45,106,79,0.06);color:var(--text-light);'}">All <span style="margin-left:4px;">${statusCounts.all}</span></button>
+          <button onclick="Admin.renderReturns('all')" style="padding:7px 16px;border-radius:20px;border:none;cursor:pointer;font-family:var(--font);font-size:0.8rem;font-weight:600;transition:0.2s;${activeTab==='all'?'background:var(--primary);color:white;':'background:var(--bubble-bg);color:var(--text-light);'}">All <span style="margin-left:4px;">${statusCounts.all}</span></button>
           <button onclick="Admin.renderReturns('pending')" style="padding:7px 16px;border-radius:20px;border:none;cursor:pointer;font-family:var(--font);font-size:0.8rem;font-weight:600;transition:0.2s;${activeTab==='pending'?'background:#ff9800;color:white;':'background:rgba(255,152,0,0.08);color:#e67e22;'}">⏳ Pending <span style="margin-left:4px;">${statusCounts.pending}</span></button>
           <button onclick="Admin.renderReturns('approved')" style="padding:7px 16px;border-radius:20px;border:none;cursor:pointer;font-family:var(--font);font-size:0.8rem;font-weight:600;transition:0.2s;${activeTab==='approved'?'background:#2196f3;color:white;':'background:rgba(33,150,243,0.08);color:#2196f3;'}">✅ Approved <span style="margin-left:4px;">${statusCounts.approved}</span></button>
           <button onclick="Admin.renderReturns('rejected')" style="padding:7px 16px;border-radius:20px;border:none;cursor:pointer;font-family:var(--font);font-size:0.8rem;font-weight:600;transition:0.2s;${activeTab==='rejected'?'background:#f44336;color:white;':'background:rgba(244,67,54,0.08);color:#f44336;'}">❌ Rejected <span style="margin-left:4px;">${statusCounts.rejected}</span></button>

@@ -19,6 +19,11 @@
   transition: var(--transition);
 }
 
+[data-theme="dark"] .admin-sidebar {
+  background: rgba(13, 17, 23, 0.95);
+  border-right: 1px solid rgba(48, 54, 61, 0.5);
+}
+
 .admin-sidebar .sidebar-header {
   padding: 0 20px 24px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -92,7 +97,7 @@
   justify-content: space-between;
   margin-bottom: 28px;
   padding-bottom: 16px;
-  border-bottom: 1px solid rgba(45, 106, 79, 0.08);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .admin-topbar h1 {
@@ -115,9 +120,9 @@
 }
 
 .stat-card {
-  background: rgba(255, 255, 255, 0.6);
+  background: var(--surface-1);
   backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
+  border: 1px solid var(--surface-border);
   border-radius: var(--border-radius);
   padding: 20px;
   display: flex;
@@ -128,7 +133,7 @@
 
 .stat-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(45, 106, 79, 0.1);
+  box-shadow: 0 8px 24px var(--shadow-md);
 }
 
 .stat-card .stat-icon {
@@ -160,9 +165,9 @@
 
 /* ========== ADMIN TABLE ========== */
 .admin-table-wrapper {
-  background: rgba(255, 255, 255, 0.6);
+  background: var(--surface-1);
   backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
+  border: 1px solid var(--surface-border);
   border-radius: var(--border-radius);
   overflow: hidden;
 }
@@ -172,7 +177,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 16px 20px;
-  border-bottom: 1px solid rgba(45, 106, 79, 0.08);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .admin-table-header h3 {
@@ -182,13 +187,14 @@
 
 .admin-table-header .search-input {
   padding: 8px 14px;
-  border: 1px solid rgba(45, 106, 79, 0.15);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   font-family: var(--font);
   font-size: 0.85rem;
   outline: none;
-  background: rgba(255, 255, 255, 0.5);
+  background: var(--input-bg);
   min-width: 200px;
+  color: var(--text);
 }
 
 .admin-table-header .search-input:focus {
@@ -205,9 +211,9 @@ body.modal-open {
 .modal-search-bar {
   display: flex;
   align-items: center;
-  background: rgba(255, 255, 255, 0.7);
+  background: var(--surface-3);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(45, 106, 79, 0.12);
+  border: 1px solid var(--border-color);
   border-radius: 14px;
   padding: 0 16px;
   transition: var(--transition);
@@ -216,8 +222,8 @@ body.modal-open {
 
 .modal-search-bar:focus-within {
   border-color: var(--secondary);
-  box-shadow: 0 4px 20px rgba(82, 183, 136, 0.15);
-  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 4px 20px var(--shadow-sm);
+  background: var(--surface-4);
 }
 
 .modal-search-bar .search-icon {
@@ -252,7 +258,7 @@ body.modal-open {
   height: 22px;
   border-radius: 50%;
   border: none;
-  background: rgba(45, 106, 79, 0.08);
+  background: var(--bubble-bg);
   color: var(--text-muted);
   font-size: 0.7rem;
   cursor: pointer;
@@ -270,12 +276,12 @@ body.modal-open {
 
 .modal-select {
   padding: 11px 14px;
-  border: 1px solid rgba(45, 106, 79, 0.12);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   font-family: var(--font);
   font-size: 0.85rem;
   color: var(--text);
-  background: rgba(255, 255, 255, 0.7);
+  background: var(--surface-3);
   backdrop-filter: blur(12px);
   outline: none;
   transition: var(--transition);
@@ -290,7 +296,7 @@ body.modal-open {
 
 .modal-select:focus {
   border-color: var(--secondary);
-  box-shadow: 0 4px 16px rgba(82, 183, 136, 0.12);
+  box-shadow: 0 4px 16px var(--shadow-sm);
 }
 
 /* ========== BULK ASSIGN MODAL ========== */
@@ -337,7 +343,7 @@ body.modal-open {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(45, 106, 79, 0.06);
+  background: var(--bubble-bg);
   transition: var(--transition);
   flex-shrink: 0;
   margin-top: -2px;
@@ -375,7 +381,7 @@ body.modal-open {
 
 .bulk-assign-divider {
   height: 1px;
-  background: rgba(45, 106, 79, 0.08);
+  background: var(--border-color);
   margin: 14px 28px 0;
 }
 
@@ -383,7 +389,7 @@ body.modal-open {
   flex: 1;
   overflow-y: auto;
   margin: 14px 28px 0;
-  border: 1px solid rgba(45, 106, 79, 0.08);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   min-height: 120px;
   max-height: 45vh;
@@ -396,7 +402,7 @@ body.modal-open {
   padding: 10px 14px;
   cursor: pointer;
   transition: background 0.15s ease;
-  border-bottom: 1px solid rgba(45, 106, 79, 0.04);
+  border-bottom: 1px solid var(--border-color-2);
 }
 
 .bulk-product-row:last-child {
@@ -404,7 +410,7 @@ body.modal-open {
 }
 
 .bulk-product-row:hover {
-  background: rgba(45, 106, 79, 0.03);
+  background: var(--bubble-bg);
 }
 
 .bulk-product-row input[type="checkbox"] {
@@ -420,7 +426,7 @@ body.modal-open {
   height: 36px;
   border-radius: 8px;
   overflow: hidden;
-  background: rgba(45, 106, 79, 0.06);
+  background: var(--bubble-bg);
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -495,12 +501,12 @@ body.modal-open {
 }
 
 .bulk-assign-footer .btn:not(.btn-primary) {
-  background: rgba(45, 106, 79, 0.06);
+  background: var(--bubble-bg);
   color: var(--text);
 }
 
 .bulk-assign-footer .btn:not(.btn-primary):hover {
-  background: rgba(45, 106, 79, 0.12);
+  background: var(--border-color);
 }
 
 .admin-table {
@@ -516,18 +522,18 @@ body.modal-open {
   letter-spacing: 0.5px;
   color: var(--text-muted);
   font-weight: 600;
-  border-bottom: 1px solid rgba(45, 106, 79, 0.08);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .admin-table td {
   padding: 14px 20px;
   font-size: 0.88rem;
-  border-bottom: 1px solid rgba(45, 106, 79, 0.04);
+  border-bottom: 1px solid var(--border-color-2);
   vertical-align: middle;
 }
 
 .admin-table tr:hover td {
-  background: rgba(82, 183, 136, 0.04);
+  background: var(--bubble-bg);
 }
 
 .admin-table .action-btns {
@@ -606,11 +612,11 @@ body.modal-open {
   width: 100%;
   max-width: 400px;
   padding: 40px;
-  background: rgba(255, 255, 255, 0.6);
+  background: var(--surface-1);
   backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
+  border: 1px solid var(--surface-border);
   border-radius: var(--border-radius-lg);
-  box-shadow: 0 16px 48px rgba(45, 106, 79, 0.1);
+  box-shadow: 0 16px 48px var(--shadow-md);
   text-align: center;
 }
 
@@ -627,9 +633,9 @@ body.modal-open {
 
 /* ========== ADMIN CHART PLACEHOLDER ========== */
 .admin-chart {
-  background: rgba(255, 255, 255, 0.6);
+  background: var(--chart-bg);
   backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
+  border: 1px solid var(--surface-border);
   border-radius: var(--border-radius);
   padding: 24px;
   margin-bottom: 28px;
@@ -685,9 +691,9 @@ body.modal-open {
 
 /* ========== ADMIN RECENT ORDERS ========== */
 .recent-orders {
-  background: rgba(255, 255, 255, 0.6);
+  background: var(--chart-bg);
   backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
+  border: 1px solid var(--surface-border);
   border-radius: var(--border-radius);
   padding: 20px;
 }
@@ -703,7 +709,7 @@ body.modal-open {
   align-items: center;
   justify-content: space-between;
   padding: 12px 0;
-  border-bottom: 1px solid rgba(45, 106, 79, 0.06);
+  border-bottom: 1px solid var(--border-color-2);
 }
 
 .recent-order-item:last-child {
