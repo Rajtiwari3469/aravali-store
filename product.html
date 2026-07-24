@@ -216,8 +216,13 @@
           `).join('')}
         </div>` : ''}
         <div class="pd-info">
-          <span class="pd-category">${product.category}</span>
-          ${product.badge ? `<span class="pd-badge">${product.badge}</span>` : ''}
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <span class="pd-category">${product.category}</span>
+              ${product.badge ? `<span class="pd-badge">${product.badge}</span>` : ''}
+            </div>
+            <button class="pd-wishlist-btn ${inWishlist ? 'active' : ''}" id="pdWishlistBtn" onclick="togglePdWishlist()" title="${inWishlist ? 'Remove from Wishlist' : 'Add to Wishlist'}" style="background:none;border:none;cursor:pointer;font-size:1.5rem;padding:4px;transition:transform 0.2s;filter:${inWishlist ? 'none' : 'grayscale(0.5)'};">${inWishlist ? '❤️' : '🤍'}</button>
+          </div>
           <h1>${product.name}</h1>
           <div class="pd-unit">${product.unit}</div>
           <div class="pd-price">
@@ -271,6 +276,7 @@
       // Bottom bar
       document.getElementById('pdBody').insertAdjacentHTML('beforeend', `
         <div class="pd-bottom-bar">
+          <button class="pd-wishlist-btn ${inWishlist ? 'active' : ''}" id="pdWishlistBtnMobile" onclick="togglePdWishlist()" title="${inWishlist ? 'Remove from Wishlist' : 'Add to Wishlist'}" style="background:none;border:none;cursor:pointer;font-size:1.3rem;padding:4px 8px;filter:${inWishlist ? 'none' : 'grayscale(0.5)'};">${inWishlist ? '❤️' : '🤍'}</button>
           <div class="pd-price-mobile">
             ${App.formatCurrency(product.price)}
             ${product.mrp && product.mrp > product.price ? `<span style="text-decoration:line-through;color:var(--text-muted);font-size:0.75rem;font-weight:400;margin-left:4px;">${App.formatCurrency(product.mrp)}</span>` : ''}
@@ -314,6 +320,16 @@
       window.addSimilarToCart = async function(id) {
         await App.addToCart(id);
         location.reload();
+      };
+
+      window.togglePdWishlist = async function() {
+        const added = await App.toggleWishlist(product.id);
+        document.querySelectorAll('.pd-wishlist-btn').forEach(btn => {
+          btn.classList.toggle('active', added);
+          btn.innerHTML = added ? '❤️' : '🤍';
+          btn.title = added ? 'Remove from Wishlist' : 'Add to Wishlist';
+          btn.style.filter = added ? 'none' : 'grayscale(0.5)';
+        });
       };
     });
   </script>

@@ -386,12 +386,29 @@ const App = {
   },
 
   updateCartBadge() {
-    this.getCartCount().then(count => {
+    const cart = JSON.parse(localStorage.getItem('aravali_cart') || '[]');
+    if (this.currentUser) {
+      fetch('/api/cart', { credentials: 'include' })
+        .then(r => r.ok ? r.json() : [])
+        .catch(() => [])
+        .then(serverCart => {
+          const merged = [...(serverCart || [])];
+          for (const lc of cart) {
+            if (!merged.find(m => m.productId === lc.productId)) merged.push(lc);
+          }
+          const count = merged.reduce((sum, c) => sum + (c.qty || 0), 0);
+          document.querySelectorAll('.cart-count').forEach(el => {
+            el.textContent = count;
+            el.style.display = count > 0 ? 'flex' : 'none';
+          });
+        });
+    } else {
+      const count = cart.reduce((sum, c) => sum + (c.qty || 0), 0);
       document.querySelectorAll('.cart-count').forEach(el => {
         el.textContent = count;
         el.style.display = count > 0 ? 'flex' : 'none';
       });
-    });
+    }
   },
 
   async clearCart() {
@@ -479,12 +496,25 @@ const App = {
   },
 
   updateWishlistBadge() {
-    this.getWishlistCount().then(count => {
+    const wishlist = JSON.parse(localStorage.getItem('aravali_wishlist') || '[]');
+    if (this.currentUser) {
+      fetch('/api/wishlist', { credentials: 'include' })
+        .then(r => r.ok ? r.json() : [])
+        .catch(() => [])
+        .then(serverList => {
+          const count = (serverList || []).length;
+          document.querySelectorAll('.wishlist-count').forEach(el => {
+            el.textContent = count;
+            el.style.display = count > 0 ? 'flex' : 'none';
+          });
+        });
+    } else {
+      const count = wishlist.length;
       document.querySelectorAll('.wishlist-count').forEach(el => {
         el.textContent = count;
         el.style.display = count > 0 ? 'flex' : 'none';
       });
-    });
+    }
   },
 
   // Orders
