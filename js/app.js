@@ -232,13 +232,11 @@ const App = {
         const res = await fetch('/api/cart', { credentials: 'include' });
         if (res.ok) {
           const serverCart = await res.json();
-          const merged = [...serverCart];
-          const addedLocal = [];
-          for (const lc of localCart) {
-            const exists = merged.find(m => m.productId === lc.productId);
-            if (!exists) addedLocal.push(lc);
-          }
-          merged.push(...addedLocal);
+          const localIds = new Set(localCart.map(c => c.productId));
+          const merged = [
+            ...localCart,
+            ...serverCart.filter(sc => !localIds.has(sc.productId))
+          ];
           localStorage.setItem('aravali_cart', JSON.stringify(merged));
           return merged;
         }
@@ -302,24 +300,30 @@ const App = {
   async removeFromCart(productId) {
     if (this.currentUser) {
       try {
-        const res = await fetch('/api/cart', {
+        await fetch('/api/cart', {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
           body: JSON.stringify({ productId }),
         });
+      } catch {}
+      try {
+        const res = await fetch('/api/cart', { credentials: 'include' });
         if (res.ok) {
-          let localCart = JSON.parse(localStorage.getItem('aravali_cart') || '[]');
-          localCart = localCart.filter(c => c.productId !== productId);
-          localStorage.setItem('aravali_cart', JSON.stringify(localCart));
+          const serverCart = await res.json();
+          const localCart = JSON.parse(localStorage.getItem('aravali_cart') || '[]');
+          const localOnly = localCart.filter(lc => !serverCart.find(sc => sc.productId === lc.productId));
+          const merged = [...serverCart, ...localOnly];
+          localStorage.setItem('aravali_cart', JSON.stringify(merged));
           this.updateCartBadge();
           return;
         }
       } catch {}
     }
-    let cart = await this.getCart();
-    cart = cart.filter(c => c.productId !== productId);
-    await this.saveCart(cart);
+    let localCart = JSON.parse(localStorage.getItem('aravali_cart') || '[]');
+    localCart = localCart.filter(c => c.productId !== productId);
+    localStorage.setItem('aravali_cart', JSON.stringify(localCart));
+    this.updateCartBadge();
   },
 
   async updateCartQty(productId, qty) {
