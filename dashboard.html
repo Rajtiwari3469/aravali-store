@@ -776,10 +776,8 @@
             return;
           }
 
-          fetch('/api/auth/change-user-password', {
+          App.apiFetch('/api/auth/change-user-password', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
             body: JSON.stringify({ currentPassword: current, newPassword: newPass }),
           })
           .then(res => res.json())

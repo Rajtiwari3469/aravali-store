@@ -1122,10 +1122,8 @@ const Admin = {
     }
 
     try {
-      const res = await fetch('/api/auth/change-admin-password', {
+      const res = await App.apiFetch('/api/auth/change-admin-password', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ currentPassword: current, newPassword: newPass }),
       });
       const data = await res.json();

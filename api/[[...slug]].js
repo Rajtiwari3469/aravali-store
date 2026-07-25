@@ -92,7 +92,10 @@ function parseCookies(h) {
 
 async function getUser(req) {
   const cookies = parseCookies(req.headers.cookie || '');
-  const token = cookies.aravali_token;
+  let token = cookies.aravali_token;
+  if (!token && req.headers.authorization) {
+    token = req.headers.authorization.replace('Bearer ', '');
+  }
   if (!token) return null;
   try {
     const j = await getJose();
@@ -103,7 +106,10 @@ async function getUser(req) {
 
 async function getAdmin(req) {
   const cookies = parseCookies(req.headers.cookie || '');
-  const token = cookies.aravali_admin_token;
+  let token = cookies.aravali_admin_token;
+  if (!token && req.headers.authorization) {
+    token = req.headers.authorization.replace('Bearer ', '');
+  }
   if (!token) return null;
   try {
     const j = await getJose();
@@ -164,11 +170,7 @@ module.exports = async function handler(req, res) {
       const ph = await bcrypt.hash(password, 10);
       await sql`INSERT INTO users (id, name, email, password_hash, phone) VALUES (${id}, ${name}, ${email}, ${ph}, ${phone || ''})`;
       const token = await signToken({ id, name, email, role: 'user' });
-      const cf = cookieFlags(req);
-      return okCookies(res, { success: true, user: { id, name, email, phone } }, [
-        `aravali_token=${token}; Path=/; HttpOnly; ${cf}SameSite=Lax; Max-Age=2592000`,
-        `aravali_admin_token=; Path=/; HttpOnly; ${cf}SameSite=Lax; Max-Age=0`
-      ]);
+      return ok(res, { success: true, user: { id, name, email, phone }, token });
     }
 
     if (slug === 'auth/login' && method === 'POST') {
@@ -179,11 +181,7 @@ module.exports = async function handler(req, res) {
       const u = users[0];
       if (!(await bcrypt.compare(password, u.password_hash))) return err(res, 'Invalid email or password', 401);
       const token = await signToken({ id: u.id, name: u.name, email: u.email, role: 'user' });
-      const cf = cookieFlags(req);
-      return okCookies(res, { success: true, user: { id: u.id, name: u.name, email: u.email, phone: u.phone } }, [
-        `aravali_token=${token}; Path=/; HttpOnly; ${cf}SameSite=Lax; Max-Age=2592000`,
-        `aravali_admin_token=; Path=/; HttpOnly; ${cf}SameSite=Lax; Max-Age=0`
-      ]);
+      return ok(res, { success: true, user: { id: u.id, name: u.name, email: u.email, phone: u.phone }, token });
     }
 
     if (slug === 'auth/admin-login' && method === 'POST') {
@@ -194,11 +192,7 @@ module.exports = async function handler(req, res) {
       const a = admins[0];
       if (!(await bcrypt.compare(password, a.password_hash))) return err(res, 'Invalid admin credentials', 401);
       const token = await signToken({ id: a.id, name: a.name, email: a.email, role: 'admin' });
-      const cf = cookieFlags(req);
-      return okCookies(res, { success: true, admin: { id: a.id, name: a.name, email: a.email, role: a.role } }, [
-        `aravali_admin_token=${token}; Path=/; HttpOnly; ${cf}SameSite=Lax; Max-Age=2592000`,
-        `aravali_token=; Path=/; HttpOnly; ${cf}SameSite=Lax; Max-Age=0`
-      ]);
+      return ok(res, { success: true, admin: { id: a.id, name: a.name, email: a.email, role: a.role }, token });
     }
 
     if (slug === 'auth/me' && method === 'GET') {
@@ -214,11 +208,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (slug === 'auth/logout' && method === 'POST') {
-      const cf = cookieFlags(req);
-      return okCookies(res, { success: true }, [
-        `aravali_token=; Path=/; HttpOnly; ${cf}SameSite=Lax; Max-Age=0`,
-        `aravali_admin_token=; Path=/; HttpOnly; ${cf}SameSite=Lax; Max-Age=0`
-      ]);
+      return ok(res, { success: true });
     }
 
     // ===== CHANGE PASSWORD (admin) =====

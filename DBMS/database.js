@@ -1,10 +1,13 @@
 const DB = {
   async _fetch(url, opts = {}) {
+    const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
+    const t = (typeof localStorage !== 'undefined') ? localStorage.getItem('aravali_token') : null;
+    if (t) headers['Authorization'] = 'Bearer ' + t;
+    const { body: rawBody, ...rest } = opts;
     const res = await fetch(url, {
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      ...opts,
-      body: opts.body ? JSON.stringify(opts.body) : undefined,
+      ...rest,
+      headers,
+      body: rawBody ? JSON.stringify(rawBody) : undefined,
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Request failed');

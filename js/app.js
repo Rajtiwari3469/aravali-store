@@ -3,6 +3,25 @@ const App = {
   _initDone: false,
   _initPromise: null,
 
+  getToken() {
+    return localStorage.getItem('aravali_token');
+  },
+
+  setToken(token) {
+    if (token) localStorage.setItem('aravali_token', token);
+  },
+
+  clearToken() {
+    localStorage.removeItem('aravali_token');
+  },
+
+  authHeaders() {
+    const h = { 'Content-Type': 'application/json' };
+    const t = this.getToken();
+    if (t) h['Authorization'] = 'Bearer ' + t;
+    return h;
+  },
+
   initTheme() {
     const saved = localStorage.getItem('aravali-theme') || 'light';
     document.documentElement.setAttribute('data-theme', saved);
@@ -54,7 +73,10 @@ const App = {
     if (this._initPromise) { await this._initPromise; return; }
     this._initPromise = (async () => {
       try {
-        const res = await fetch('/api/auth/me', { credentials: 'include' });
+        const res = await fetch('/api/auth/me', {
+          headers: this.authHeaders(),
+          credentials: 'include',
+        });
         if (res.ok) {
           const data = await res.json();
           if (data.admin) {
@@ -125,12 +147,12 @@ const App = {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
       if (res.ok && data.success) {
         this.currentUser = data.user;
+        this.setToken(data.token);
         return { success: true, user: data.user };
       }
       return { success: false, error: data.error || data.message || 'Invalid email or password' };
@@ -144,12 +166,12 @@ const App = {
       const res = await fetch('/api/auth/admin-login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
       if (res.ok && data.success) {
         this.currentUser = { ...data.admin, isAdmin: true };
+        this.setToken(data.token);
         return { success: true };
       }
       return { success: false, error: data.error || data.message || 'Invalid admin credentials' };
@@ -163,12 +185,12 @@ const App = {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ name, email, password, phone }),
       });
       const data = await res.json();
       if (res.ok && data.success) {
         this.currentUser = data.user;
+        this.setToken(data.token);
         return { success: true, user: data.user };
       }
       return { success: false, error: data.error || data.message || 'Registration failed' };
@@ -178,10 +200,11 @@ const App = {
   },
 
   async logout() {
-    try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }); } catch {}
+    try { await fetch('/api/auth/logout', { method: 'POST' }); } catch {}
     this.currentUser = null;
+    this.clearToken();
     const path = window.location.pathname;
-    if (path.includes('/admin/')) {
+    if (path.includes('/admin')) {
       window.location.href = '/admin/login';
     } else {
       window.location.href = '/';
@@ -227,10 +250,14 @@ const App = {
   },
 
   // Cart - server-authoritative for logged-in users, localStorage for guests
+  async apiFetch(url, opts = {}) {
+    const headers = { ...this.authHeaders(), ...(opts.headers || {}) };
+    return fetch(url, { ...opts, headers, credentials: 'include' });
+  },
   async getCart() {
     if (this.currentUser) {
       try {
-        const res = await fetch('/api/cart', { credentials: 'include' });
+        const res = await this.apiFetch('/api/cart');
         if (res.ok) return await res.json();
       } catch {}
     }
@@ -246,10 +273,8 @@ const App = {
   async addToCart(productId, qty = 1) {
     if (this.currentUser) {
       try {
-        const res = await fetch('/api/cart', {
+        const res = await this.apiFetch('/api/cart', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
           body: JSON.stringify({ productId, qty }),
         });
         if (res.ok) {
@@ -290,10 +315,8 @@ const App = {
   async removeFromCart(productId) {
     if (this.currentUser) {
       try {
-        await fetch('/api/cart', {
+        await this.apiFetch('/api/cart', {
           method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
           body: JSON.stringify({ productId }),
         });
       } catch {}
@@ -307,10 +330,8 @@ const App = {
     if (qty <= 0) return this.removeFromCart(productId);
     if (this.currentUser) {
       try {
-        const res = await fetch('/api/cart', {
+        const res = await this.apiFetch('/api/cart', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
           body: JSON.stringify({ productId, qty }),
         });
         if (res.ok) {
@@ -360,7 +381,7 @@ const App = {
 
   updateCartBadge() {
     if (this.currentUser) {
-      fetch('/api/cart', { credentials: 'include' })
+      this.apiFetch('/api/cart')
         .then(r => r.ok ? r.json() : [])
         .catch(() => [])
         .then(serverCart => {
@@ -385,10 +406,8 @@ const App = {
       try {
         const cart = await this.getCart();
         for (const item of cart) {
-          await fetch('/api/cart', {
+          await this.apiFetch('/api/cart', {
             method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
             body: JSON.stringify({ productId: item.productId }),
           });
         }
@@ -402,7 +421,7 @@ const App = {
   async getWishlist() {
     if (this.currentUser) {
       try {
-        const res = await fetch('/api/wishlist', { credentials: 'include' });
+        const res = await this.apiFetch('/api/wishlist');
         if (res.ok) {
           const data = await res.json();
           return data.map(item => item.product_id || item.productId || item);
@@ -417,10 +436,8 @@ const App = {
       const inWishlist = await this.isInWishlist(productId);
       if (inWishlist) {
         try {
-          const res = await fetch('/api/wishlist', {
+          const res = await this.apiFetch('/api/wishlist', {
             method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
             body: JSON.stringify({ productId }),
           });
           if (res.ok) {
@@ -431,10 +448,8 @@ const App = {
         } catch {}
       } else {
         try {
-          const res = await fetch('/api/wishlist', {
+          const res = await this.apiFetch('/api/wishlist', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
             body: JSON.stringify({ productId }),
           });
           if (res.ok) {
@@ -474,7 +489,7 @@ const App = {
   updateWishlistBadge() {
     const wishlist = JSON.parse(localStorage.getItem('aravali_wishlist') || '[]');
     if (this.currentUser) {
-      fetch('/api/wishlist', { credentials: 'include' })
+      this.apiFetch('/api/wishlist')
         .then(r => r.ok ? r.json() : [])
         .catch(() => [])
         .then(serverList => {
@@ -510,10 +525,8 @@ const App = {
     const total = subtotal + delivery;
 
     try {
-      const res = await fetch('/api/orders', {
+      const res = await this.apiFetch('/api/orders', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({
           items: cartItems.map(c => ({
             productId: c.productId,
@@ -553,10 +566,8 @@ const App = {
       reader.readAsDataURL(file);
     });
     try {
-      const res = await fetch('/api/upload', {
+      const res = await this.apiFetch('/api/upload', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ file: base64 })
       });
       const data = await res.json();
