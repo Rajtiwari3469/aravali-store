@@ -90,9 +90,9 @@ function parseCookies(h) {
   return c;
 }
 
-async function getUser(req) {
+async function getTokenPayload(req) {
   const cookies = parseCookies(req.headers.cookie || '');
-  let token = cookies.aravali_token;
+  let token = cookies.aravali_admin_token || cookies.aravali_token;
   if (!token && req.headers.authorization) {
     token = req.headers.authorization.replace('Bearer ', '');
   }
@@ -104,24 +104,26 @@ async function getUser(req) {
   } catch { return null; }
 }
 
+async function getUser(req) {
+  const payload = await getTokenPayload(req);
+  if (!payload) return null;
+  if (payload.role === 'admin') return null;
+  return payload;
+}
+
 async function getAdmin(req) {
-  const cookies = parseCookies(req.headers.cookie || '');
-  let token = cookies.aravali_admin_token;
-  if (!token && req.headers.authorization) {
-    token = req.headers.authorization.replace('Bearer ', '');
-  }
-  if (!token) return null;
-  try {
-    const j = await getJose();
-    const { payload } = await j.jwtVerify(token, SECRET);
-    return payload;
-  } catch { return null; }
+  const payload = await getTokenPayload(req);
+  if (!payload) return null;
+  if (payload.role !== 'admin' && payload.role !== 'superadmin') return null;
+  return payload;
 }
 
 async function getAuthUser(req) {
   const admin = await getAdmin(req);
   if (admin) return admin;
-  return await getUser(req);
+  const user = await getUser(req);
+  if (user) return user;
+  return await getTokenPayload(req);
 }
 
 function ok(res, data) { res.setHeader('Content-Type', 'application/json'); res.statusCode = 200; res.end(JSON.stringify(data)); }
