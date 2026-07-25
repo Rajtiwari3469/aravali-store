@@ -79,7 +79,7 @@ const App = {
         });
         if (res.ok) {
           const data = await res.json();
-          if (data.admin) {
+          if (data.admin && window.location.pathname.startsWith('/admin')) {
             this.currentUser = { ...data.admin, isAdmin: true };
           } else {
             this.currentUser = data.user || null;
