@@ -232,12 +232,18 @@ const App = {
         const res = await fetch('/api/cart', { credentials: 'include' });
         if (res.ok) {
           const serverCart = await res.json();
-          const localIds = new Set(localCart.map(c => c.productId));
-          const merged = [
-            ...localCart,
-            ...serverCart.filter(sc => !localIds.has(sc.productId))
-          ];
-          localStorage.setItem('aravali_cart', JSON.stringify(merged));
+          const serverMap = new Map(serverCart.map(sc => [sc.productId, sc]));
+          const localMap = new Map(localCart.map(lc => [lc.productId, lc]));
+          for (const [pid, item] of localMap) {
+            if (serverMap.has(pid)) {
+              localMap.set(pid, { ...item, qty: serverMap.get(pid).qty });
+            }
+          }
+          const allIds = new Set([...serverMap.keys(), ...localMap.keys()]);
+          const merged = [];
+          for (const pid of allIds) {
+            merged.push(localMap.get(pid) || serverMap.get(pid));
+          }
           return merged;
         }
       } catch {}
@@ -306,18 +312,6 @@ const App = {
           credentials: 'include',
           body: JSON.stringify({ productId }),
         });
-      } catch {}
-      try {
-        const res = await fetch('/api/cart', { credentials: 'include' });
-        if (res.ok) {
-          const serverCart = await res.json();
-          const localCart = JSON.parse(localStorage.getItem('aravali_cart') || '[]');
-          const localOnly = localCart.filter(lc => !serverCart.find(sc => sc.productId === lc.productId));
-          const merged = [...serverCart, ...localOnly];
-          localStorage.setItem('aravali_cart', JSON.stringify(merged));
-          this.updateCartBadge();
-          return;
-        }
       } catch {}
     }
     let localCart = JSON.parse(localStorage.getItem('aravali_cart') || '[]');
