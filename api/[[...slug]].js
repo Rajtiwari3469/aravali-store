@@ -30,6 +30,7 @@ async function getResend() {
   return resend;
 }
 let dbReady = false;
+let seedDone = false;
 
 async function initDB() {
   if (dbReady) return;
@@ -47,6 +48,39 @@ async function initDB() {
   await sql`CREATE TABLE IF NOT EXISTS addresses (id TEXT PRIMARY KEY, user_id TEXT NOT NULL, name TEXT DEFAULT '', phone TEXT DEFAULT '', line TEXT DEFAULT '', city TEXT DEFAULT '', state TEXT DEFAULT '', pincode TEXT DEFAULT '', type TEXT DEFAULT 'home', is_default BOOLEAN DEFAULT false)`;
   await sql`CREATE TABLE IF NOT EXISTS password_resets (id TEXT PRIMARY KEY, email TEXT NOT NULL, code TEXT NOT NULL, expires_at TIMESTAMPTZ NOT NULL, used BOOLEAN DEFAULT false, created_at TIMESTAMPTZ DEFAULT NOW())`;
   dbReady = true;
+}
+
+async function ensureSeeded() {
+  if (seedDone) return;
+  try {
+    const adminCount = await sql`SELECT COUNT(*) as cnt FROM admins`;
+    if (Number(adminCount[0].cnt) === 0) {
+      const ph = await bcrypt.hash('gateout@123#', 10);
+      await sql`INSERT INTO admins (id, name, email, password_hash, role) VALUES ('admin_001', 'Admin', 'admin@gmail.com', ${ph}, 'superadmin') ON CONFLICT (id) DO NOTHING`;
+    }
+    const productCount = await sql`SELECT COUNT(*) as cnt FROM products`;
+    if (Number(productCount[0].cnt) === 0) {
+      try {
+        const { SEED_DATA } = require('../DBMS/data');
+        if (SEED_DATA && SEED_DATA.products) {
+          for (const p of SEED_DATA.products) {
+            await sql`INSERT INTO products (id, name, description, category, price, mrp, stock, unit, image, badge, offer) VALUES (${p.id}, ${p.name}, ${p.description || ''}, ${p.category || ''}, ${p.price || 0}, ${p.mrp || 0}, ${p.stock || 0}, ${p.unit || ''}, ${p.image || ''}, ${p.badge || ''}, ${p.offer || ''}) ON CONFLICT (id) DO NOTHING`;
+          }
+        }
+        if (SEED_DATA && SEED_DATA.banners) {
+          for (const b of SEED_DATA.banners) {
+            await sql`INSERT INTO banners (id, title, subtitle, gradient, link, image, active, sort_order) VALUES (${b.id}, ${b.title || ''}, ${b.subtitle || ''}, ${b.gradient || ''}, ${b.link || ''}, ${b.image || ''}, ${b.active !== false}, ${b.order || 0}) ON CONFLICT (id) DO NOTHING`;
+          }
+        }
+        if (SEED_DATA && SEED_DATA.catalogs) {
+          for (const c of SEED_DATA.catalogs) {
+            await sql`INSERT INTO catalogs (id, name, emoji, description, image, active, sort_order) VALUES (${c.id}, ${c.name}, ${c.emoji || ''}, ${c.description || ''}, ${c.image || ''}, ${c.active !== false}, ${c.order || 0}) ON CONFLICT (id) DO NOTHING`;
+          }
+        }
+      } catch {}
+    }
+    seedDone = true;
+  } catch {}
 }
 
 function parseCookies(h) {
@@ -85,9 +119,13 @@ async function getAuthUser(req) {
 }
 
 function ok(res, data) { res.setHeader('Content-Type', 'application/json'); res.statusCode = 200; res.end(JSON.stringify(data)); }
-function okCookies(res, data, cookies) { res.writeHead(200, { 'Content-Type': 'application/json', 'Set-Cookie': cookies }); res.end(JSON.stringify(data)); }
+function okCookies(res, data, cookies) { res.setHeader('Content-Type', 'application/json'); res.setHeader('Set-Cookie', cookies); res.statusCode = 200; res.end(JSON.stringify(data)); }
 function err(res, msg, s = 400) { res.setHeader('Content-Type', 'application/json'); res.statusCode = s; res.end(JSON.stringify({ error: msg })); }
 function getId(res, id) { return ok(res, { id }); }
+function cookieFlags(req) {
+  const proto = req.headers['x-forwarded-proto'] || 'http';
+  return proto === 'https' ? 'Secure; ' : '';
+}
 
 const gid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 
@@ -98,6 +136,7 @@ async function signToken(payload) {
 
 module.exports = async function handler(req, res) {
   await initDB();
+  await ensureSeeded();
   const url = new URL(req.url, 'http://localhost');
   let slug = (req.query.slug || []).join('/');
   if (!slug) {
@@ -125,9 +164,10 @@ module.exports = async function handler(req, res) {
       const ph = await bcrypt.hash(password, 10);
       await sql`INSERT INTO users (id, name, email, password_hash, phone) VALUES (${id}, ${name}, ${email}, ${ph}, ${phone || ''})`;
       const token = await signToken({ id, name, email, role: 'user' });
+      const cf = cookieFlags(req);
       return okCookies(res, { success: true, user: { id, name, email, phone } }, [
-        `aravali_token=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000`,
-        'aravali_admin_token=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0'
+        `aravali_token=${token}; Path=/; HttpOnly; ${cf}SameSite=Lax; Max-Age=2592000`,
+        `aravali_admin_token=; Path=/; HttpOnly; ${cf}SameSite=Lax; Max-Age=0`
       ]);
     }
 
@@ -139,9 +179,10 @@ module.exports = async function handler(req, res) {
       const u = users[0];
       if (!(await bcrypt.compare(password, u.password_hash))) return err(res, 'Invalid email or password', 401);
       const token = await signToken({ id: u.id, name: u.name, email: u.email, role: 'user' });
+      const cf = cookieFlags(req);
       return okCookies(res, { success: true, user: { id: u.id, name: u.name, email: u.email, phone: u.phone } }, [
-        `aravali_token=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000`,
-        'aravali_admin_token=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0'
+        `aravali_token=${token}; Path=/; HttpOnly; ${cf}SameSite=Lax; Max-Age=2592000`,
+        `aravali_admin_token=; Path=/; HttpOnly; ${cf}SameSite=Lax; Max-Age=0`
       ]);
     }
 
@@ -153,9 +194,10 @@ module.exports = async function handler(req, res) {
       const a = admins[0];
       if (!(await bcrypt.compare(password, a.password_hash))) return err(res, 'Invalid admin credentials', 401);
       const token = await signToken({ id: a.id, name: a.name, email: a.email, role: 'admin' });
+      const cf = cookieFlags(req);
       return okCookies(res, { success: true, admin: { id: a.id, name: a.name, email: a.email, role: a.role } }, [
-        `aravali_admin_token=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000`,
-        'aravali_token=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0'
+        `aravali_admin_token=${token}; Path=/; HttpOnly; ${cf}SameSite=Lax; Max-Age=2592000`,
+        `aravali_token=; Path=/; HttpOnly; ${cf}SameSite=Lax; Max-Age=0`
       ]);
     }
 
@@ -172,10 +214,41 @@ module.exports = async function handler(req, res) {
     }
 
     if (slug === 'auth/logout' && method === 'POST') {
+      const cf = cookieFlags(req);
       return okCookies(res, { success: true }, [
-        'aravali_token=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0',
-        'aravali_admin_token=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0'
+        `aravali_token=; Path=/; HttpOnly; ${cf}SameSite=Lax; Max-Age=0`,
+        `aravali_admin_token=; Path=/; HttpOnly; ${cf}SameSite=Lax; Max-Age=0`
       ]);
+    }
+
+    // ===== CHANGE PASSWORD (admin) =====
+    if (slug === 'auth/change-admin-password' && method === 'POST') {
+      const { currentPassword, newPassword } = body;
+      if (!currentPassword || !newPassword) return err(res, 'Current and new password are required');
+      if (newPassword.length < 6) return err(res, 'Password must be at least 6 characters');
+      const admin = await getAdmin(req);
+      if (!admin) return err(res, 'Admin auth required', 401);
+      const admins = await sql`SELECT password_hash FROM admins WHERE id = ${admin.id}`;
+      if (admins.length === 0) return err(res, 'Admin not found', 404);
+      if (!(await bcrypt.compare(currentPassword, admins[0].password_hash))) return err(res, 'Current password is incorrect');
+      const ph = await bcrypt.hash(newPassword, 10);
+      await sql`UPDATE admins SET password_hash = ${ph} WHERE id = ${admin.id}`;
+      return ok(res, { success: true, message: 'Password updated successfully' });
+    }
+
+    // ===== CHANGE PASSWORD (user) =====
+    if (slug === 'auth/change-user-password' && method === 'POST') {
+      const { currentPassword, newPassword } = body;
+      if (!currentPassword || !newPassword) return err(res, 'Current and new password are required');
+      if (newPassword.length < 6) return err(res, 'Password must be at least 6 characters');
+      const user = await getUser(req);
+      if (!user) return err(res, 'Auth required', 401);
+      const users = await sql`SELECT password_hash FROM users WHERE id = ${user.id}`;
+      if (users.length === 0) return err(res, 'User not found', 404);
+      if (!(await bcrypt.compare(currentPassword, users[0].password_hash))) return err(res, 'Current password is incorrect');
+      const ph = await bcrypt.hash(newPassword, 10);
+      await sql`UPDATE users SET password_hash = ${ph} WHERE id = ${user.id}`;
+      return ok(res, { success: true, message: 'Password updated successfully' });
     }
 
     // ===== FORGOT PASSWORD =====

@@ -1108,9 +1108,8 @@ const Admin = {
     const newPass = document.getElementById('newPass').value;
     const confirm = document.getElementById('confirmPass').value;
 
-    const admin = await DB.getById('admins', adminId);
-    if (admin.password !== current) {
-      App.showToast('Current password is incorrect', 'error');
+    if (!current || !newPass) {
+      App.showToast('Please fill in all password fields', 'error');
       return;
     }
     if (newPass !== confirm) {
@@ -1122,9 +1121,23 @@ const Admin = {
       return;
     }
 
-    await DB.update('admins', adminId, { password: newPass });
-    App.showToast('Password updated successfully!', 'success');
-    document.getElementById('settingsForm').reset();
+    try {
+      const res = await fetch('/api/auth/change-admin-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ currentPassword: current, newPassword: newPass }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        App.showToast('Password updated successfully!', 'success');
+        document.getElementById('settingsForm').reset();
+      } else {
+        App.showToast(data.error || 'Failed to update password', 'error');
+      }
+    } catch (e) {
+      App.showToast('Failed to update password', 'error');
+    }
   },
 
   async saveUpiId() {

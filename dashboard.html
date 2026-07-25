@@ -763,8 +763,8 @@
           const user = App.currentUser;
           if (!user) return;
 
-          if (current !== user.password) {
-            App.showToast('Current password is incorrect!', 'error');
+          if (!current || !newPass) {
+            App.showToast('Please fill in all password fields!', 'error');
             return;
           }
           if (newPass !== confirm) {
@@ -775,9 +775,23 @@
             App.showToast('Password must be at least 6 characters!', 'error');
             return;
           }
-          App.updateCurrentUser({ password: newPass });
-          document.getElementById('passForm').reset();
-          App.showToast('Password updated successfully!', 'success');
+
+          fetch('/api/auth/change-user-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ currentPassword: current, newPassword: newPass }),
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              document.getElementById('passForm').reset();
+              App.showToast('Password updated successfully!', 'success');
+            } else {
+              App.showToast(data.error || 'Failed to update password', 'error');
+            }
+          })
+          .catch(() => App.showToast('Failed to update password', 'error'));
         },
 
         async deleteAccount() {

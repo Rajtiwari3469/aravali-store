@@ -117,7 +117,7 @@
           if (result.success) {
             if (errorEl) errorEl.style.display = 'none';
             App.showToast('Account created successfully!', 'success');
-            setTimeout(() => { window.location.href = '/'; }, 500);
+            setTimeout(() => { window.location.href = '/dashboard'; }, 500);
           } else {
             if (errorEl) {
               errorEl.textContent = result.error || result.message || 'Registration failed';
