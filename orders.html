@@ -82,7 +82,7 @@
       if (!(await App.requireAuth())) return;
 
       const container = document.getElementById('ordersContainer');
-      const orders = (await DB.query('orders', o => o.userId === App.currentUser.id)).reverse();
+      const orders = (await App.getOrders()).reverse();
 
       if (orders.length === 0) {
         container.innerHTML = `
@@ -126,7 +126,7 @@
       }).join('');
 
       window.showOrderDetail = async function(orderId) {
-        const allOrders = await DB.query('orders', o => o.userId === App.currentUser.id);
+        const allOrders = await App.getOrders();
         const order = allOrders.find(o => o.id === orderId);
         if (!order) return;
 

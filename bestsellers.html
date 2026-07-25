@@ -72,6 +72,7 @@
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
       App.init();
+      await Shop.preload();
       await App.updateCartBadge();
       await App.updateWishlistBadge();
       App.initSearchCycle();
@@ -118,6 +119,7 @@
         }
 
         grid.innerHTML = pageProducts.map(p => Shop.renderProductCard(p)).join('');
+        Shop.attachCardEvents();
 
         if (!pag || totalPages <= 1) { if (pag) pag.innerHTML = ''; return; }
         let html = `<button ${currentPage===1?'disabled':''} onclick="goPage(${currentPage-1})">← Prev</button>`;

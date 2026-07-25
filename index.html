@@ -241,6 +241,8 @@
   <script src="js/shop.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
+      await App.init();
+      await Shop.preload();
       // Banners from admin with auto-swipe support
       const banners = (await DB.getAll('banners')).filter(b => b.active).sort((a, b) => (a.order || 0) - (b.order || 0));
       const promoGrid = document.getElementById('promoGrid');
@@ -342,6 +344,8 @@
       if (trGrid && topRated.length > 0) {
         trGrid.innerHTML = topRated.map(p => Shop.renderProductCard(p)).join('');
       }
+
+      Shop.attachCardEvents();
 
     });
   </script>

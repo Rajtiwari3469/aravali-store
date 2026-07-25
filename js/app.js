@@ -106,11 +106,13 @@ const App = {
     });
 
     document.querySelectorAll('.cart-count').forEach(el => {
-      el.textContent = this.getCartCount();
+      el.style.display = 'none';
     });
     document.querySelectorAll('.wishlist-count').forEach(el => {
-      el.textContent = this.getWishlistCount();
+      el.style.display = 'none';
     });
+    this.updateCartBadge();
+    this.updateWishlistBadge();
   },
 
   toggleUserDropdown() {
@@ -226,32 +228,17 @@ const App = {
 
   // Cart - server-authoritative for logged-in users, localStorage for guests
   async getCart() {
-    const localCart = JSON.parse(localStorage.getItem('aravali_cart') || '[]');
     if (this.currentUser) {
       try {
         const res = await fetch('/api/cart', { credentials: 'include' });
-        if (res.ok) {
-          const serverCart = await res.json();
-          const serverMap = new Map(serverCart.map(sc => [sc.productId, sc]));
-          const localMap = new Map(localCart.map(lc => [lc.productId, lc]));
-          for (const [pid, item] of localMap) {
-            if (serverMap.has(pid)) {
-              localMap.set(pid, { ...item, qty: serverMap.get(pid).qty });
-            }
-          }
-          const allIds = new Set([...serverMap.keys(), ...localMap.keys()]);
-          const merged = [];
-          for (const pid of allIds) {
-            merged.push(localMap.get(pid) || serverMap.get(pid));
-          }
-          return merged;
-        }
+        if (res.ok) return await res.json();
       } catch {}
     }
-    return localCart;
+    return JSON.parse(localStorage.getItem('aravali_cart') || '[]');
   },
 
   async saveCart(cart) {
+    if (this.currentUser) return;
     localStorage.setItem('aravali_cart', JSON.stringify(cart));
     this.updateCartBadge();
   },
@@ -266,10 +253,6 @@ const App = {
           body: JSON.stringify({ productId, qty }),
         });
         if (res.ok) {
-          const localCart = JSON.parse(localStorage.getItem('aravali_cart') || '[]');
-          const existing = localCart.find(c => c.productId === productId);
-          if (existing) { existing.qty += qty; } else { localCart.push({ productId, qty }); }
-          localStorage.setItem('aravali_cart', JSON.stringify(localCart));
           this.showToast('Added to cart!', 'success');
           this.updateCartBadge();
           return;
@@ -299,8 +282,9 @@ const App = {
     } else {
       cart.push({ productId, qty });
     }
-    await this.saveCart(cart);
+    localStorage.setItem('aravali_cart', JSON.stringify(cart));
     this.showToast('Added to cart!', 'success');
+    this.updateCartBadge();
   },
 
   async removeFromCart(productId) {
@@ -314,52 +298,34 @@ const App = {
         });
       } catch {}
     }
-    let localCart = JSON.parse(localStorage.getItem('aravali_cart') || '[]');
-    localCart = localCart.filter(c => c.productId !== productId);
+    const localCart = JSON.parse(localStorage.getItem('aravali_cart') || '[]').filter(c => c.productId !== productId);
     localStorage.setItem('aravali_cart', JSON.stringify(localCart));
     this.updateCartBadge();
   },
 
   async updateCartQty(productId, qty) {
+    if (qty <= 0) return this.removeFromCart(productId);
     if (this.currentUser) {
-      if (qty <= 0) {
-        return this.removeFromCart(productId);
-      }
       try {
-        await fetch('/api/cart', {
+        const res = await fetch('/api/cart', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
           body: JSON.stringify({ productId, qty }),
         });
-        let localCart = JSON.parse(localStorage.getItem('aravali_cart') || '[]');
-        const localItem = localCart.find(c => c.productId === productId);
-        if (localItem) localItem.qty = qty;
-        else localCart.push({ productId, qty });
-        localStorage.setItem('aravali_cart', JSON.stringify(localCart));
-        this.updateCartBadge();
-        return;
+        if (res.ok) {
+          this.updateCartBadge();
+          return;
+        }
       } catch {}
     }
 
-    const cart = await this.getCart();
-    const item = cart.find(c => c.productId === productId);
+    const localCart = JSON.parse(localStorage.getItem('aravali_cart') || '[]');
+    const item = localCart.find(c => c.productId === productId);
     if (item) {
-      if (qty <= 0) {
-        await this.removeFromCart(productId);
-      } else {
-        const product = await DB.getById('products', productId);
-        if (product && qty > (product.stock || 0)) {
-          this.showToast(`Only ${product.stock} units available for ${product.name}`, 'error');
-          qty = product.stock || 0;
-          if (qty <= 0) {
-            await this.removeFromCart(productId);
-            return;
-          }
-        }
-        item.qty = qty;
-        await this.saveCart(cart);
-      }
+      item.qty = qty;
+      localStorage.setItem('aravali_cart', JSON.stringify(localCart));
+      this.updateCartBadge();
     }
   },
 
@@ -382,8 +348,12 @@ const App = {
     const cart = await this.getCart();
     const items = [];
     for (const c of cart) {
-      const product = await DB.getById('products', c.productId);
-      if (product) items.push({ ...c, product });
+      if (c.product) {
+        items.push({ ...c, product: c.product });
+      } else {
+        const product = await DB.getById('products', c.productId);
+        if (product) items.push({ ...c, product });
+      }
     }
     return items;
   },
@@ -394,13 +364,7 @@ const App = {
         .then(r => r.ok ? r.json() : [])
         .catch(() => [])
         .then(serverCart => {
-          const freshLocal = JSON.parse(localStorage.getItem('aravali_cart') || '[]');
-          const merged = [...(serverCart || [])];
-          for (const lc of freshLocal) {
-            if (!merged.find(m => m.productId === lc.productId)) merged.push(lc);
-          }
-          localStorage.setItem('aravali_cart', JSON.stringify(merged));
-          const count = merged.reduce((sum, c) => sum + (c.qty || 0), 0);
+          const count = (serverCart || []).reduce((sum, c) => sum + (c.qty || 0), 0);
           document.querySelectorAll('.cart-count').forEach(el => {
             el.textContent = count;
             el.style.display = count > 0 ? 'flex' : 'none';

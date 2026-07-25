@@ -57,13 +57,31 @@ function parseCookies(h) {
 }
 
 async function getUser(req) {
-  const token = parseCookies(req.headers.cookie || '').aravali_token;
+  const cookies = parseCookies(req.headers.cookie || '');
+  const token = cookies.aravali_token;
   if (!token) return null;
   try {
     const j = await getJose();
     const { payload } = await j.jwtVerify(token, SECRET);
     return payload;
   } catch { return null; }
+}
+
+async function getAdmin(req) {
+  const cookies = parseCookies(req.headers.cookie || '');
+  const token = cookies.aravali_admin_token;
+  if (!token) return null;
+  try {
+    const j = await getJose();
+    const { payload } = await j.jwtVerify(token, SECRET);
+    return payload;
+  } catch { return null; }
+}
+
+async function getAuthUser(req) {
+  const admin = await getAdmin(req);
+  if (admin) return admin;
+  return await getUser(req);
 }
 
 function ok(res, data) { res.setHeader('Content-Type', 'application/json'); res.statusCode = 200; res.end(JSON.stringify(data)); }
@@ -86,7 +104,7 @@ module.exports = async function handler(req, res) {
   }
   const method = req.method;
   let body = {};
-  if (method === 'POST' || method === 'PUT' || method === 'PATCH') {
+  if (method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE') {
     try {
       const chunks = [];
       for await (const chunk of req) chunks.push(chunk);
@@ -130,23 +148,25 @@ module.exports = async function handler(req, res) {
       const a = admins[0];
       if (!(await bcrypt.compare(password, a.password_hash))) return err(res, 'Invalid admin credentials', 401);
       const token = await signToken({ id: a.id, name: a.name, email: a.email, role: 'admin' });
-      res.setHeader('Set-Cookie', `aravali_token=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000`);
+      res.setHeader('Set-Cookie', `aravali_admin_token=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000`);
       return ok(res, { success: true, admin: { id: a.id, name: a.name, email: a.email, role: a.role } });
     }
 
     if (slug === 'auth/me' && method === 'GET') {
-      const user = await getUser(req);
-      if (!user) return err(res, 'Not authenticated', 401);
-      if (user.role === 'admin') {
-        const admins = await sql`SELECT id, name, email, role FROM admins WHERE id = ${user.id}`;
+      const admin = await getAdmin(req);
+      if (admin) {
+        const admins = await sql`SELECT id, name, email, role FROM admins WHERE id = ${admin.id}`;
         return ok(res, { admin: admins[0] || null });
       }
+      const user = await getAuthUser(req);
+      if (!user) return err(res, 'Not authenticated', 401);
       const users = await sql`SELECT id, name, email, phone FROM users WHERE id = ${user.id}`;
       return ok(res, { user: users[0] || null });
     }
 
     if (slug === 'auth/logout' && method === 'POST') {
       res.setHeader('Set-Cookie', 'aravali_token=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0');
+      res.setHeader('Set-Cookie', 'aravali_admin_token=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0');
       return ok(res, { success: true });
     }
 
@@ -234,7 +254,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (slug === 'products' && method === 'POST') {
-      const user = await getUser(req);
+      const user = await getAuthUser(req);
       if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
       const id = gid();
       const { name, description, category, price, mrp, stock, unit, image, badge, offer, images } = body;
@@ -250,7 +270,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (slug.startsWith('products/') && method === 'PUT') {
-      const user = await getUser(req);
+      const user = await getAuthUser(req);
       if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
       const id = slug.split('/')[1];
       const ex = await sql`SELECT * FROM products WHERE id = ${id}`;
@@ -262,7 +282,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (slug.startsWith('products/') && method === 'DELETE') {
-      const user = await getUser(req);
+      const user = await getAuthUser(req);
       if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
       const id = slug.split('/')[1];
       await sql`DELETE FROM products WHERE id = ${id}`;
@@ -271,7 +291,7 @@ module.exports = async function handler(req, res) {
 
     // ===== ORDERS =====
     if (slug === 'orders' && method === 'GET') {
-      const user = await getUser(req);
+      const user = await getAuthUser(req);
       let rows;
       if (user && user.role === 'admin') {
         rows = await sql`SELECT * FROM orders ORDER BY order_date DESC`;
@@ -280,11 +300,26 @@ module.exports = async function handler(req, res) {
       } else {
         rows = [];
       }
-      return ok(res, rows);
+      return ok(res, rows.map(r => ({
+        id: r.id,
+        user_id: r.user_id,
+        userId: r.user_id,
+        userName: r.user_name,
+        items: typeof r.items === 'string' ? JSON.parse(r.items) : (r.items || []),
+        address: r.address,
+        paymentMethod: r.payment_method,
+        subtotal: Number(r.subtotal || 0),
+        delivery: Number(r.delivery || 0),
+        total: Number(r.total || 0),
+        status: r.status,
+        orderDate: r.order_date,
+        createdAt: r.order_date,
+        discount: r.discount || 0,
+      })));
     }
 
     if (slug === 'orders' && method === 'POST') {
-      const user = await getUser(req);
+      const user = await getAuthUser(req);
       const id = gid();
       const { items, address, paymentMethod, subtotal, delivery, total, status, orderDate } = body;
       const userId = user ? user.id : 'guest';
@@ -302,7 +337,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (slug.startsWith('orders/') && method === 'PUT') {
-      const user = await getUser(req);
+      const user = await getAuthUser(req);
       if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
       const id = slug.split('/')[1];
       const { status } = body;
@@ -311,7 +346,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (slug.startsWith('orders/') && method === 'DELETE') {
-      const user = await getUser(req);
+      const user = await getAuthUser(req);
       if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
       const id = slug.split('/')[1];
       await sql`DELETE FROM orders WHERE id = ${id}`;
@@ -320,14 +355,14 @@ module.exports = async function handler(req, res) {
 
     // ===== CART =====
     if (slug === 'cart' && method === 'GET') {
-      const user = await getUser(req);
+      const user = await getAuthUser(req);
       if (!user) return ok(res, []);
       const rows = await sql`SELECT c.*, p.name, p.price, p.mrp, p.stock, p.unit, p.image, p.category, p.description, p.badge, p.offer FROM cart_items c LEFT JOIN products p ON c.product_id = p.id WHERE c.user_id = ${user.id}`;
       return ok(res, rows.map(r => ({ id: r.id, productId: r.product_id, qty: r.qty, product: r.name ? { id: r.product_id, name: r.name, price: Number(r.price), mrp: Number(r.mrp), stock: r.stock, unit: r.unit, image: r.image, category: r.category, description: r.description, badge: r.badge, offer: r.offer } : null })));
     }
 
     if (slug === 'cart' && method === 'POST') {
-      const user = await getUser(req);
+      const user = await getAuthUser(req);
       if (!user) return err(res, 'Login required', 401);
       const { productId, qty } = body;
       if (!productId) return err(res, 'productId required');
@@ -341,7 +376,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (slug === 'cart' && method === 'DELETE') {
-      const user = await getUser(req);
+      const user = await getAuthUser(req);
       if (!user) return err(res, 'Login required', 401);
       const { productId } = body;
       await sql`DELETE FROM cart_items WHERE user_id = ${user.id} AND product_id = ${productId}`;
@@ -350,14 +385,14 @@ module.exports = async function handler(req, res) {
 
     // ===== WISHLIST =====
     if (slug === 'wishlist' && method === 'GET') {
-      const user = await getUser(req);
+      const user = await getAuthUser(req);
       if (!user) return ok(res, []);
       const rows = await sql`SELECT product_id FROM wishlist WHERE user_id = ${user.id}`;
       return ok(res, rows.map(r => r.product_id));
     }
 
     if (slug === 'wishlist' && method === 'POST') {
-      const user = await getUser(req);
+      const user = await getAuthUser(req);
       if (!user) return err(res, 'Login required', 401);
       const { productId } = body;
       const ex = await sql`SELECT id FROM wishlist WHERE user_id = ${user.id} AND product_id = ${productId}`;
@@ -366,7 +401,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (slug === 'wishlist' && method === 'DELETE') {
-      const user = await getUser(req);
+      const user = await getAuthUser(req);
       if (!user) return err(res, 'Login required', 401);
       const { productId } = body;
       await sql`DELETE FROM wishlist WHERE user_id = ${user.id} AND product_id = ${productId}`;
@@ -375,13 +410,13 @@ module.exports = async function handler(req, res) {
 
     // ===== ADDRESSES =====
     if (slug === 'addresses' && method === 'GET') {
-      const user = await getUser(req);
+      const user = await getAuthUser(req);
       if (!user) return ok(res, []);
       return ok(res, await sql`SELECT * FROM addresses WHERE user_id = ${user.id}`);
     }
 
     if (slug === 'addresses' && method === 'POST') {
-      const user = await getUser(req);
+      const user = await getAuthUser(req);
       if (!user) return err(res, 'Login required', 401);
       const { name, phone, line, city, state, pincode, type, isDefault } = body;
       if (isDefault) await sql`UPDATE addresses SET is_default = false WHERE user_id = ${user.id}`;
@@ -391,7 +426,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (slug === 'addresses' && method === 'DELETE') {
-      const user = await getUser(req);
+      const user = await getAuthUser(req);
       if (!user) return err(res, 'Login required', 401);
       const { id } = body;
       await sql`DELETE FROM addresses WHERE id = ${id} AND user_id = ${user.id}`;
@@ -404,7 +439,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (slug === 'banners' && method === 'POST') {
-      const user = await getUser(req);
+      const user = await getAuthUser(req);
       if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
       const id = gid();
       const { title, subtitle, gradient, link, image, active, sort_order } = body;
@@ -413,7 +448,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (slug === 'banners' && method === 'PUT') {
-      const user = await getUser(req);
+      const user = await getAuthUser(req);
       if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
       const { id } = body;
       if (!id) return err(res, 'id required');
@@ -425,7 +460,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (slug.startsWith('banners/') && method === 'PUT') {
-      const user = await getUser(req);
+      const user = await getAuthUser(req);
       if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
       const id = slug.split('/')[1];
       const ex = await sql`SELECT * FROM banners WHERE id = ${id}`;
@@ -436,7 +471,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (slug === 'banners' && method === 'DELETE') {
-      const user = await getUser(req);
+      const user = await getAuthUser(req);
       if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
       const { id } = body;
       await sql`DELETE FROM banners WHERE id = ${id}`;
@@ -444,7 +479,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (slug.startsWith('banners/') && method === 'DELETE') {
-      const user = await getUser(req);
+      const user = await getAuthUser(req);
       if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
       const id = slug.split('/')[1];
       await sql`DELETE FROM banners WHERE id = ${id}`;
@@ -457,7 +492,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (slug === 'catalogs' && method === 'POST') {
-      const user = await getUser(req);
+      const user = await getAuthUser(req);
       if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
       const id = gid();
       const { name, emoji, description, image, active, sort_order } = body;
@@ -466,7 +501,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (slug === 'catalogs' && method === 'PUT') {
-      const user = await getUser(req);
+      const user = await getAuthUser(req);
       if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
       const { id } = body;
       if (!id) return err(res, 'id required');
@@ -478,7 +513,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (slug.startsWith('catalogs/') && method === 'PUT') {
-      const user = await getUser(req);
+      const user = await getAuthUser(req);
       if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
       const id = slug.split('/')[1];
       const ex = await sql`SELECT * FROM catalogs WHERE id = ${id}`;
@@ -489,7 +524,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (slug === 'catalogs' && method === 'DELETE') {
-      const user = await getUser(req);
+      const user = await getAuthUser(req);
       if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
       const { id } = body;
       await sql`DELETE FROM catalogs WHERE id = ${id}`;
@@ -497,7 +532,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (slug.startsWith('catalogs/') && method === 'DELETE') {
-      const user = await getUser(req);
+      const user = await getAuthUser(req);
       if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
       const id = slug.split('/')[1];
       await sql`DELETE FROM catalogs WHERE id = ${id}`;
@@ -513,7 +548,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (slug === 'settings' && method === 'PUT') {
-      const user = await getUser(req);
+      const user = await getAuthUser(req);
       if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
       const { key, value } = body;
       if (key && value !== undefined) {
@@ -524,20 +559,20 @@ module.exports = async function handler(req, res) {
 
     // ===== STOCK LOGS =====
     if (slug === 'stock-logs' && method === 'GET') {
-      const user = await getUser(req);
+      const user = await getAuthUser(req);
       if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
       return ok(res, await sql`SELECT * FROM stock_logs ORDER BY timestamp DESC`);
     }
 
     // ===== USERS =====
     if (slug === 'users' && method === 'GET') {
-      const user = await getUser(req);
+      const user = await getAuthUser(req);
       if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
       return ok(res, await sql`SELECT id, name, email, phone, created_at FROM users ORDER BY created_at DESC`);
     }
 
     if (slug === 'users' && method === 'DELETE') {
-      const user = await getUser(req);
+      const user = await getAuthUser(req);
       if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
       const { id } = body;
       await sql`DELETE FROM users WHERE id = ${id}`;
@@ -549,13 +584,13 @@ module.exports = async function handler(req, res) {
 
     // ===== ADMINS =====
     if (slug === 'admins' && method === 'GET') {
-      const user = await getUser(req);
+      const user = await getAuthUser(req);
       if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
       return ok(res, await sql`SELECT id, name, email, role, created_at FROM admins ORDER BY created_at DESC`);
     }
 
     if (slug === 'admins' && method === 'POST') {
-      const user = await getUser(req);
+      const user = await getAuthUser(req);
       if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
       const id = gid();
       const { name, email, password, role } = body;
@@ -566,7 +601,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (slug === 'admins' && method === 'DELETE') {
-      const user = await getUser(req);
+      const user = await getAuthUser(req);
       if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
       const { id } = body;
       const main = await sql`SELECT id FROM admins WHERE email = 'admin@gmail.com'`;
@@ -576,7 +611,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (slug.startsWith('admins/') && method === 'DELETE') {
-      const user = await getUser(req);
+      const user = await getAuthUser(req);
       if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
       const id = slug.split('/')[1];
       const main = await sql`SELECT id FROM admins WHERE email = 'admin@gmail.com'`;
@@ -586,7 +621,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (slug === 'admins' && method === 'PUT') {
-      const user = await getUser(req);
+      const user = await getAuthUser(req);
       if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
       const { id, name, email, password } = body;
       if (password) {
@@ -599,7 +634,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (slug.startsWith('admins/') && method === 'PUT') {
-      const user = await getUser(req);
+      const user = await getAuthUser(req);
       if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
       const id = slug.split('/')[1];
       const { name, email, password } = body;
@@ -614,7 +649,7 @@ module.exports = async function handler(req, res) {
 
     // ===== RETURNS =====
     if (slug === 'returns' && method === 'GET') {
-      const user = await getUser(req);
+      const user = await getAuthUser(req);
       if (!user) return err(res, 'Auth required', 401);
       if (user.role === 'admin') {
         return ok(res, await sql`SELECT * FROM returns ORDER BY created_at DESC`);
@@ -623,7 +658,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (slug === 'returns' && method === 'POST') {
-      const user = await getUser(req);
+      const user = await getAuthUser(req);
       if (!user) return err(res, 'Auth required', 401);
       const id = gid();
       const { orderId, reason, additionalInfo } = body;
@@ -637,7 +672,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (slug.startsWith('returns/') && method === 'PUT') {
-      const user = await getUser(req);
+      const user = await getAuthUser(req);
       if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
       const id = slug.split('/')[1];
       const { status, rejectReason } = body;
@@ -686,7 +721,7 @@ module.exports = async function handler(req, res) {
 
     // ===== EXPORT =====
     if (slug === 'export' && method === 'GET') {
-      const user = await getUser(req);
+      const user = await getAuthUser(req);
       if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
       const data = {};
       for (const t of ['products', 'orders', 'users', 'admins', 'banners', 'catalogs', 'returns', 'stock_logs', 'settings', 'addresses']) {
@@ -697,7 +732,7 @@ module.exports = async function handler(req, res) {
 
     // ===== IMPORT =====
     if (slug === 'import' && method === 'POST') {
-      const user = await getUser(req);
+      const user = await getAuthUser(req);
       if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
       const data = body;
       for (const [table, rows] of Object.entries(data)) {
@@ -717,7 +752,7 @@ module.exports = async function handler(req, res) {
 
     // ===== UPLOAD (Cloudinary) =====
     if (slug === 'upload' && method === 'POST') {
-      const user = await getUser(req);
+      const user = await getAuthUser(req);
       if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
       const { file } = body;
       if (!file) return err(res, 'No file provided');

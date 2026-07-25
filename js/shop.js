@@ -127,10 +127,18 @@ const Shop = {
     return products;
   },
 
+  async preload() {
+    this._wishlistIds = await App.getWishlist();
+    this._cartItems = await App.getCart();
+  },
+
   async renderProducts() {
     const container = document.querySelector('.product-grid');
     const countEl = document.querySelector('.product-count');
     if (!container) return;
+
+    this._wishlistIds = await App.getWishlist();
+    this._cartItems = await App.getCart();
 
     const products = await this.getFilteredProducts();
     const total = products.length;

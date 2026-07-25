@@ -82,7 +82,9 @@
   <script src="js/app.js"></script>
   <script src="js/shop.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
+      await App.init();
+      await Shop.preload();
       const urlParams = new URLSearchParams(window.location.search);
       const cat = urlParams.get('cat');
       const q = urlParams.get('q');

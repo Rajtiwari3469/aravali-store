@@ -59,6 +59,7 @@
   <script src="js/shop.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
+      await App.init();
       const grid = document.getElementById('categoriesGrid');
       const catalogs = (await DB.getAll('catalogs')).filter(c => c.active).sort((a,b) => (a.order||0) - (b.order||0));
       const products = await DB.getAll('products');
