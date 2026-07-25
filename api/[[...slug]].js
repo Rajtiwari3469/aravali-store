@@ -125,6 +125,7 @@ module.exports = async function handler(req, res) {
       await sql`INSERT INTO users (id, name, email, password_hash, phone) VALUES (${id}, ${name}, ${email}, ${ph}, ${phone || ''})`;
       const token = await signToken({ id, name, email, role: 'user' });
       res.setHeader('Set-Cookie', `aravali_token=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000`);
+      res.setHeader('Set-Cookie', 'aravali_admin_token=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0');
       return ok(res, { success: true, user: { id, name, email, phone } });
     }
 
@@ -137,6 +138,7 @@ module.exports = async function handler(req, res) {
       if (!(await bcrypt.compare(password, u.password_hash))) return err(res, 'Invalid email or password', 401);
       const token = await signToken({ id: u.id, name: u.name, email: u.email, role: 'user' });
       res.setHeader('Set-Cookie', `aravali_token=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000`);
+      res.setHeader('Set-Cookie', 'aravali_admin_token=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0');
       return ok(res, { success: true, user: { id: u.id, name: u.name, email: u.email, phone: u.phone } });
     }
 
@@ -149,6 +151,7 @@ module.exports = async function handler(req, res) {
       if (!(await bcrypt.compare(password, a.password_hash))) return err(res, 'Invalid admin credentials', 401);
       const token = await signToken({ id: a.id, name: a.name, email: a.email, role: 'admin' });
       res.setHeader('Set-Cookie', `aravali_admin_token=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000`);
+      res.setHeader('Set-Cookie', 'aravali_token=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0');
       return ok(res, { success: true, admin: { id: a.id, name: a.name, email: a.email, role: a.role } });
     }
 
