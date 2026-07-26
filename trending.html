@@ -146,7 +146,7 @@
       if (catContainer) {
         let html = `<button class="category-chip active" data-category="All"><span class="emoji">🏪</span> All</button>`;
         if (catalogs.length > 0) {
-          html += catalogs.map(c => `<button class="category-chip" data-category="${escapeHtml(c.name)}">${c.image ? `<img src="${escapeHtml(c.image)}" style="width:20px;height:20px;border-radius:50%;object-fit:cover;" onerror="this.style.display='none';this.nextElementSibling.style.display='inline';">` : ''}<span class="emoji" style="${c.image ? 'display:none;' : ''}">${escapeHtml(c.emoji || CATEGORY_EMOJIS[c.name] || '📦')}</span> ${escapeHtml(c.name)}</button>`).join('');
+          html += catalogs.map(c => `<button class="category-chip" data-category="${escapeHtml(c.name)}">${c.image ? `<img src="${escapeHtml(c.image)}" style="width:20px;height:20px;border-radius:50%;object-fit:cover;" onerror="this.outerHTML='<span class=emoji>${escapeHtml(c.emoji || CATEGORY_EMOJIS[c.name] || '📦')}</span>'">` : `<span class="emoji">${escapeHtml(c.emoji || CATEGORY_EMOJIS[c.name] || '📦')}</span>`} ${escapeHtml(c.name)}</button>`).join('');
         } else {
           const cats = [...new Set((await DB.getAll('products')).map(p => p.category))];
           html += cats.map(c => `<button class="category-chip" data-category="${escapeHtml(c)}"><span class="emoji">${escapeHtml(CATEGORY_EMOJIS[c] || '📦')}</span> ${escapeHtml(c)}</button>`).join('');

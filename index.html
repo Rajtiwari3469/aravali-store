@@ -293,7 +293,7 @@
       if (catContainer && catalogs.length > 0) {
         catContainer.innerHTML = catalogs.map(cat => `
           <a href="/shop?cat=${escapeHtml(cat.name)}" class="category-chip">
-            ${cat.image ? `<img src="${escapeHtml(cat.image)}" style="width:24px;height:24px;border-radius:50%;object-fit:cover;" onerror="this.style.display='none';this.nextElementSibling.style.display='inline';">` : ''}<span class="emoji" style="${cat.image ? 'display:none;' : ''}">${escapeHtml(cat.emoji || CATEGORY_EMOJIS[cat.name] || '📦')}</span>
+            ${cat.image ? `<img src="${escapeHtml(cat.image)}" style="width:24px;height:24px;border-radius:50%;object-fit:cover;" onerror="this.outerHTML='<span class=emoji>${escapeHtml(cat.emoji || CATEGORY_EMOJIS[cat.name] || '📦')}</span>'">` : `<span class="emoji">${escapeHtml(cat.emoji || CATEGORY_EMOJIS[cat.name] || '📦')}</span>`}
             ${escapeHtml(cat.name)}
           </a>
         `).join('');

@@ -75,7 +75,7 @@
         return `
           <div class="glass-card" style="padding:24px;text-align:center;cursor:pointer;" onclick="window.location.href='/shop?cat=${escapeHtml(c.name)}'">
             <div style="font-size:3rem;margin-bottom:12px;">
-              ${c.image ? `<img src="${escapeHtml(c.image)}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;margin:0 auto;" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">` : ''}<span style="${c.image ? 'display:none;' : ''}font-size:3rem;">${c.emoji || '📦'}</span>
+              ${c.image ? `<img src="${escapeHtml(c.image)}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;margin:0 auto;" onerror="this.outerHTML='<span style=font-size:3rem>${c.emoji || '📦'}</span>'">` : `<span style="font-size:3rem;">${c.emoji || '📦'}</span>`}
             </div>
             <h3 style="font-size:1.1rem;color:var(--primary-dark);margin-bottom:6px;">${escapeHtml(c.name)}</h3>
             <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:12px;">${escapeHtml(c.description || '')}</p>

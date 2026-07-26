@@ -29,7 +29,7 @@ const Shop = {
         </button>
         ${catalogs.map(cat => `
           <button class="category-chip ${cat.name === this.currentCategory ? 'active' : ''}" data-category="${escapeHtml(cat.name)}">
-            ${cat.image ? `<img src="${escapeHtml(cat.image)}" style="width:20px;height:20px;border-radius:50%;object-fit:cover;" onerror="this.style.display='none';this.nextElementSibling.style.display='inline';">` : ''}<span class="emoji" style="${cat.image ? 'display:none;' : ''}">${escapeHtml(cat.emoji || CATEGORY_EMOJIS[cat.name] || '📦')}</span>
+            ${cat.image ? `<img src="${escapeHtml(cat.image)}" style="width:20px;height:20px;border-radius:50%;object-fit:cover;" onerror="this.outerHTML='<span class=emoji>${escapeHtml(cat.emoji || CATEGORY_EMOJIS[cat.name] || '📦')}</span>'">` : `<span class="emoji">${escapeHtml(cat.emoji || CATEGORY_EMOJIS[cat.name] || '📦')}</span>`}
             ${escapeHtml(cat.name)}
           </button>
         `).join('')}
