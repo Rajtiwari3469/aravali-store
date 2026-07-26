@@ -79,6 +79,7 @@ async function initDB() {
   await sql`CREATE TABLE IF NOT EXISTS password_resets (id TEXT PRIMARY KEY, email TEXT NOT NULL, code TEXT NOT NULL, expires_at TIMESTAMPTZ NOT NULL, used BOOLEAN DEFAULT false, created_at TIMESTAMPTZ DEFAULT NOW())`;
   try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS images JSONB DEFAULT '[]'`; } catch {}
   try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS mrp DECIMAL(10,2) DEFAULT 0`; } catch {}
+  try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS variants JSONB DEFAULT '[]'`; } catch {}
   dbReady = true;
 }
 
@@ -369,10 +370,11 @@ module.exports = async function handler(req, res) {
       const user = await getAuthUser(req);
       if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
       const id = gid();
-      const { name, description, category, price, mrp, stock, unit, image, badge, offer, images } = body;
+      const { name, description, category, price, mrp, stock, unit, image, badge, offer, images, variants } = body;
       const finalImages = (images && images.length > 0) ? images : (image ? [image] : []);
-      await sql`INSERT INTO products (id, name, description, category, price, mrp, stock, unit, image, images, badge, offer) VALUES (${id}, ${sanitizeInput(name)}, ${sanitizeInput(description)}, ${sanitizeInput(category)}, ${price || 0}, ${mrp || 0}, ${stock || 0}, ${sanitizeInput(unit)}, ${image || ''}, ${JSON.stringify(finalImages)}, ${sanitizeInput(badge)}, ${sanitizeInput(offer)})`;
-      return ok(res, { success: true, record: { id, name, description, category, price, mrp, stock, unit, image, images: finalImages, badge, offer } });
+      const finalVariants = Array.isArray(variants) ? variants : [];
+      await sql`INSERT INTO products (id, name, description, category, price, mrp, stock, unit, image, images, badge, offer, variants) VALUES (${id}, ${sanitizeInput(name)}, ${sanitizeInput(description)}, ${sanitizeInput(category)}, ${price || 0}, ${mrp || 0}, ${stock || 0}, ${sanitizeInput(unit)}, ${image || ''}, ${JSON.stringify(finalImages)}, ${sanitizeInput(badge)}, ${sanitizeInput(offer)}, ${JSON.stringify(finalVariants)})`;
+      return ok(res, { success: true, record: { id, name, description, category, price, mrp, stock, unit, image, images: finalImages, badge, offer, variants: finalVariants } });
     }
 
     if (slug.startsWith('products/') && method === 'GET') {
@@ -389,7 +391,7 @@ module.exports = async function handler(req, res) {
       const ex = await sql`SELECT * FROM products WHERE id = ${id}`;
       if (ex.length === 0) return err(res, 'Not found', 404);
       const e = ex[0];
-      const { name, description, category, price, mrp, stock, unit, image, badge, offer, images } = body;
+      const { name, description, category, price, mrp, stock, unit, image, badge, offer, images, variants } = body;
       const newImage = image !== undefined ? image : e.image;
       let newImages;
       if (images !== undefined) {
@@ -397,7 +399,8 @@ module.exports = async function handler(req, res) {
       } else {
         newImages = e.images || [];
       }
-      await sql`UPDATE products SET name=${name !== undefined ? sanitizeInput(name) : e.name}, description=${description !== undefined ? sanitizeInput(description) : e.description}, category=${category !== undefined ? sanitizeInput(category) : e.category}, price=${price !== undefined ? price : e.price}, mrp=${mrp !== undefined ? mrp : e.mrp}, stock=${stock !== undefined ? stock : e.stock}, unit=${unit !== undefined ? sanitizeInput(unit) : e.unit}, image=${newImage}, images=${JSON.stringify(newImages)}, badge=${badge !== undefined ? sanitizeInput(badge) : e.badge}, offer=${offer !== undefined ? sanitizeInput(offer) : e.offer}, updated_at=NOW() WHERE id = ${id}`;
+      const newVariants = variants !== undefined ? (Array.isArray(variants) ? variants : []) : (e.variants || []);
+      await sql`UPDATE products SET name=${name !== undefined ? sanitizeInput(name) : e.name}, description=${description !== undefined ? sanitizeInput(description) : e.description}, category=${category !== undefined ? sanitizeInput(category) : e.category}, price=${price !== undefined ? price : e.price}, mrp=${mrp !== undefined ? mrp : e.mrp}, stock=${stock !== undefined ? stock : e.stock}, unit=${unit !== undefined ? sanitizeInput(unit) : e.unit}, image=${newImage}, images=${JSON.stringify(newImages)}, badge=${badge !== undefined ? sanitizeInput(badge) : e.badge}, offer=${offer !== undefined ? sanitizeInput(offer) : e.offer}, variants=${JSON.stringify(newVariants)}, updated_at=NOW() WHERE id = ${id}`;
       return ok(res, { success: true });
     }
 
@@ -863,7 +866,7 @@ module.exports = async function handler(req, res) {
       const data = body;
       const allowedTables = ['products', 'orders', 'users', 'admins', 'banners', 'catalogs', 'returns', 'stock_logs', 'settings', 'addresses'];
       const validColumns = {
-        products: ['id','name','description','category','price','mrp','stock','unit','image','images','badge','offer','created_at','updated_at'],
+        products: ['id','name','description','category','price','mrp','stock','unit','image','images','badge','offer','variants','created_at','updated_at'],
         orders: ['id','user_id','user_name','items','address','payment_method','subtotal','delivery','total','status','order_date','discount'],
         users: ['id','name','email','password_hash','phone','created_at'],
         admins: ['id','name','email','password_hash','role','created_at'],

@@ -78,6 +78,22 @@
     .pd-info .pd-price { font-size: 1.8rem; font-weight: 800; color: var(--primary); margin-bottom: 12px; }
     .pd-info .pd-price small { font-size: 0.85rem; font-weight: 400; color: var(--text-muted); }
     .pd-info .pd-desc { color: var(--text-light); font-size: 0.9rem; line-height: 1.7; margin-bottom: 16px; }
+    .pd-desc-toggle { color: var(--primary); font-weight: 600; cursor: pointer; font-size: 0.85rem; display: inline; }
+    .pd-desc-toggle:hover { text-decoration: underline; }
+    .pd-variants { margin-bottom: 16px; }
+    .pd-variants-label { font-size: 0.85rem; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+    .pd-variant-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .pd-variant-chip {
+      padding: 8px 14px; border-radius: 8px; border: 1.5px solid var(--border-color, #e0e0e0);
+      background: var(--card-bg, white); color: var(--text); font-size: 0.82rem; font-weight: 600;
+      cursor: pointer; transition: 0.2s; font-family: var(--font); display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 80px;
+    }
+    .pd-variant-chip:hover { border-color: var(--primary); }
+    .pd-variant-chip.active { border-color: var(--primary); background: rgba(45,106,79,0.08); color: var(--primary); }
+    .pd-variant-chip .vlabel { font-size: 0.82rem; font-weight: 700; }
+    .pd-variant-chip .vsp { font-size: 0.85rem; font-weight: 800; color: var(--primary); }
+    .pd-variant-chip .vmrp { font-size: 0.7rem; color: var(--text-muted); text-decoration: line-through; }
+    .pd-variant-chip .voff { font-size: 0.65rem; font-weight: 700; color: var(--success); background: rgba(76,175,80,0.1); padding: 1px 6px; border-radius: 10px; }
     .pd-info .pd-stock { font-size: 0.85rem; margin-bottom: 16px; }
     .pd-info .pd-stock .in-stock { color: var(--success); font-weight: 600; }
     .pd-info .pd-stock .out-stock { color: var(--danger); font-weight: 600; }
@@ -195,15 +211,104 @@
       const qty = cartItem ? cartItem.qty : 0;
       const isOutOfStock = (product.stock || 0) <= 0;
 
-      // Similar products (same category, exclude current)
+      const variants = (product.variants && Array.isArray(product.variants) && product.variants.length > 0) ? product.variants : [];
+      let selectedVariantIdx = 0;
+      let selectedPrice = variants.length > 0 ? variants[0].price : product.price;
+      let selectedMrp = variants.length > 0 ? (variants[0].mrp || 0) : (product.mrp || 0);
+      let selectedLabel = variants.length > 0 ? variants[0].label : product.unit;
+
       const allProducts = await DB.getAll('products');
       const similar = allProducts.filter(p => p.category === product.category && p.id !== product.id);
-      // Also grab a few from other categories if not enough
       const extra = allProducts.filter(p => p.category !== product.category && p.id !== product.id).slice(0, 4);
       const similarProducts = [...similar, ...extra].slice(0, 12);
 
       const productImages = (product.images && product.images.length > 0) ? product.images : (product.image ? [product.image] : []);
       const hasMultipleImages = productImages.length > 1;
+      const desc = product.description || 'Fresh and high-quality product from Aravali Store.';
+      const DESC_THRESHOLD = 120;
+      const needsTruncation = desc.length > DESC_THRESHOLD;
+      const shortDesc = needsTruncation ? desc.substring(0, DESC_THRESHOLD) : desc;
+
+      function getVariantChipHtml(v, i, pSelectedIdx) {
+        const vPrice = v.price || 0;
+        const vMrp = v.mrp || 0;
+        const hasDiscount = vMrp > vPrice && vPrice > 0;
+        const offPct = hasDiscount ? Math.round((vMrp - vPrice) / vMrp * 100) : 0;
+        return `
+          <button class="pd-variant-chip ${i === pSelectedIdx ? 'active' : ''}" onclick="selectVariant(${i})">
+            <span class="vlabel">${escapeHtml(v.label)}</span>
+            ${vPrice ? `<span class="vsp">${App.formatCurrency(vPrice)}</span>` : ''}
+            ${hasDiscount ? `<span class="vmrp">${App.formatCurrency(vMrp)}</span><span class="voff">${offPct}% OFF</span>` : ''}
+          </button>`;
+      }
+
+      function renderInfo(pPrice, pMrp, pUnit, pSelectedIdx) {
+        const hasDiscount = pMrp > pPrice && pPrice > 0;
+        const offPct = hasDiscount ? Math.round((pMrp - pPrice) / pMrp * 100) : 0;
+        const savings = hasDiscount ? pMrp - pPrice : 0;
+        return `
+          <div class="pd-info">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                <span class="pd-category">${escapeHtml(product.category)}</span>
+                ${product.badge ? `<span class="pd-badge">${escapeHtml(product.badge)}</span>` : ''}
+              </div>
+              <button class="pd-wishlist-btn ${inWishlist ? 'active' : ''}" id="pdWishlistBtn" onclick="togglePdWishlist()" title="${inWishlist ? 'Remove from Wishlist' : 'Add to Wishlist'}" style="background:none;border:none;cursor:pointer;font-size:1.5rem;padding:4px;transition:transform 0.2s;filter:${inWishlist ? 'none' : 'grayscale(0.5)'};">${inWishlist ? '❤️' : '🤍'}</button>
+            </div>
+            <h1>${escapeHtml(product.name)}</h1>
+            <div class="pd-unit">${escapeHtml(pUnit)}</div>
+            <div class="pd-price">
+              ${App.formatCurrency(pPrice)}
+              ${hasDiscount ? `<span style="text-decoration:line-through;color:var(--text-muted);font-size:1rem;font-weight:400;margin-left:8px;">${App.formatCurrency(pMrp)}</span> <span style="font-size:0.85rem;color:white;background:var(--success);padding:2px 8px;border-radius:12px;font-weight:700;margin-left:8px;">${offPct}% OFF</span>` : ''}
+              <small>/ ${escapeHtml(pUnit)}</small>
+            </div>
+            ${hasDiscount ? `<p style="color:var(--success);font-size:0.88rem;font-weight:600;margin-bottom:12px;">You save ${App.formatCurrency(savings)}</p>` : ''}
+            ${variants.length > 0 ? `
+            <div class="pd-variants">
+              <div class="pd-variants-label">Select Quantity</div>
+              <div class="pd-variant-chips" id="pdVariantChips">
+                ${variants.map((v, i) => getVariantChipHtml(v, i, pSelectedIdx)).join('')}
+              </div>
+            </div>
+            ` : ''}
+            ${needsTruncation ? `
+              <p class="pd-desc" id="pdDescText"><span id="pdDescShort">${escapeHtml(shortDesc)}</span><span id="pdDescFull" style="display:none;">${escapeHtml(desc)}</span> <span class="pd-desc-toggle" id="pdDescToggle" onclick="toggleDesc()">...more</span></p>
+            ` : `<p class="pd-desc">${escapeHtml(desc)}</p>`}
+            <div class="pd-stock">
+              ${product.stock > 0
+                ? `<span class="in-stock">✓ In Stock</span>`
+                : `<span class="out-stock">✗ Out of Stock</span>`}
+            </div>
+          </div>
+          <div class="pd-divider"></div>
+        `;
+      }
+
+      function renderBottomBar(pPrice, pMrp, pUnit) {
+        const hasDiscount = pMrp > pPrice && pPrice > 0;
+        return `
+          <div class="pd-bottom-bar">
+            <button class="pd-wishlist-btn ${inWishlist ? 'active' : ''}" id="pdWishlistBtnMobile" onclick="togglePdWishlist()" title="${inWishlist ? 'Remove from Wishlist' : 'Add to Wishlist'}" style="background:none;border:none;cursor:pointer;font-size:1.3rem;padding:4px 8px;filter:${inWishlist ? 'none' : 'grayscale(0.5)'};">${inWishlist ? '❤️' : '🤍'}</button>
+            <div class="pd-price-mobile">
+              ${App.formatCurrency(pPrice)}
+              ${hasDiscount ? `<span style="text-decoration:line-through;color:var(--text-muted);font-size:0.75rem;font-weight:400;margin-left:4px;">${App.formatCurrency(pMrp)}</span> <span style="font-size:0.65rem;color:white;background:var(--success);padding:1px 6px;border-radius:8px;font-weight:700;">${Math.round((pMrp - pPrice) / pMrp * 100)}% OFF</span>` : ''}
+              <small>/ ${escapeHtml(pUnit)}</small>
+            </div>
+            ${isOutOfStock
+              ? `<button class="btn btn-lg" disabled style="flex:1;justify-content:center;opacity:0.5;cursor:not-allowed;background:var(--text-muted);color:white;">Out of Stock</button>`
+              : qty > 0
+                ? `<div class="qty-control" style="height:42px;">
+                    <button onclick="updateQty(-1)" style="font-size:1.2rem;">−</button>
+                    <span class="qty-val" style="font-size:1rem;" id="pdQty">${qty}</span>
+                    <button onclick="updateQty(1)" style="font-size:1.2rem;">+</button>
+                  </div>`
+                : `<button class="btn btn-primary btn-lg" onclick="addToCart()" id="pdAddBtn" style="justify-content:center;">
+                    🛒 Add to Cart
+                  </button>`
+            }
+          </div>
+        `;
+      }
 
       let html = `
         <div class="pd-image-section" id="pdMainImage">
@@ -219,39 +324,17 @@
             </div>
           `).join('')}
         </div>` : ''}
-        <div class="pd-info">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-              <span class="pd-category">${escapeHtml(product.category)}</span>
-              ${product.badge ? `<span class="pd-badge">${escapeHtml(product.badge)}</span>` : ''}
-            </div>
-            <button class="pd-wishlist-btn ${inWishlist ? 'active' : ''}" id="pdWishlistBtn" onclick="togglePdWishlist()" title="${inWishlist ? 'Remove from Wishlist' : 'Add to Wishlist'}" style="background:none;border:none;cursor:pointer;font-size:1.5rem;padding:4px;transition:transform 0.2s;filter:${inWishlist ? 'none' : 'grayscale(0.5)'};">${inWishlist ? '❤️' : '🤍'}</button>
-          </div>
-          <h1>${escapeHtml(product.name)}</h1>
-          <div class="pd-unit">${escapeHtml(product.unit)}</div>
-          <div class="pd-price">
-            ${App.formatCurrency(product.price)}
-            ${product.mrp && product.mrp > product.price ? `<span style="text-decoration:line-through;color:var(--text-muted);font-size:1rem;font-weight:400;margin-left:8px;">${App.formatCurrency(product.mrp)}</span> <span style="font-size:0.85rem;color:white;background:var(--success);padding:2px 8px;border-radius:12px;font-weight:700;margin-left:8px;">${Math.round((product.mrp - product.price) / product.mrp * 100)}% OFF</span>` : ''}
-            <small>/ ${escapeHtml(product.unit)}</small>
-          </div>
-          ${product.mrp && product.mrp > product.price ? `<p style="color:var(--success);font-size:0.88rem;font-weight:600;margin-bottom:12px;">You save ${App.formatCurrency(product.mrp - product.price)}</p>` : ''}
-          <p class="pd-desc">${escapeHtml(product.description) || 'Fresh and high-quality product from Aravali Store.'}</p>
-          <div class="pd-stock">
-            ${product.stock > 0
-              ? `<span class="in-stock">✓ In Stock</span>`
-              : `<span class="out-stock">✗ Out of Stock</span>`}
-          </div>
-        </div>
-        <div class="pd-divider"></div>
+        <div id="pdInfoSection">${renderInfo(selectedPrice, selectedMrp, selectedLabel, selectedVariantIdx)}</div>
       `;
 
-      // Similar products
       if (similarProducts.length > 0) {
         html += `<div class="similar-section">
           <h2>Similar Products</h2>
           <div class="similar-scroll">`;
         similarProducts.forEach(sp => {
           const spInCart = cart.find(c => c.productId === sp.id);
+          const spDesc = sp.description || '';
+          const spShort = spDesc.length > 50 ? spDesc.substring(0, 50) + '...' : spDesc;
           html += `
             <a href="/product?id=${sp.id}" class="similar-card">
               <div style="overflow:hidden;">
@@ -262,6 +345,7 @@
               <div class="similar-card-body">
                 <div class="similar-card-name">${escapeHtml(sp.name)}</div>
                 <div class="similar-card-unit">${escapeHtml(sp.unit)}</div>
+                ${spShort ? `<div style="font-size:0.7rem;color:var(--text-muted);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(spShort)}</div>` : ''}
                 <div class="similar-card-bottom">
                   <span class="similar-card-price">${App.formatCurrency(sp.price)}</span>
                   <button class="similar-card-add ${spInCart ? 'in-cart' : ''}"
@@ -276,32 +360,28 @@
       }
 
       document.getElementById('pdBody').innerHTML = html;
+      document.getElementById('pdBody').insertAdjacentHTML('beforeend', `<div id="pdBottomBar">${renderBottomBar(selectedPrice, selectedMrp, selectedLabel)}</div>`);
 
-      // Bottom bar
-      document.getElementById('pdBody').insertAdjacentHTML('beforeend', `
-        <div class="pd-bottom-bar">
-          <button class="pd-wishlist-btn ${inWishlist ? 'active' : ''}" id="pdWishlistBtnMobile" onclick="togglePdWishlist()" title="${inWishlist ? 'Remove from Wishlist' : 'Add to Wishlist'}" style="background:none;border:none;cursor:pointer;font-size:1.3rem;padding:4px 8px;filter:${inWishlist ? 'none' : 'grayscale(0.5)'};">${inWishlist ? '❤️' : '🤍'}</button>
-          <div class="pd-price-mobile">
-            ${App.formatCurrency(product.price)}
-            ${product.mrp && product.mrp > product.price ? `<span style="text-decoration:line-through;color:var(--text-muted);font-size:0.75rem;font-weight:400;margin-left:4px;">${App.formatCurrency(product.mrp)}</span>` : ''}
-            <small>/ ${escapeHtml(product.unit)}</small>
-          </div>
-          ${isOutOfStock
-            ? `<button class="btn btn-lg" disabled style="flex:1;justify-content:center;opacity:0.5;cursor:not-allowed;background:var(--text-muted);color:white;">Out of Stock</button>`
-            : qty > 0
-              ? `<div class="qty-control" style="height:42px;">
-                  <button onclick="updateQty(-1)" style="font-size:1.2rem;">−</button>
-                  <span class="qty-val" style="font-size:1rem;" id="pdQty">${qty}</span>
-                  <button onclick="updateQty(1)" style="font-size:1.2rem;">+</button>
-                </div>`
-              : `<button class="btn btn-primary btn-lg" onclick="addToCart()" id="pdAddBtn" style="justify-content:center;">
-                  🛒 Add to Cart
-                </button>`
-          }
-        </div>
-      `);
+      window.selectVariant = function(idx) {
+        selectedVariantIdx = idx;
+        selectedPrice = variants[idx].price;
+        selectedMrp = variants[idx].mrp || 0;
+        selectedLabel = variants[idx].label;
+        document.getElementById('pdInfoSection').innerHTML = renderInfo(selectedPrice, selectedMrp, selectedLabel, selectedVariantIdx);
+        document.getElementById('pdBottomBar').innerHTML = renderBottomBar(selectedPrice, selectedMrp, selectedLabel);
+      };
 
-      // Functions
+      window.toggleDesc = function() {
+        const short = document.getElementById('pdDescShort');
+        const full = document.getElementById('pdDescFull');
+        const toggle = document.getElementById('pdDescToggle');
+        if (!short || !full || !toggle) return;
+        const showing = full.style.display === 'inline';
+        short.style.display = showing ? 'inline' : 'none';
+        full.style.display = showing ? 'none' : 'inline';
+        toggle.textContent = showing ? '...more' : '...less';
+      };
+
       window.addToCart = async function() {
         await App.addToCart(product.id);
         location.reload();

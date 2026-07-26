@@ -395,6 +395,7 @@ const Admin = {
   async showAddProduct() {
     const modal = document.getElementById('productModal');
     const content = document.getElementById('productModalContent');
+    this._pVariants = [];
     const allCatalogsRaw = await DB.getAll('catalogs');
     const categories = allCatalogsRaw.filter(c => c.active).map(c => c.name);
     if (categories.length === 0) {
@@ -438,6 +439,17 @@ const Admin = {
         <div class="form-group">
           <label>Description</label>
           <textarea id="pDesc" rows="3"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Product Variants (optional)</label>
+          <p style="font-size:0.75rem;color:var(--text-muted);margin:0 0 8px;">Add size/weight options. Customer picks one on the product page.</p>
+          <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;">
+            <button type="button" class="btn btn-sm" onclick="Admin.addPresetVariants('weight')" style="font-size:0.72rem;padding:4px 10px;border-radius:6px;border:1px solid var(--border-color,#e0e0e0);background:var(--bubble-bg,#f5f5f5);cursor:pointer;">+ Weight (500g, 1kg, 2kg)</button>
+            <button type="button" class="btn btn-sm" onclick="Admin.addPresetVariants('liquid')" style="font-size:0.72rem;padding:4px 10px;border-radius:6px;border:1px solid var(--border-color,#e0e0e0);background:var(--bubble-bg,#f5f5f5);cursor:pointer;">+ Liquid (500ml, 1L, 2L)</button>
+            <button type="button" class="btn btn-sm" onclick="Admin.addPresetVariants('count')" style="font-size:0.72rem;padding:4px 10px;border-radius:6px;border:1px solid var(--border-color,#e0e0e0);background:var(--bubble-bg,#f5f5f5);cursor:pointer;">+ Count (6pc, 12pc, 24pc)</button>
+          </div>
+          <div id="pVariantsList"></div>
+          <button type="button" class="btn btn-sm" onclick="Admin.addVariantRow()" style="margin-top:6px;font-size:0.75rem;padding:5px 12px;border-radius:6px;border:1px dashed var(--primary);background:transparent;color:var(--primary);cursor:pointer;">+ Add Custom Variant</button>
         </div>
         <div class="form-group">
           <label>Badge (optional)</label>
@@ -491,6 +503,9 @@ const Admin = {
     document.getElementById('pOffer').value = product.offer || '';
     document.getElementById('pEditId').value = id;
 
+    this._pVariants = (product.variants && Array.isArray(product.variants)) ? [...product.variants] : [];
+    this.renderVariantsList();
+
     const existingImages = [];
     if (product.images && product.images.length > 0) {
       existingImages.push(...product.images);
@@ -519,6 +534,72 @@ const Admin = {
     `).join('');
   },
 
+  _pVariants: [],
+
+  addVariantRow(label, price, mrp) {
+    this._pVariants.push({ label: label || '', price: price || '', mrp: mrp || '' });
+    this.renderVariantsList();
+  },
+
+  removeVariantRow(idx) {
+    this._pVariants.splice(idx, 1);
+    this.renderVariantsList();
+  },
+
+  renderVariantsList() {
+    const el = document.getElementById('pVariantsList');
+    if (!el) return;
+    if (this._pVariants.length === 0) {
+      el.innerHTML = '<p style="font-size:0.75rem;color:var(--text-muted);margin:0;">No variants added. Product will use the base price.</p>';
+      return;
+    }
+    el.innerHTML = this._pVariants.map((v, i) => `
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;">
+        <input type="text" placeholder="Label (e.g. 1kg)" value="${escapeHtml(v.label)}" onchange="Admin._pVariants[${i}].label=this.value" style="flex:1;padding:6px 10px;border:1px solid var(--border-color,#e0e0e0);border-radius:6px;font-size:0.8rem;font-family:var(--font);">
+        <input type="number" placeholder="MRP ₹" value="${escapeHtml(v.mrp)}" onchange="Admin._pVariants[${i}].mrp=parseFloat(this.value)||0" min="0" style="width:85px;padding:6px 10px;border:1px solid var(--border-color,#e0e0e0);border-radius:6px;font-size:0.8rem;font-family:var(--font);">
+        <input type="number" placeholder="Price ₹" value="${escapeHtml(v.price)}" onchange="Admin._pVariants[${i}].price=parseFloat(this.value)||0" min="0" style="width:85px;padding:6px 10px;border:1px solid var(--border-color,#e0e0e0);border-radius:6px;font-size:0.8rem;font-family:var(--font);">
+        <button type="button" onclick="Admin.removeVariantRow(${i})" style="width:28px;height:28px;border-radius:6px;border:none;background:rgba(230,57,70,0.1);color:var(--danger);font-size:0.85rem;cursor:pointer;flex-shrink:0;">✕</button>
+      </div>
+    `).join('');
+  },
+
+  addPresetVariants(type) {
+    const presets = {
+      weight: [
+        { label: '250g', price: '', mrp: '' },
+        { label: '500g', price: '', mrp: '' },
+        { label: '1kg', price: '', mrp: '' },
+        { label: '2kg', price: '', mrp: '' }
+      ],
+      liquid: [
+        { label: '250ml', price: '', mrp: '' },
+        { label: '500ml', price: '', mrp: '' },
+        { label: '1L', price: '', mrp: '' },
+        { label: '2L', price: '', mrp: '' }
+      ],
+      count: [
+        { label: '6 pc', price: '', mrp: '' },
+        { label: '12 pc', price: '', mrp: '' },
+        { label: '24 pc', price: '', mrp: '' }
+      ]
+    };
+    const basePrice = parseFloat(document.getElementById('pPrice').value) || 0;
+    const baseMrp = parseFloat(document.getElementById('pMrp').value) || 0;
+    const items = presets[type] || [];
+    items.forEach(item => {
+      if (!item.price && basePrice) item.price = basePrice;
+      if (!item.mrp && baseMrp) item.mrp = baseMrp;
+      this._pVariants.push(item);
+    });
+    this.renderVariantsList();
+  },
+
+  getVariantsData() {
+    const el = document.getElementById('pVariantsList');
+    if (!el) return [];
+    return this._pVariants.filter(v => v.label.trim()).map(v => ({ label: v.label.trim(), price: parseFloat(v.price) || 0, mrp: parseFloat(v.mrp) || 0 }));
+  },
+
   async saveProduct(e) {
     e.preventDefault();
     const editId = document.getElementById('pEditId').value;
@@ -538,7 +619,8 @@ const Admin = {
       badge: sanitizeInput(document.getElementById('pBadge').value),
       offer: document.getElementById('pOffer').value,
       image: allImages[0] || '',
-      images: allImages
+      images: allImages,
+      variants: this.getVariantsData()
     };
 
     if (editId) {

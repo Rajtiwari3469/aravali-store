@@ -188,7 +188,7 @@ const Shop = {
             ${p.offer && !isOutOfStock ? `<span class="product-badge" style="position:static;background:linear-gradient(135deg,#ff6b6b,#ee5a24);font-size:0.58rem;padding:2px 6px;">${escapeHtml(p.offer.split(' ').slice(1).join(' '))}</span>` : ''}
           </div>
           <div class="product-name">${escapeHtml(p.name)}</div>
-          <div class="product-desc">${escapeHtml(p.description || '')}</div>
+          <div class="product-desc">${escapeHtml((p.description || '').length > 60 ? p.description.substring(0, 60) + '...' : (p.description || ''))}</div>
           <div class="product-price">
             ${App.formatCurrency(p.price)}
             ${p.mrp && p.mrp > p.price ? `<span style="text-decoration:line-through;color:var(--text-muted);font-size:0.72rem;font-weight:400;margin-left:4px;">${App.formatCurrency(p.mrp)}</span><span style="font-size:0.68rem;color:var(--success);font-weight:700;margin-left:4px;">${Math.round(((p.mrp - p.price) / p.mrp) * 100)}% off</span>` : ''}
