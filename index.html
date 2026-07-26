@@ -288,7 +288,7 @@
       }
 
       // Catalogs from admin
-      const catalogs = (await DB.getAll('catalogs')).filter(c => c.active).sort((a, b) => (a.order || 0) - (b.order || 0));
+      const catalogs = (await DB.getAll('catalogs')).filter(c => c.active && c.name && CATEGORY_EMOJIS[c.name]).sort((a, b) => (a.order || 0) - (b.order || 0));
       const catContainer = document.getElementById('homeCategories');
       if (catContainer && catalogs.length > 0) {
         catContainer.innerHTML = catalogs.map(cat => `

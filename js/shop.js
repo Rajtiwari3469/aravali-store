@@ -18,7 +18,7 @@ const Shop = {
     const container = document.querySelector('.categories-scroll');
     if (!container) return;
 
-    const catalogs = (await DB.getAll('catalogs')).filter(c => c.active).sort((a, b) => (a.sort_order || a.order || 0) - (b.sort_order || b.order || 0));
+    const catalogs = (await DB.getAll('catalogs')).filter(c => c.active && c.name && CATEGORY_EMOJIS[c.name]).sort((a, b) => (a.sort_order || a.order || 0) - (b.sort_order || b.order || 0));
 
     if (catalogs.length > 0) {
       const allActive = !this.currentCategory || this.currentCategory === 'All';

@@ -149,7 +149,7 @@
       window.goPage = (page) => { currentPage = page; renderProducts(); window.scrollTo({top:300,behavior:'smooth'}); };
 
       // Category chips
-      const catalogs = (await DB.getAll('catalogs')).filter(c => c.active).sort((a, b) => (a.order || 0) - (b.order || 0));
+      const catalogs = (await DB.getAll('catalogs')).filter(c => c.active && c.name && CATEGORY_EMOJIS[c.name]).sort((a, b) => (a.order || 0) - (b.order || 0));
       const catContainer = document.getElementById('seasonalCategories');
       if (catContainer) {
         let html = `<button class="category-chip active" data-category="All"><span class="emoji">🏪</span> All</button>`;
