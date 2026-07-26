@@ -15,15 +15,36 @@ const App = {
     localStorage.removeItem('aravali_token');
   },
 
+  getAdminToken() {
+    return localStorage.getItem('aravali_admin_token');
+  },
+
+  setAdminToken(token) {
+    if (token) localStorage.setItem('aravali_admin_token', token);
+  },
+
+  clearAdminToken() {
+    localStorage.removeItem('aravali_admin_token');
+  },
+
   authHeaders() {
     const h = { 'Content-Type': 'application/json' };
-    const t = this.getToken();
+    const isAdminPage = window.location.pathname.startsWith('/admin');
+    const t = isAdminPage ? this.getAdminToken() : this.getToken();
     if (t) h['Authorization'] = 'Bearer ' + t;
     return h;
   },
 
+  _isAdminPage() {
+    return window.location.pathname.startsWith('/admin');
+  },
+
+  _themeKey() {
+    return this._isAdminPage() ? 'aravali_admin_theme' : 'aravali-theme';
+  },
+
   initTheme() {
-    const saved = localStorage.getItem('aravali-theme') || 'light';
+    const saved = localStorage.getItem(this._themeKey()) || 'light';
     document.documentElement.setAttribute('data-theme', saved);
     this.injectThemeToggle();
   },
@@ -32,7 +53,7 @@ const App = {
     const current = document.documentElement.getAttribute('data-theme');
     const next = current === 'dark' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', next);
-    localStorage.setItem('aravali-theme', next);
+    localStorage.setItem(this._themeKey(), next);
     this.updateThemeIcon();
   },
 
@@ -79,7 +100,7 @@ const App = {
         });
         if (res.ok) {
           const data = await res.json();
-          if (data.admin && window.location.pathname.startsWith('/admin')) {
+          if (data.admin) {
             this.currentUser = { ...data.admin, isAdmin: true };
           } else {
             this.currentUser = data.user || null;
@@ -96,15 +117,17 @@ const App = {
   },
 
   updateNav() {
+    const isAdminPage = window.location.pathname.startsWith('/admin');
     document.querySelectorAll('.nav-user-section').forEach(el => {
-      if (this.currentUser && this.currentUser.isAdmin) {
+      if (isAdminPage && this.currentUser && this.currentUser.isAdmin) {
         el.innerHTML = `
           <a href="/admin" class="btn btn-primary btn-sm" style="font-weight:700;">Admin Panel</a>
           <button onclick="App.logout()" class="btn btn-sm" style="border:1px solid var(--border-color);color:var(--danger);font-size:0.78rem;padding:5px 12px;border-radius:8px;background:transparent;cursor:pointer;font-family:var(--font);">Logout</button>`;
-      } else if (this.currentUser) {
+      } else if (this.currentUser && !this.currentUser.isAdmin) {
         const avatarHtml = this.currentUser.avatar
-          ? `<img src="${this.currentUser.avatar}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid var(--white);box-shadow:0 2px 8px var(--shadow-sm);">`
-          : `<span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--secondary));color:white;font-weight:800;font-size:0.85rem;border:2px solid var(--white);box-shadow:0 2px 8px var(--shadow-sm);">${(this.currentUser.name || 'U').charAt(0).toUpperCase()}</span>`;
+          ? `<img src="${escapeHtml(this.currentUser.avatar)}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid var(--white);box-shadow:0 2px 8px var(--shadow-sm);">`
+          : `<span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--secondary));color:white;font-weight:800;font-size:0.85rem;border:2px solid var(--white);box-shadow:0 2px 8px var(--shadow-sm);">${escapeHtml((this.currentUser.name || 'U').charAt(0).toUpperCase())}</span>`;
+        const adminLink = this.currentUser.isAdmin ? `<a href="/admin" style="font-weight:600;color:var(--primary);">Admin Panel</a>` : '';
         el.innerHTML = `
           <div class="user-dropdown">
             <button class="nav-icon-btn" onclick="App.toggleUserDropdown()" style="font-size:1rem;">
@@ -112,8 +135,9 @@ const App = {
             </button>
             <div class="user-dropdown-menu" id="userDropdown">
               <div style="padding:10px 14px;font-weight:600;font-size:0.88rem;border-bottom:1px solid var(--border-color);margin-bottom:4px;">
-                ${this.currentUser.name}
+                ${escapeHtml(this.currentUser.name)}
               </div>
+              ${adminLink}
               <a href="/dashboard">👤 My Profile</a>
               <a href="/orders">📦 My Orders</a>
               <a href="/wishlist">❤️ Wishlist</a>
@@ -171,7 +195,7 @@ const App = {
       const data = await res.json();
       if (res.ok && data.success) {
         this.currentUser = { ...data.admin, isAdmin: true };
-        this.setToken(data.token);
+        this.setAdminToken(data.token);
         return { success: true };
       }
       return { success: false, error: data.error || data.message || 'Invalid admin credentials' };
@@ -203,6 +227,7 @@ const App = {
     try { await fetch('/api/auth/logout', { method: 'POST' }); } catch {}
     this.currentUser = null;
     this.clearToken();
+    this.clearAdminToken();
     const path = window.location.pathname;
     if (path.includes('/admin')) {
       window.location.href = '/admin/login';

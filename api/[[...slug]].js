@@ -2,7 +2,37 @@ const { neon } = require('@neondatabase/serverless');
 const bcrypt = require('bcryptjs');
 
 const sql = neon(process.env.NEON_DATABASE_URL);
+if (!process.env.JWT_SECRET) console.error('WARNING: JWT_SECRET not set, using fallback');
 const SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'aravali-store-secret-key-2024');
+
+function sanitizeInput(str) {
+  if (str == null) return '';
+  return String(str).replace(/<[^>]*>/g, '').trim();
+}
+
+const VALID_ORDER_STATUSES = ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'];
+const VALID_RETURN_STATUSES = ['pending', 'approved', 'rejected', 'refunded'];
+
+const rateLimitMap = new Map();
+function rateLimit(key, maxRequests, windowMs) {
+  const now = Date.now();
+  const entry = rateLimitMap.get(key);
+  if (!entry || now - entry.start > windowMs) {
+    rateLimitMap.set(key, { start: now, count: 1 });
+    return false;
+  }
+  entry.count++;
+  return entry.count >= maxRequests;
+}
+setInterval(() => { const now = Date.now(); for (const [k, v] of rateLimitMap) { if (now - v.start > 300000) rateLimitMap.delete(k); } }, 300000);
+
+function setSecurityHeaders(res) {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+}
 
 let cloudinary = null;
 async function getCloudinary() {
@@ -47,6 +77,8 @@ async function initDB() {
   await sql`CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT DEFAULT '')`;
   await sql`CREATE TABLE IF NOT EXISTS addresses (id TEXT PRIMARY KEY, user_id TEXT NOT NULL, name TEXT DEFAULT '', phone TEXT DEFAULT '', line TEXT DEFAULT '', city TEXT DEFAULT '', state TEXT DEFAULT '', pincode TEXT DEFAULT '', type TEXT DEFAULT 'home', is_default BOOLEAN DEFAULT false)`;
   await sql`CREATE TABLE IF NOT EXISTS password_resets (id TEXT PRIMARY KEY, email TEXT NOT NULL, code TEXT NOT NULL, expires_at TIMESTAMPTZ NOT NULL, used BOOLEAN DEFAULT false, created_at TIMESTAMPTZ DEFAULT NOW())`;
+  try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS images JSONB DEFAULT '[]'`; } catch {}
+  try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS mrp DECIMAL(10,2) DEFAULT 0`; } catch {}
   dbReady = true;
 }
 
@@ -143,6 +175,12 @@ async function signToken(payload) {
 }
 
 module.exports = async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Max-Age', '86400');
+  if (req.method === 'OPTIONS') { res.statusCode = 204; return res.end(); }
+  setSecurityHeaders(res);
   await initDB();
   await ensureSeeded();
   const url = new URL(req.url, 'http://localhost');
@@ -178,6 +216,7 @@ module.exports = async function handler(req, res) {
     if (slug === 'auth/login' && method === 'POST') {
       const { email, password } = body;
       if (!email || !password) return err(res, 'Email and password are required');
+      if (rateLimit('login:' + email, 10, 900000)) return err(res, 'Too many attempts. Try again later.', 429);
       const users = await sql`SELECT id, name, email, password_hash, phone FROM users WHERE email = ${email}`;
       if (users.length === 0) return err(res, 'Invalid email or password', 401);
       const u = users[0];
@@ -189,6 +228,7 @@ module.exports = async function handler(req, res) {
     if (slug === 'auth/admin-login' && method === 'POST') {
       const { email, password } = body;
       if (!email || !password) return err(res, 'Email and password are required');
+      if (rateLimit('admin-login:' + email, 10, 900000)) return err(res, 'Too many attempts. Try again later.', 429);
       const admins = await sql`SELECT id, name, email, password_hash, role FROM admins WHERE email = ${email}`;
       if (admins.length === 0) return err(res, 'Invalid admin credentials', 401);
       const a = admins[0];
@@ -247,8 +287,9 @@ module.exports = async function handler(req, res) {
     if (slug === 'auth/forgot-password' && method === 'POST') {
       const { email } = body;
       if (!email) return err(res, 'Email is required');
+      if (rateLimit('forgot:' + email, 5, 900000)) return err(res, 'Too many attempts. Try again later.', 429);
       const users = await sql`SELECT id, name FROM users WHERE email = ${email}`;
-      if (users.length === 0) return err(res, 'No account found with this email');
+      if (users.length === 0) return ok(res, { success: true, message: 'If an account exists, a reset code has been sent.' });
       const code = String(Math.floor(100000 + Math.random() * 900000));
       const id = gid();
       await sql`INSERT INTO password_resets (id, email, code, expires_at) VALUES (${id}, ${email}, ${code}, NOW() + INTERVAL '10 minutes')`;
@@ -277,7 +318,7 @@ module.exports = async function handler(req, res) {
         emailError = e.message || String(e);
         console.error('Email send error:', emailError);
       }
-      return ok(res, { success: true, message: emailSent ? 'Reset code sent to your email' : 'Check spam folder for the code.', debugCode: code });
+      return ok(res, { success: true, message: emailSent ? 'Reset code sent to your email' : 'Check spam folder for the code.' });
     }
 
     // ===== VERIFY RESET CODE =====
@@ -305,8 +346,6 @@ module.exports = async function handler(req, res) {
 
     // ===== PRODUCTS =====
     if (slug === 'products' && method === 'GET') {
-      try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS images JSONB DEFAULT '[]'`; } catch {}
-      try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS mrp DECIMAL(10,2) DEFAULT 0`; } catch {}
       const search = url.searchParams.get('search') || '';
       const category = url.searchParams.get('category') || '';
       const page = parseInt(url.searchParams.get('page') || '1');
@@ -331,8 +370,9 @@ module.exports = async function handler(req, res) {
       if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
       const id = gid();
       const { name, description, category, price, mrp, stock, unit, image, badge, offer, images } = body;
-      await sql`INSERT INTO products (id, name, description, category, price, mrp, stock, unit, image, images, badge, offer) VALUES (${id}, ${name || ''}, ${description || ''}, ${category || ''}, ${price || 0}, ${mrp || 0}, ${stock || 0}, ${unit || ''}, ${image || ''}, ${JSON.stringify(images || [])}, ${badge || ''}, ${offer || ''})`;
-      return ok(res, { success: true, record: { id, name, description, category, price, mrp, stock, unit, image, images, badge, offer } });
+      const finalImages = (images && images.length > 0) ? images : (image ? [image] : []);
+      await sql`INSERT INTO products (id, name, description, category, price, mrp, stock, unit, image, images, badge, offer) VALUES (${id}, ${sanitizeInput(name)}, ${sanitizeInput(description)}, ${sanitizeInput(category)}, ${price || 0}, ${mrp || 0}, ${stock || 0}, ${sanitizeInput(unit)}, ${image || ''}, ${JSON.stringify(finalImages)}, ${sanitizeInput(badge)}, ${sanitizeInput(offer)})`;
+      return ok(res, { success: true, record: { id, name, description, category, price, mrp, stock, unit, image, images: finalImages, badge, offer } });
     }
 
     if (slug.startsWith('products/') && method === 'GET') {
@@ -350,7 +390,14 @@ module.exports = async function handler(req, res) {
       if (ex.length === 0) return err(res, 'Not found', 404);
       const e = ex[0];
       const { name, description, category, price, mrp, stock, unit, image, badge, offer, images } = body;
-      await sql`UPDATE products SET name=${name !== undefined ? name : e.name}, description=${description !== undefined ? description : e.description}, category=${category !== undefined ? category : e.category}, price=${price !== undefined ? price : e.price}, mrp=${mrp !== undefined ? mrp : e.mrp}, stock=${stock !== undefined ? stock : e.stock}, unit=${unit !== undefined ? unit : e.unit}, image=${image !== undefined ? image : e.image}, images=${images !== undefined ? JSON.stringify(images) : (e.images ? JSON.stringify(e.images) : '[]')}, badge=${badge !== undefined ? badge : e.badge}, offer=${offer !== undefined ? offer : e.offer}, updated_at=NOW() WHERE id = ${id}`;
+      const newImage = image !== undefined ? image : e.image;
+      let newImages;
+      if (images !== undefined) {
+        newImages = (images.length > 0) ? images : (newImage ? [newImage] : []);
+      } else {
+        newImages = e.images || [];
+      }
+      await sql`UPDATE products SET name=${name !== undefined ? sanitizeInput(name) : e.name}, description=${description !== undefined ? sanitizeInput(description) : e.description}, category=${category !== undefined ? sanitizeInput(category) : e.category}, price=${price !== undefined ? price : e.price}, mrp=${mrp !== undefined ? mrp : e.mrp}, stock=${stock !== undefined ? stock : e.stock}, unit=${unit !== undefined ? sanitizeInput(unit) : e.unit}, image=${newImage}, images=${JSON.stringify(newImages)}, badge=${badge !== undefined ? sanitizeInput(badge) : e.badge}, offer=${offer !== undefined ? sanitizeInput(offer) : e.offer}, updated_at=NOW() WHERE id = ${id}`;
       return ok(res, { success: true });
     }
 
@@ -394,10 +441,10 @@ module.exports = async function handler(req, res) {
     if (slug === 'orders' && method === 'POST') {
       const user = await getAuthUser(req);
       const id = gid();
-      const { items, address, paymentMethod, subtotal, delivery, total, status, orderDate } = body;
+      const { items, address, paymentMethod, subtotal, delivery, total, orderDate } = body;
       const userId = user ? user.id : 'guest';
       const userName = user ? user.name : 'Guest';
-      await sql`INSERT INTO orders (id, user_id, user_name, items, address, payment_method, subtotal, delivery, total, status, order_date) VALUES (${id}, ${userId}, ${userName}, ${JSON.stringify(items || [])}, ${address || ''}, ${paymentMethod || 'cod'}, ${subtotal || 0}, ${delivery || 0}, ${total || 0}, ${status || 'pending'}, ${orderDate || new Date().toISOString()})`;
+      await sql`INSERT INTO orders (id, user_id, user_name, items, address, payment_method, subtotal, delivery, total, status, order_date) VALUES (${id}, ${userId}, ${userName}, ${JSON.stringify(items || [])}, ${address || ''}, ${paymentMethod || 'cod'}, ${subtotal || 0}, ${delivery || 0}, ${total || 0}, 'pending', ${orderDate || new Date().toISOString()})`;
       if (items && items.length > 0) {
         for (const item of items) {
           if (item.productId) {
@@ -414,6 +461,7 @@ module.exports = async function handler(req, res) {
       if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
       const id = slug.split('/')[1];
       const { status } = body;
+      if (!VALID_ORDER_STATUSES.includes(status)) return err(res, 'Invalid order status');
       await sql`UPDATE orders SET status = ${status} WHERE id = ${id}`;
       return ok(res, { success: true });
     }
@@ -664,7 +712,7 @@ module.exports = async function handler(req, res) {
 
     if (slug === 'admins' && method === 'POST') {
       const user = await getAuthUser(req);
-      if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
+      if (!user || user.role !== 'superadmin') return err(res, 'Superadmin only', 403);
       const id = gid();
       const { name, email, password, role } = body;
       if (!name || !email || !password) return err(res, 'Name, email, password required');
@@ -675,7 +723,7 @@ module.exports = async function handler(req, res) {
 
     if (slug === 'admins' && method === 'DELETE') {
       const user = await getAuthUser(req);
-      if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
+      if (!user || user.role !== 'superadmin') return err(res, 'Superadmin only', 403);
       const { id } = body;
       const main = await sql`SELECT id FROM admins WHERE email = 'admin@gmail.com'`;
       if (main.length > 0 && main[0].id === id) return err(res, 'Cannot delete main admin');
@@ -685,7 +733,7 @@ module.exports = async function handler(req, res) {
 
     if (slug.startsWith('admins/') && method === 'DELETE') {
       const user = await getAuthUser(req);
-      if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
+      if (!user || user.role !== 'superadmin') return err(res, 'Superadmin only', 403);
       const id = slug.split('/')[1];
       const main = await sql`SELECT id FROM admins WHERE email = 'admin@gmail.com'`;
       if (main.length > 0 && main[0].id === id) return err(res, 'Cannot delete main admin');
@@ -695,7 +743,7 @@ module.exports = async function handler(req, res) {
 
     if (slug === 'admins' && method === 'PUT') {
       const user = await getAuthUser(req);
-      if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
+      if (!user || user.role !== 'superadmin') return err(res, 'Superadmin only', 403);
       const { id, name, email, password } = body;
       if (password) {
         const ph = await bcrypt.hash(password, 10);
@@ -708,7 +756,7 @@ module.exports = async function handler(req, res) {
 
     if (slug.startsWith('admins/') && method === 'PUT') {
       const user = await getAuthUser(req);
-      if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
+      if (!user || user.role !== 'superadmin') return err(res, 'Superadmin only', 403);
       const id = slug.split('/')[1];
       const { name, email, password } = body;
       if (password) {
@@ -749,6 +797,7 @@ module.exports = async function handler(req, res) {
       if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
       const id = slug.split('/')[1];
       const { status, rejectReason } = body;
+      if (!VALID_RETURN_STATUSES.includes(status)) return err(res, 'Invalid return status');
       const reviewedAt = status !== 'pending' ? new Date().toISOString() : null;
       const refundedAt = status === 'refunded' ? new Date().toISOString() : null;
       await sql`UPDATE returns SET status = ${status}, reviewed_at = ${reviewedAt}, refunded_at = ${refundedAt}, reject_reason = ${rejectReason || null} WHERE id = ${id}`;
@@ -763,6 +812,8 @@ module.exports = async function handler(req, res) {
 
     // ===== INIT (seed data) =====
     if (slug === 'init' && method === 'POST') {
+      const admin = await getAdmin(req);
+      if (!admin) return err(res, 'Admin auth required', 401);
       try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS images JSONB DEFAULT '[]'`; } catch {}
       try { await sql`ALTER TABLE products ADD COLUMN IF NOT EXISTS mrp DECIMAL(10,2) DEFAULT 0`; } catch {}
       const productCount = await sql`SELECT COUNT(*) as cnt FROM products`;
@@ -798,7 +849,9 @@ module.exports = async function handler(req, res) {
       if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
       const data = {};
       for (const t of ['products', 'orders', 'users', 'admins', 'banners', 'catalogs', 'returns', 'stock_logs', 'settings', 'addresses']) {
-        data[t] = await sql`SELECT * FROM ${sql(t)}`;
+        try { data[t] = await sql`SELECT * FROM ${sql(t)}`; } catch { data[t] = []; }
+        if (t === 'admins' && Array.isArray(data[t])) data[t] = data[t].map(r => { const { password_hash, ...rest } = r; return rest; });
+        if (t === 'users' && Array.isArray(data[t])) data[t] = data[t].map(r => { const { password_hash, ...rest } = r; return rest; });
       }
       return ok(res, data);
     }
@@ -806,17 +859,35 @@ module.exports = async function handler(req, res) {
     // ===== IMPORT =====
     if (slug === 'import' && method === 'POST') {
       const user = await getAuthUser(req);
-      if (!user || user.role !== 'admin') return err(res, 'Admin only', 403);
+      if (!user || user.role !== 'superadmin') return err(res, 'Superadmin only', 403);
       const data = body;
+      const allowedTables = ['products', 'orders', 'users', 'admins', 'banners', 'catalogs', 'returns', 'stock_logs', 'settings', 'addresses'];
+      const validColumns = {
+        products: ['id','name','description','category','price','mrp','stock','unit','image','images','badge','offer','created_at','updated_at'],
+        orders: ['id','user_id','user_name','items','address','payment_method','subtotal','delivery','total','status','order_date','discount'],
+        users: ['id','name','email','password_hash','phone','created_at'],
+        admins: ['id','name','email','password_hash','role','created_at'],
+        banners: ['id','title','subtitle','gradient','link','image','active','sort_order'],
+        catalogs: ['id','name','emoji','description','image','active','sort_order'],
+        returns: ['id','order_id','user_id','customer_name','product_name','product_id','qty','reason','additional_info','refund_amount','status','created_at','reviewed_at','refunded_at','reject_reason'],
+        stock_logs: ['id','product_id','product_name','change_val','reason','timestamp'],
+        settings: ['key','value'],
+        addresses: ['id','user_id','name','phone','line','city','state','pincode','type','is_default'],
+      };
       for (const [table, rows] of Object.entries(data)) {
-        if (Array.isArray(rows)) {
-          await sql`DELETE FROM ${sql(table)}`;
-          for (const row of rows) {
-            const keys = Object.keys(row);
-            if (keys.length > 0) {
-              const vals = keys.map(k => row[k]);
-              await sql`INSERT INTO ${sql(table)} (${sql(keys.join(','))}) VALUES (${sql.unsafe(vals.map(v => typeof v === 'object' ? JSON.stringify(v) : String(v)).join(','))})`;
-            }
+        if (!allowedTables.includes(table) || !Array.isArray(rows)) continue;
+        const allowedCols = validColumns[table] || [];
+        await sql`DELETE FROM ${sql(table)}`;
+        for (const row of rows) {
+          const keys = Object.keys(row).filter(k => allowedCols.includes(k));
+          if (keys.length > 0) {
+            const sanitized = keys.map(k => {
+              const v = row[k];
+              if (typeof v === 'object' && v !== null) return JSON.stringify(v);
+              if (typeof v === 'string') return v.replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, '');
+              return String(v == null ? '' : v);
+            });
+            await sql`INSERT INTO ${sql(table)} (${sql.unsafe(keys.join(','))}) VALUES (${sql.unsafe(sanitized.map(v => `'${v.replace(/'/g, "''")}'`).join(','))})`;
           }
         }
       }
@@ -834,9 +905,29 @@ module.exports = async function handler(req, res) {
       return ok(res, { url: result.secure_url, public_id: result.public_id });
     }
 
+    // ===== MIGRATION: Sync single image → images array =====
+    if (slug === 'migrate/sync-images' && method === 'POST') {
+      const admin = await getAdmin(req);
+      if (!admin) return err(res, 'Admin auth required', 401);
+      const products = await sql`SELECT id, image, images FROM products`;
+      let updated = 0;
+      for (const p of products) {
+        const currentImages = Array.isArray(p.images) ? p.images : [];
+        if (p.image && currentImages.length === 0) {
+          await sql`UPDATE products SET images = ${JSON.stringify([p.image])} WHERE id = ${p.id}`;
+          updated++;
+        } else if (p.image && currentImages.length > 0 && !currentImages.includes(p.image)) {
+          const merged = [p.image, ...currentImages];
+          await sql`UPDATE products SET images = ${JSON.stringify(merged)} WHERE id = ${p.id}`;
+          updated++;
+        }
+      }
+      return ok(res, { success: true, total: products.length, updated });
+    }
+
     return err(res, 'Not found: ' + slug, 404);
   } catch (e) {
     console.error('API Error:', e);
-    return err(res, e.message || 'Internal server error', 500);
+    return err(res, 'Internal server error', 500);
   }
 };

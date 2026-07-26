@@ -1,8 +1,11 @@
 const DB = {
   async _fetch(url, opts = {}) {
     const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
-    const t = (typeof localStorage !== 'undefined') ? localStorage.getItem('aravali_token') : null;
-    if (t) headers['Authorization'] = 'Bearer ' + t;
+    if (typeof localStorage !== 'undefined') {
+      const isAdminPage = window.location.pathname.startsWith('/admin');
+      const t = isAdminPage ? localStorage.getItem('aravali_admin_token') : localStorage.getItem('aravali_token');
+      if (t) headers['Authorization'] = 'Bearer ' + t;
+    }
     const { body: rawBody, ...rest } = opts;
     const res = await fetch(url, {
       ...rest,

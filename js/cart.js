@@ -29,11 +29,11 @@ const Cart = {
       return `
       <div class="cart-item" data-id="${item.productId}" style="${isOutOfStock || exceedsStock ? 'border-left:3px solid var(--danger);' : ''}">
         <div class="item-emoji" style="display:flex;align-items:center;justify-content:center;overflow:hidden;">
-          ${(item.product.image || (item.product.images && item.product.images[0])) ? `<img src="${item.product.image || item.product.images[0]}" style="width:100%;height:100%;object-fit:contain;background:var(--surface-1,#f8f8f8);">` : `<span style="color:var(--text-muted);font-size:0.7rem;">No Image</span>`}
+          ${(item.product.image || (item.product.images && item.product.images[0])) ? `<img src="${escapeHtml(item.product.image || item.product.images[0])}" style="width:100%;height:100%;object-fit:contain;background:var(--surface-1,#f8f8f8);" onerror="this.style.display='none';">` : `<span style="color:var(--text-muted);font-size:0.7rem;">No Image</span>`}
         </div>
         <div class="item-details">
-          <div class="item-name">${item.product.name}</div>
-          <div class="item-unit">${item.product.unit}${isOutOfStock ? ` <span style="color:var(--danger);font-weight:600;">• Out of Stock</span>` : exceedsStock ? ` <span style="color:var(--danger);font-weight:600;">• Only ${item.product.stock} available</span>` : ''}</div>
+          <div class="item-name">${escapeHtml(item.product.name)}</div>
+          <div class="item-unit">${escapeHtml(item.product.unit)}${isOutOfStock ? ` <span style="color:var(--danger);font-weight:600;">• Out of Stock</span>` : exceedsStock ? ` <span style="color:var(--danger);font-weight:600;">• Only ${item.product.stock} available</span>` : ''}</div>
         </div>
         <div class="qty-control">
           <button onclick="Cart.changeQty('${item.productId}', -1)">−</button>
@@ -128,8 +128,8 @@ const Checkout = {
     container.innerHTML = items.map(item => `
       <div class="order-item">
         <div>
-          ${(item.product.image || (item.product.images && item.product.images[0])) ? `<img src="${item.product.image || item.product.images[0]}" style="width:20px;height:20px;border-radius:4px;object-fit:cover;vertical-align:middle;margin-right:4px;">` : ''}
-          <span>${item.product.name}</span>
+          ${(item.product.image || (item.product.images && item.product.images[0])) ? `<img src="${escapeHtml(item.product.image || item.product.images[0])}" style="width:20px;height:20px;border-radius:4px;object-fit:cover;vertical-align:middle;margin-right:4px;">` : ''}
+          <span>${escapeHtml(item.product.name)}</span>
           <span style="color:var(--text-muted);font-size:0.8rem;"> × ${item.qty}</span>
         </div>
         <span style="font-weight:600;">${App.formatCurrency(item.product.price * item.qty)}</span>

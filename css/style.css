@@ -743,7 +743,7 @@ img {
 
 .product-card .product-image {
   width: 100%;
-  height: 140px;
+  height: 180px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -751,7 +751,9 @@ img {
   font-size: 4rem;
   margin-bottom: 12px;
   border-radius: var(--border-radius-sm);
-  background: var(--bubble-bg);
+  background: #ffffff;
+  overflow: hidden;
+  border: 1px solid rgba(0,0,0,0.06);
 }
 
 .product-card .product-info {
@@ -1917,7 +1919,7 @@ img {
 
 /* ===== DARK MODE: Global overrides for inline-styled elements ===== */
 
-[data-theme="dark"] body { background: #0d1117; }
+[data-theme="dark"] body { background-color: #0d1117; }
 [data-theme="dark"] .modal { background: var(--modal-bg); color: var(--text); }
 [data-theme="dark"] .modal-close { background: rgba(255,255,255,0.1); }
 [data-theme="dark"] select { background: var(--input-bg); color: var(--text); border-color: var(--border-color); }
@@ -1967,6 +1969,7 @@ img {
 /* Product cards (shop.js rendered) */
 [data-theme="dark"] .product-card { background: var(--card-bg); border-color: var(--border-color); }
 [data-theme="dark"] .product-card:hover { border-color: var(--primary); }
+[data-theme="dark"] .product-card .product-image { background: #1a1a2e; border-color: rgba(255,255,255,0.08); }
 
 /* Policy page links */
 [data-theme="dark"] a[href*="mailto:"],

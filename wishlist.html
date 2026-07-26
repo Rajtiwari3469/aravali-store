@@ -52,6 +52,7 @@
 
   <script src="DBMS/data.js"></script>
   <script src="DBMS/database.js"></script>
+  <script src="js/utils.js"></script>
   <script src="js/app.js"></script>
   <script src="js/shop.js"></script>
   <script>
@@ -79,13 +80,13 @@
         return `
           <div class="product-card" data-id="${p.id}" onclick="window.location.href='/product?id=${p.id}'" style="cursor:pointer;">
             <button class="wishlist-btn active" onclick="event.stopPropagation();removeFromWishlist('${p.id}')">❤️</button>
-            <div class="product-image">${p.image ? `<img src="${p.image}" style="width:100%;height:100%;object-fit:contain;border-radius:var(--border-radius-sm);background:var(--surface-1,#f8f8f8);">` : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--bubble-bg,rgba(45,106,79,0.06)),rgba(82,183,136,0.1));border-radius:var(--border-radius-sm);color:var(--text-muted);font-size:0.75rem;">No Image</div>`}</div>
+            <div class="product-image">${p.image ? `<img src="${escapeHtml(p.image)}" style="width:100%;height:100%;object-fit:contain;border-radius:var(--border-radius-sm);background:var(--surface-1,#f8f8f8);" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div style="width:100%;height:100%;display:none;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--bubble-bg,rgba(45,106,79,0.06)),rgba(82,183,136,0.1));border-radius:var(--border-radius-sm);color:var(--text-muted);font-size:0.75rem;">No Image</div>` : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--bubble-bg,rgba(45,106,79,0.06)),rgba(82,183,136,0.1));border-radius:var(--border-radius-sm);color:var(--text-muted);font-size:0.75rem;">No Image</div>`}</div>
             <div class="product-info">
-              <div class="product-category">${p.category}</div>
-              <div class="product-name">${p.name}</div>
-              <div class="product-unit">${p.unit}</div>
+              <div class="product-category">${escapeHtml(p.category)}</div>
+              <div class="product-name">${escapeHtml(p.name)}</div>
+              <div class="product-unit">${escapeHtml(p.unit)}</div>
               <div class="product-bottom">
-                <div class="product-price">${App.formatCurrency(p.price)} <small>/${p.unit}</small></div>
+                <div class="product-price">${App.formatCurrency(p.price)} <small>/${escapeHtml(p.unit)}</small></div>
                 ${inCart
                   ? `<button class="btn-add-cart" disabled style="opacity:0.6;">In Cart</button>`
                   : `<button class="btn-add-cart" onclick="App.addToCart('${p.id}');this.textContent='In Cart';this.disabled=true;this.style.opacity=0.6;">Add +</button>`

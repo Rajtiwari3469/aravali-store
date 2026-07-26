@@ -338,6 +338,7 @@
 
   <script src="DBMS/data.js"></script>
   <script src="DBMS/database.js"></script>
+  <script src="js/utils.js"></script>
   <script src="js/app.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
@@ -459,17 +460,17 @@
             <div class="order-card-dash" onclick="Dash.showOrderDetail('${o.id}')">
               <div class="order-top">
                 <span class="order-id">#${o.id.slice(-6).toUpperCase()}</span>
-                <span class="order-status ${o.status}">${o.status}</span>
+                <span class="order-status ${escapeHtml(o.status)}">${escapeHtml(o.status)}</span>
               </div>
               <div class="order-items">
-                ${(o.items||[]).map(item => `${item.name} × ${item.qty}`).join(', ')}
+                ${(o.items||[]).map(item => `${escapeHtml(item.name)} × ${item.qty}`).join(', ')}
               </div>
               <div class="order-bottom">
                 <span style="color:var(--text-muted);">${App.formatDate(o.orderDate || o.createdAt)}</span>
                 <span style="font-weight:700;color:var(--primary);">${App.formatCurrency(o.total||0)}</span>
               </div>
               <div style="font-size:0.78rem;color:var(--text-muted);margin-top:6px;">
-                📍 ${o.address || 'N/A'} • 💳 ${o.paymentMethod || 'N/A'}
+                📍 ${escapeHtml(o.address || 'N/A')} • 💳 ${escapeHtml(o.paymentMethod || 'N/A')}
               </div>
               <div style="text-align:center;margin-top:10px;font-size:0.78rem;color:var(--primary);font-weight:600;">Tap to view full details →</div>
             </div>
@@ -493,7 +494,7 @@
             <div style="text-align:center;margin-bottom:20px;">
               <div style="font-size:2.2rem;margin-bottom:6px;">${statusEmoji[order.status] || '📋'}</div>
               <h3 style="margin:0;color:var(--primary-dark);">Order #${order.id.slice(-6).toUpperCase()}</h3>
-              <span class="order-status ${order.status}" style="margin-top:8px;display:inline-block;">${statusLabels[order.status] || order.status}</span>
+              <span class="order-status ${escapeHtml(order.status)}" style="margin-top:8px;display:inline-block;">${escapeHtml(statusLabels[order.status] || order.status)}</span>
             </div>
 
             <div class="detail-section">
@@ -501,7 +502,7 @@
               ${(order.items || []).map(item => `
                 <div class="detail-row">
                   <div>
-                    <span style="font-weight:600;">${item.name}</span>
+                    <span style="font-weight:600;">${escapeHtml(item.name)}</span>
                     <span style="color:var(--text-muted);font-size:0.82rem;margin-left:6px;">× ${item.qty}</span>
                   </div>
                   <span style="font-weight:700;">${App.formatCurrency((item.price || 0) * (item.qty || 0))}</span>
@@ -533,14 +534,14 @@
 
             <div class="detail-section">
               <h4>Delivery Address</h4>
-              <p style="font-size:0.9rem;color:var(--text-light);line-height:1.5;">${order.address || 'N/A'}</p>
+              <p style="font-size:0.9rem;color:var(--text-light);line-height:1.5;">${escapeHtml(order.address || 'N/A')}</p>
             </div>
 
             <div class="detail-section">
               <h4>Payment & Date</h4>
               <div class="detail-row">
                 <span class="detail-label">Payment Method</span>
-                <span class="detail-value">${order.paymentMethod || 'N/A'}</span>
+                <span class="detail-value">${escapeHtml(order.paymentMethod || 'N/A')}</span>
               </div>
               <div class="detail-row">
                 <span class="detail-label">Order Date</span>
@@ -665,9 +666,9 @@
                 <button class="delete-btn" onclick="Dash.deleteAddress(${i})" title="Delete">🗑️</button>
               </div>
               ${isDefault ? '<span class="default-badge">DEFAULT</span>' : ''}
-              <div class="addr-name">${typeEmoji} ${a.name}</div>
-              <div class="addr-phone">${a.phone}</div>
-              <div class="addr-line">${a.line}, ${a.city}, ${a.state} - ${a.pincode}</div>
+              <div class="addr-name">${typeEmoji} ${escapeHtml(a.name)}</div>
+              <div class="addr-phone">${escapeHtml(a.phone)}</div>
+              <div class="addr-line">${escapeHtml(a.line)}, ${escapeHtml(a.city)}, ${escapeHtml(a.state)} - ${escapeHtml(a.pincode)}</div>
             </div>`;
           }).join('');
         },

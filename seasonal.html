@@ -77,6 +77,7 @@
 
   <script src="DBMS/data.js"></script>
   <script src="DBMS/database.js"></script>
+  <script src="js/utils.js"></script>
   <script src="js/app.js"></script>
   <script src="js/shop.js"></script>
   <script>
@@ -153,10 +154,10 @@
       if (catContainer) {
         let html = `<button class="category-chip active" data-category="All"><span class="emoji">🏪</span> All</button>`;
         if (catalogs.length > 0) {
-          html += catalogs.map(c => `<button class="category-chip" data-category="${c.name}">${c.image ? `<img src="${c.image}" style="width:20px;height:20px;border-radius:50%;object-fit:cover;">` : `<span class="emoji">${c.emoji || CATEGORY_EMOJIS[c.name] || '📦'}</span>`} ${c.name}</button>`).join('');
+          html += catalogs.map(c => `<button class="category-chip" data-category="${escapeHtml(c.name)}">${c.image ? `<img src="${escapeHtml(c.image)}" style="width:20px;height:20px;border-radius:50%;object-fit:cover;" onerror="this.style.display='none';this.nextElementSibling.style.display='inline';">` : ''}<span class="emoji" style="${c.image ? 'display:none;' : ''}">${escapeHtml(c.emoji || CATEGORY_EMOJIS[c.name] || '📦')}</span> ${escapeHtml(c.name)}</button>`).join('');
         } else {
           const cats = [...new Set((await DB.getAll('products')).map(p => p.category))];
-          html += cats.map(c => `<button class="category-chip" data-category="${c}"><span class="emoji">${CATEGORY_EMOJIS[c] || '📦'}</span> ${c}</button>`).join('');
+          html += cats.map(c => `<button class="category-chip" data-category="${escapeHtml(c)}"><span class="emoji">${escapeHtml(CATEGORY_EMOJIS[c] || '📦')}</span> ${escapeHtml(c)}</button>`).join('');
         }
         catContainer.innerHTML = html;
         catContainer.querySelectorAll('.category-chip').forEach(chip => {

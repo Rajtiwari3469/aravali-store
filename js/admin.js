@@ -168,7 +168,7 @@ const Admin = {
               <div style="display:flex;flex-wrap:wrap;gap:6px;">
                 ${outOfStockProducts.map(p => `
                   <span style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:rgba(230,57,70,0.1);border-radius:20px;font-size:0.78rem;">
-                    ${p.name}
+                    ${escapeHtml(p.name)}
                     <button onclick="Admin.quickRestock('${p.id}')" style="border:none;background:var(--primary);color:white;border-radius:50%;width:18px;height:18px;font-size:0.7rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">+</button>
                   </span>
                 `).join('')}
@@ -181,7 +181,7 @@ const Admin = {
               <div style="display:flex;flex-wrap:wrap;gap:6px;">
                 ${lowStockProducts.map(p => `
                   <span style="display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:rgba(244,140,6,0.1);border-radius:20px;font-size:0.78rem;">
-                    ${p.name} (${p.stock} left)
+                    ${escapeHtml(p.name)} (${p.stock} left)
                     <button onclick="Admin.quickRestock('${p.id}')" style="border:none;background:var(--primary);color:white;border-radius:50%;width:18px;height:18px;font-size:0.7rem;cursor:pointer;display:flex;align-items:center;justify-content:center;">+</button>
                   </span>
                 `).join('')}
@@ -274,9 +274,9 @@ const Admin = {
           <div class="recent-order-item">
             <div class="order-info">
               <span class="order-id">#${o.id.slice(-6).toUpperCase()}</span>
-              <span class="order-date">${o.user_name || o.userName || 'Guest'} • ${App.formatDate(o.order_date || o.orderDate || o.created_at || o.createdAt)}</span>
+              <span class="order-date">${escapeHtml(o.user_name || o.userName || 'Guest')} • ${App.formatDate(o.order_date || o.orderDate || o.created_at || o.createdAt)}</span>
             </div>
-            <span class="order-status ${o.status}">${o.status}</span>
+            <span class="order-status ${escapeHtml(o.status)}">${escapeHtml(o.status)}</span>
             <span style="font-weight:600;">${App.formatCurrency(o.total)}</span>
           </div>
         `).join('');
@@ -345,17 +345,17 @@ const Admin = {
         <td>
           <div style="display:flex;align-items:center;gap:10px;">
             ${p.image
-              ? `<img src="${p.image}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;">`
+              ? `<img src="${escapeHtml(p.image)}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;">`
               : `<div style="width:40px;height:40px;border-radius:8px;background:rgba(45,106,79,0.08);display:flex;align-items:center;justify-content:center;font-size:0.65rem;color:var(--text-muted);">No Img</div>`
             }
             <div>
-              <div style="font-weight:600;">${p.name}</div>
-              <div style="font-size:0.75rem;color:var(--text-muted);cursor:pointer;padding:2px 6px;border-radius:4px;border:1px dashed rgba(45,106,79,0.2);display:inline-block;" onclick="Admin.editUnitInline('${p.id}', this)" title="Click to edit unit">/${p.unit}</div>
-              ${p.offer ? `<div style="font-size:0.68rem;margin-top:3px;display:inline-block;padding:2px 8px;background:rgba(230,57,70,0.08);color:var(--danger);border-radius:8px;font-weight:600;">${p.offer}</div>` : ''}
+              <div style="font-weight:600;">${escapeHtml(p.name)}</div>
+              <div style="font-size:0.75rem;color:var(--text-muted);cursor:pointer;padding:2px 6px;border-radius:4px;border:1px dashed rgba(45,106,79,0.2);display:inline-block;" onclick="Admin.editUnitInline('${p.id}', this)" title="Click to edit unit">/${escapeHtml(p.unit)}</div>
+              ${p.offer ? `<div style="font-size:0.68rem;margin-top:3px;display:inline-block;padding:2px 8px;background:rgba(230,57,70,0.08);color:var(--danger);border-radius:8px;font-weight:600;">${escapeHtml(p.offer)}</div>` : ''}
             </div>
           </div>
         </td>
-        <td style="font-size:0.82rem;">${p.category}</td>
+        <td style="font-size:0.82rem;">${escapeHtml(p.category)}</td>
         <td style="font-weight:600;color:var(--primary);">${App.formatCurrency(p.price)}${p.mrp && p.mrp > p.price ? ` <span style="text-decoration:line-through;color:var(--text-muted);font-weight:400;font-size:0.78rem;">${App.formatCurrency(p.mrp)}</span> <span style="font-size:0.72rem;color:var(--success);font-weight:600;">${Math.round((p.mrp - p.price) / p.mrp * 100)}% off</span>` : ''}</td>
         <td>
           <div style="display:flex;align-items:center;gap:8px;">
@@ -416,7 +416,7 @@ const Admin = {
         <div class="form-group">
           <label>Category</label>
           <select id="pCategory" required>
-            ${categories.map(c => `<option value="${c}">${c}</option>`).join('')}
+            ${categories.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('')}
           </select>
         </div>
         <div class="form-group">
@@ -512,7 +512,7 @@ const Admin = {
     const images = container._images || [];
     container.innerHTML = images.map((img, i) => `
       <div style="position:relative;width:70px;height:70px;border-radius:8px;overflow:hidden;border:2px solid ${i === 0 ? 'var(--primary)' : 'rgba(45,106,79,0.15)'};">
-        <img src="${img}" style="width:100%;height:100%;object-fit:cover;">
+        <img src="${escapeHtml(img)}" style="width:100%;height:100%;object-fit:cover;">
         ${i === 0 ? '<span style="position:absolute;bottom:0;left:0;right:0;background:var(--primary);color:white;font-size:0.55rem;text-align:center;padding:1px 0;font-weight:600;">MAIN</span>' : ''}
         <button type="button" onclick="App.removeMultiImage('pImagesPreview',${i})" style="position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(230,57,70,0.9);color:white;border:none;font-size:0.65rem;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;">✕</button>
       </div>
@@ -528,14 +528,14 @@ const Admin = {
     const priceVal = parseFloat(document.getElementById('pPrice').value);
 
     const data = {
-      name: document.getElementById('pName').value.trim(),
+      name: sanitizeInput(document.getElementById('pName').value),
       category: document.getElementById('pCategory').value,
       price: priceVal,
       mrp: mrpVal > priceVal ? mrpVal : 0,
-      unit: document.getElementById('pUnit').value.trim(),
+      unit: sanitizeInput(document.getElementById('pUnit').value),
       stock: parseInt(document.getElementById('pStock').value),
-      description: document.getElementById('pDesc').value.trim(),
-      badge: document.getElementById('pBadge').value.trim(),
+      description: sanitizeInput(document.getElementById('pDesc').value),
+      badge: sanitizeInput(document.getElementById('pBadge').value),
       offer: document.getElementById('pOffer').value,
       image: allImages[0] || '',
       images: allImages
@@ -649,9 +649,9 @@ const Admin = {
       return `
       <tr>
         <td style="font-weight:600;">#${o.id.slice(-6).toUpperCase()}</td>
-        <td style="font-weight:600;">${parsed.customerName}</td>
-        <td style="font-size:0.82rem;">${parsed.phone || 'N/A'}</td>
-        <td style="font-size:0.78rem;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${parsed.cleanAddress}">${parsed.cleanAddress || 'N/A'}</td>
+        <td style="font-weight:600;">${escapeHtml(parsed.customerName)}</td>
+        <td style="font-size:0.82rem;">${escapeHtml(parsed.phone || 'N/A')}</td>
+        <td style="font-size:0.78rem;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeHtml(parsed.cleanAddress)}">${escapeHtml(parsed.cleanAddress || 'N/A')}</td>
         <td>${(o.items || []).length} items</td>
         <td style="font-weight:600;color:var(--primary);">${App.formatCurrency(o.total || 0)}</td>
         <td>
@@ -737,15 +737,15 @@ const Admin = {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;">
         <div style="padding:12px;background:rgba(82,183,136,0.05);border-radius:10px;">
           <p style="font-size:0.72rem;color:var(--text-muted);margin:0 0 3px;">Customer</p>
-          <p style="font-weight:700;margin:0;font-size:0.9rem;">${userName}</p>
+          <p style="font-weight:700;margin:0;font-size:0.9rem;">${escapeHtml(userName)}</p>
         </div>
         <div style="padding:12px;background:rgba(82,183,136,0.05);border-radius:10px;">
           <p style="font-size:0.72rem;color:var(--text-muted);margin:0 0 3px;">Phone</p>
-          <p style="font-weight:700;margin:0;font-size:0.9rem;">${userPhone || 'N/A'}</p>
+          <p style="font-weight:700;margin:0;font-size:0.9rem;">${escapeHtml(userPhone || 'N/A')}</p>
         </div>
         ${userEmail ? `<div style="padding:12px;background:rgba(82,183,136,0.05);border-radius:10px;">
           <p style="font-size:0.72rem;color:var(--text-muted);margin:0 0 3px;">Email</p>
-          <p style="font-weight:600;margin:0;font-size:0.82rem;">${userEmail}</p>
+          <p style="font-weight:600;margin:0;font-size:0.82rem;">${escapeHtml(userEmail)}</p>
         </div>` : ''}
         <div style="padding:12px;background:rgba(82,183,136,0.05);border-radius:10px;">
           <p style="font-size:0.72rem;color:var(--text-muted);margin:0 0 3px;">Date</p>
@@ -755,12 +755,12 @@ const Admin = {
 
       <div style="padding:12px 14px;background:rgba(45,106,79,0.04);border-radius:10px;border-left:3px solid var(--primary);margin-bottom:16px;">
         <p style="font-size:0.72rem;color:var(--text-muted);margin:0 0 3px;">📍 Delivery Address</p>
-        <p style="font-weight:600;margin:0;font-size:0.88rem;">${parsed.cleanAddress || order.address || 'N/A'}</p>
+        <p style="font-weight:600;margin:0;font-size:0.88rem;">${escapeHtml(parsed.cleanAddress || order.address || 'N/A')}</p>
       </div>
 
       <div style="display:flex;gap:10px;margin-bottom:16px;">
         <div style="flex:1;padding:10px;text-align:center;background:rgba(82,183,136,0.06);border-radius:8px;">
-          <span class="order-status ${order.status}" style="font-size:0.78rem;">${order.status}</span>
+            <span class="order-status ${order.status}" style="font-size:0.78rem;">${escapeHtml(order.status)}</span>
         </div>
         <div style="flex:1;padding:10px;text-align:center;background:rgba(82,183,136,0.06);border-radius:8px;">
           <span style="font-size:0.78rem;color:var(--text-muted);">Payment</span><br>
@@ -772,7 +772,7 @@ const Admin = {
       ${(order.items || []).map(item => `
         <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(45,106,79,0.06);">
           <div>
-            <span style="font-weight:600;font-size:0.88rem;">${item.name}</span>
+            <span style="font-weight:600;font-size:0.88rem;">${escapeHtml(item.name)}</span>
             <span style="font-size:0.78rem;color:var(--text-muted);margin-left:6px;">× ${item.qty}</span>
           </div>
           <span style="font-weight:600;">${App.formatCurrency(item.price * item.qty)}</span>
@@ -841,9 +841,9 @@ const Admin = {
       const totalSpent = userOrders.reduce((sum, o) => sum + (o.total || 0), 0);
       return `
         <tr>
-          <td style="font-weight:600;">${u.name}</td>
-          <td>${u.email}</td>
-          <td>${u.phone || 'N/A'}</td>
+          <td style="font-weight:600;">${escapeHtml(u.name)}</td>
+          <td>${escapeHtml(u.email)}</td>
+          <td>${escapeHtml(u.phone || 'N/A')}</td>
           <td>${userOrders.length}</td>
           <td style="font-weight:600;color:var(--primary);">${totalSpent > 0 ? App.formatCurrency(totalSpent) : '-'}</td>
           <td style="font-size:0.82rem;">${App.formatDate(u.created_at || u.createdAt)}</td>
@@ -885,16 +885,16 @@ const Admin = {
 
     content.innerHTML = `
       <button class="modal-close" onclick="Admin.closeModal()">✕</button>
-      <h2 style="margin-bottom:20px;">${user.name}</h2>
+      <h2 style="margin-bottom:20px;">${escapeHtml(user.name)}</h2>
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;">
         <div style="padding:14px;background:rgba(82,183,136,0.05);border-radius:10px;">
           <p style="font-size:0.75rem;color:var(--text-muted);margin:0 0 4px;">Email</p>
-          <p style="font-weight:600;margin:0;font-size:0.88rem;">${user.email}</p>
+          <p style="font-weight:600;margin:0;font-size:0.88rem;">${escapeHtml(user.email)}</p>
         </div>
         <div style="padding:14px;background:rgba(82,183,136,0.05);border-radius:10px;">
           <p style="font-size:0.75rem;color:var(--text-muted);margin:0 0 4px;">Phone</p>
-          <p style="font-weight:600;margin:0;font-size:0.88rem;">${user.phone || 'N/A'}</p>
+          <p style="font-weight:600;margin:0;font-size:0.88rem;">${escapeHtml(user.phone || 'N/A')}</p>
         </div>
         <div style="padding:14px;background:rgba(82,183,136,0.05);border-radius:10px;">
           <p style="font-size:0.75rem;color:var(--text-muted);margin:0 0 4px;">Joined</p>
@@ -926,7 +926,7 @@ const Admin = {
           <h3 style="font-size:0.9rem;margin-bottom:10px;color:var(--text);">📍 Saved Addresses</h3>
           ${addresses.map(a => `
             <div style="padding:10px 14px;background:rgba(82,183,136,0.04);border-radius:8px;margin-bottom:6px;font-size:0.85rem;border-left:3px solid var(--primary);">
-              ${a}
+              ${escapeHtml(a)}
             </div>
           `).join('')}
         </div>
@@ -942,7 +942,7 @@ const Admin = {
                 <span style="font-size:0.75rem;color:var(--text-muted);margin-left:8px;">${App.formatDate(o.order_date || o.orderDate || o.created_at || o.createdAt)}</span>
                 <div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px;">${(o.items || []).length} items</div>
               </div>
-              <span class="order-status ${o.status}" style="font-size:0.72rem;">${o.status}</span>
+              <span class="order-status ${o.status}" style="font-size:0.72rem;">${escapeHtml(o.status)}</span>
               <span style="font-weight:600;font-size:0.85rem;color:var(--primary);">${App.formatCurrency(o.total || 0)}</span>
             </div>
           `).join('')}
@@ -988,7 +988,7 @@ const Admin = {
           <h3 style="margin-bottom:20px;color:var(--primary-dark);">Online Payment Settings</h3>
           <div class="form-group">
             <label>Admin UPI ID</label>
-            <input type="text" id="adminUpi" value="${settings.upiId || ''}" placeholder="e.g. merchant@upi or 9876543210@paytm">
+            <input type="text" id="adminUpi" value="${escapeHtml(settings.upiId || '')}" placeholder="e.g. merchant@upi or 9876543210@paytm">
             <p style="font-size:0.8rem;color:var(--text-muted);margin-top:6px;">If set, customers can pay online via UPI. If empty, online payment is disabled and only COD is available.</p>
           </div>
           <button class="btn btn-primary btn-sm" onclick="Admin.saveUpiId()">Save UPI ID</button>
@@ -999,31 +999,31 @@ const Admin = {
           <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:16px;">This information is shown on the Contact Us page and footer. Update it anytime.</p>
           <div class="form-group">
             <label>Store Name</label>
-            <input type="text" id="contactStoreName" value="${settings.contactStoreName || 'Aravali Store'}" placeholder="Your store name">
+            <input type="text" id="contactStoreName" value="${escapeHtml(settings.contactStoreName || 'Aravali Store')}" placeholder="Your store name">
           </div>
           <div class="form-group">
             <label>📍 Store Address</label>
-            <input type="text" id="contactAddress" value="${settings.contactAddress || '123 MG Road, Udaipur, Rajasthan - 313001, India'}" placeholder="Full store address">
+            <input type="text" id="contactAddress" value="${escapeHtml(settings.contactAddress || '123 MG Road, Udaipur, Rajasthan - 313001, India')}" placeholder="Full store address">
           </div>
           <div class="form-group">
             <label>📞 Phone Number</label>
-            <input type="tel" id="contactPhone" value="${settings.contactPhone || '+91 98765 43210'}" placeholder="+91 XXXXX XXXXX">
+            <input type="tel" id="contactPhone" value="${escapeHtml(settings.contactPhone || '+91 98765 43210')}" placeholder="+91 XXXXX XXXXX">
           </div>
           <div class="form-group">
             <label>✉️ Primary Email</label>
-            <input type="email" id="contactEmail" value="${settings.contactEmail || 'hello@aravalistore.in'}" placeholder="hello@example.com">
+            <input type="email" id="contactEmail" value="${escapeHtml(settings.contactEmail || 'hello@aravalistore.in')}" placeholder="hello@example.com">
           </div>
           <div class="form-group">
             <label>✉️ Support Email</label>
-            <input type="email" id="contactSupportEmail" value="${settings.contactSupportEmail || 'support@aravalistore.in'}" placeholder="support@example.com">
+            <input type="email" id="contactSupportEmail" value="${escapeHtml(settings.contactSupportEmail || 'support@aravalistore.in')}" placeholder="support@example.com">
           </div>
           <div class="form-group">
             <label>🕐 Weekday Hours</label>
-            <input type="text" id="contactWeekdayHours" value="${settings.contactWeekdayHours || 'Monday - Saturday: 8:00 AM - 10:00 PM'}" placeholder="e.g. Mon-Sat: 9AM-9PM">
+            <input type="text" id="contactWeekdayHours" value="${escapeHtml(settings.contactWeekdayHours || 'Monday - Saturday: 8:00 AM - 10:00 PM')}" placeholder="e.g. Mon-Sat: 9AM-9PM">
           </div>
           <div class="form-group">
             <label>🕐 Sunday Hours</label>
-            <input type="text" id="contactSundayHours" value="${settings.contactSundayHours || 'Sunday: 9:00 AM - 8:00 PM'}" placeholder="e.g. Sunday: 10AM-6PM">
+            <input type="text" id="contactSundayHours" value="${escapeHtml(settings.contactSundayHours || 'Sunday: 9:00 AM - 8:00 PM')}" placeholder="e.g. Sunday: 10AM-6PM">
           </div>
           <button class="btn btn-primary btn-sm" onclick="Admin.saveContactInfo()">Save Contact Info</button>
         </div>
@@ -1106,13 +1106,13 @@ const Admin = {
   async changePassword(adminId) {
     const current = document.getElementById('currentPass').value;
     const newPass = document.getElementById('newPass').value;
-    const confirm = document.getElementById('confirmPass').value;
+    const confirmPass = document.getElementById('confirmPass').value;
 
     if (!current || !newPass) {
       App.showToast('Please fill in all password fields', 'error');
       return;
     }
-    if (newPass !== confirm) {
+    if (newPass !== confirmPass) {
       App.showToast('New passwords do not match', 'error');
       return;
     }
@@ -1212,13 +1212,13 @@ const Admin = {
               : banners.map(b => `
                 <tr>
                   <td>
-                    <div style="width:120px;height:60px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:0.75rem;background:${b.gradient};overflow:hidden;">
-                      ${b.image ? `<img src="${b.image}" style="width:100%;height:100%;object-fit:cover;">` : b.title}
+                    <div style="width:120px;height:60px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:0.75rem;background:${escapeHtml(b.gradient)};overflow:hidden;">
+                      ${b.image ? `<img src="${escapeHtml(b.image)}" style="width:100%;height:100%;object-fit:cover;">` : escapeHtml(b.title)}
                     </div>
                   </td>
-                  <td style="font-weight:600;">${b.title}</td>
-                  <td style="font-size:0.82rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${b.subtitle}</td>
-                  <td style="font-size:0.82rem;">${b.link}</td>
+                  <td style="font-weight:600;">${escapeHtml(b.title)}</td>
+                  <td style="font-size:0.82rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(b.subtitle)}</td>
+                  <td style="font-size:0.82rem;">${escapeHtml(b.link)}</td>
                   <td><span style="color:${b.active ? 'var(--success)' : 'var(--danger)'};font-weight:600;">${b.active ? 'Active' : 'Hidden'}</span></td>
                   <td>${b.sort_order || b.order || '-'}</td>
                   <td>
@@ -1369,10 +1369,10 @@ const Admin = {
                   return `
                     <tr>
                       <td style="font-size:2rem;text-align:center;">
-                        ${c.image ? `<img src="${c.image}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;">` : `<div style="width:40px;height:40px;border-radius:8px;background:rgba(45,106,79,0.08);display:flex;align-items:center;justify-content:center;font-size:0.65rem;color:var(--text-muted);">No Img</div>`}
+                        ${c.image ? `<img src="${escapeHtml(c.image)}" style="width:40px;height:40px;border-radius:8px;object-fit:cover;">` : `<div style="width:40px;height:40px;border-radius:8px;background:rgba(45,106,79,0.08);display:flex;align-items:center;justify-content:center;font-size:0.65rem;color:var(--text-muted);">No Img</div>`}
                       </td>
-                      <td style="font-weight:600;">${c.name}</td>
-                      <td style="font-size:0.82rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${c.description}</td>
+                      <td style="font-weight:600;">${escapeHtml(c.name)}</td>
+                      <td style="font-size:0.82rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(c.description)}</td>
                       <td><span style="color:${c.active ? 'var(--success)' : 'var(--danger)'};font-weight:600;">${c.active ? 'Active' : 'Hidden'}</span></td>
                       <td>${c.sort_order || c.order || '-'}</td>
                       <td>${productCount}</td>
@@ -1522,7 +1522,7 @@ const Admin = {
     const product = await DB.getById('products', productId);
     if (!product) return;
     const current = product.unit || '';
-    el.outerHTML = `<input type="text" value="${current}" style="font-size:0.75rem;width:100px;padding:2px 6px;border:1px solid var(--primary);border-radius:4px;font-family:var(--font);" id="unitInput_${productId}" onblur="Admin.saveUnitInline('${productId}', this.value)" onkeydown="if(event.key==='Enter'){this.blur();}if(event.key==='Escape'){Admin.cancelUnitInline('${productId}','${current}');}">`;
+    el.outerHTML = `<input type="text" value="${escapeHtml(current)}" style="font-size:0.75rem;width:100px;padding:2px 6px;border:1px solid var(--primary);border-radius:4px;font-family:var(--font);" id="unitInput_${productId}" onblur="Admin.saveUnitInline('${productId}', this.value)" onkeydown="if(event.key==='Enter'){this.blur();}if(event.key==='Escape'){Admin.cancelUnitInline('${productId}','${escapeHtml(current)}');}">`;
     const input = document.getElementById(`unitInput_${productId}`);
     if (input) { input.focus(); input.select(); }
   },
@@ -1576,8 +1576,8 @@ const Admin = {
             ${logs.map(log => `
               <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(45,106,79,0.06);">
                 <div>
-                  <div style="font-weight:600;font-size:0.88rem;">${log.product_name || log.productName}</div>
-                  <div style="font-size:0.75rem;color:var(--text-muted);">${log.reason} • ${App.formatDate(log.timestamp)}</div>
+                  <div style="font-weight:600;font-size:0.88rem;">${escapeHtml(log.product_name || log.productName)}</div>
+                  <div style="font-size:0.75rem;color:var(--text-muted);">${escapeHtml(log.reason)} • ${App.formatDate(log.timestamp)}</div>
                 </div>
                 <span style="font-weight:700;font-size:0.9rem;color:${(log.change_val || log.change) > 0 ? 'var(--success)' : 'var(--danger)'};">
                   ${(log.change_val || log.change) > 0 ? '+' : ''}${log.change_val || log.change}
@@ -1740,7 +1740,7 @@ const Admin = {
         <div style="display:flex;gap:8px;">
           <select id="offerProductSelect" style="flex:1;padding:10px 14px;border:1px solid rgba(45,106,79,0.15);border-radius:10px;font-family:var(--font);font-size:0.88rem;">
             <option value="">Select a product to add...</option>
-            ${allProducts.map(p => `<option value="${p.id}">${p.name} (${p.category}) — ₹${p.price}</option>`).join('')}
+            ${allProducts.map(p => `<option value="${p.id}">${escapeHtml(p.name)} (${escapeHtml(p.category)}) — ₹${p.price}</option>`).join('')}
           </select>
           <button class="btn btn-primary" style="padding:10px 20px;white-space:nowrap;" onclick="Admin.assignProductToOffer('${categoryId}')">Add</button>
         </div>
@@ -1754,11 +1754,11 @@ const Admin = {
             <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:10px;margin-bottom:6px;background:rgba(82,183,136,0.04);border:1px solid rgba(45,106,79,0.06);">
               <div style="display:flex;align-items:center;gap:10px;">
                 <div style="width:38px;height:38px;border-radius:8px;overflow:hidden;background:rgba(45,106,79,0.06);flex-shrink:0;">
-                  ${p.image ? `<img src="${p.image}" style="width:100%;height:100%;object-fit:cover;">` : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:var(--text-muted);">📦</div>`}
+                  ${p.image ? `<img src="${escapeHtml(p.image)}" style="width:100%;height:100%;object-fit:cover;">` : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:var(--text-muted);">📦</div>`}
                 </div>
                 <div>
-                  <div style="font-weight:600;font-size:0.85rem;">${p.name}</div>
-                  <div style="font-size:0.75rem;color:var(--text-muted);">${p.category} • ₹${p.price}</div>
+                  <div style="font-weight:600;font-size:0.85rem;">${escapeHtml(p.name)}</div>
+                  <div style="font-size:0.75rem;color:var(--text-muted);">${escapeHtml(p.category)} • ₹${p.price}</div>
                 </div>
               </div>
               <button onclick="Admin.removeProductFromOffer('${p.id}')" style="width:30px;height:30px;border-radius:8px;border:1px solid rgba(244,67,54,0.15);background:rgba(244,67,54,0.06);color:var(--danger);cursor:pointer;font-size:0.85rem;display:flex;align-items:center;justify-content:center;transition:0.15s;"
@@ -1855,13 +1855,13 @@ const Admin = {
       <label class="bulk-product-row">
         <input type="checkbox" class="bulk-product-cb" value="${p.id}">
         <div class="bulk-product-thumb">
-          ${p.image ? `<img src="${p.image}">` : `<span>📦</span>`}
+          ${p.image ? `<img src="${escapeHtml(p.image)}">` : `<span>📦</span>`}
         </div>
         <div class="bulk-product-info">
-          <div class="bulk-product-name">${p.name}</div>
-          <div class="bulk-product-meta">${p.category} • ₹${p.price}</div>
+          <div class="bulk-product-name">${escapeHtml(p.name)}</div>
+          <div class="bulk-product-meta">${escapeHtml(p.category)} • ₹${p.price}</div>
         </div>
-        ${p.offer ? `<span class="bulk-product-badge">${p.offer.split(' ').slice(1).join(' ')}</span>` : ''}
+        ${p.offer ? `<span class="bulk-product-badge">${escapeHtml(p.offer.split(' ').slice(1).join(' '))}</span>` : ''}
       </label>
     `).join('');
   },
@@ -1968,11 +1968,11 @@ const Admin = {
       <tr>
         <td style="font-weight:600;">#${r.id.slice(-6).toUpperCase()}</td>
         <td style="font-weight:600;color:var(--primary);">#${((r.order_id || r.orderId) || '').slice(-6).toUpperCase()}</td>
-        <td style="font-size:0.85rem;">${r.customer_name || r.customerName || 'Guest'}</td>
-        <td style="font-size:0.85rem;">${r.product_name || r.productName || 'N/A'} ${r.qty > 1 ? '× ' + r.qty : ''}</td>
-        <td style="font-size:0.78rem;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${r.reason}">${r.reason || 'N/A'}</td>
+        <td style="font-size:0.85rem;">${escapeHtml(r.customer_name || r.customerName || 'Guest')}</td>
+        <td style="font-size:0.85rem;">${escapeHtml(r.product_name || r.productName || 'N/A')} ${r.qty > 1 ? '× ' + r.qty : ''}</td>
+        <td style="font-size:0.78rem;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeHtml(r.reason)}">${escapeHtml(r.reason || 'N/A')}</td>
         <td style="font-weight:700;color:var(--danger);">${App.formatCurrency(r.refund_amount || r.refundAmount || 0)}</td>
-        <td><span style="display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.75rem;font-weight:600;background:${statusColors[r.status] || '#999'}20;color:${statusColors[r.status] || '#999'};">${r.status}</span></td>
+        <td><span style="display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.75rem;font-weight:600;background:${statusColors[r.status] || '#999'}20;color:${statusColors[r.status] || '#999'};">${escapeHtml(r.status)}</span></td>
         <td style="font-size:0.82rem;">${App.formatDate(r.created_at || r.createdAt)}</td>
         <td>
           <div class="action-btns">
@@ -2063,13 +2063,13 @@ const Admin = {
       <h2 style="margin-bottom:20px;">Return #${ret.id.slice(-6).toUpperCase()}</h2>
 
       <div style="text-align:center;margin-bottom:20px;">
-        <span style="display:inline-block;padding:6px 18px;border-radius:20px;font-weight:700;font-size:0.88rem;background:${statusColors[ret.status] || '#999'}18;color:${statusColors[ret.status] || '#999'};">${ret.status.toUpperCase()}</span>
+        <span style="display:inline-block;padding:6px 18px;border-radius:20px;font-weight:700;font-size:0.88rem;background:${statusColors[ret.status] || '#999'}18;color:${statusColors[ret.status] || '#999'};">${escapeHtml(ret.status.toUpperCase())}</span>
       </div>
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px;">
         <div style="padding:12px;background:rgba(82,183,136,0.05);border-radius:10px;">
           <p style="font-size:0.72rem;color:var(--text-muted);margin:0 0 3px;">Customer</p>
-          <p style="font-weight:700;margin:0;font-size:0.9rem;">${ret.customer_name || ret.customerName || 'Guest'}</p>
+          <p style="font-weight:700;margin:0;font-size:0.9rem;">${escapeHtml(ret.customer_name || ret.customerName || 'Guest')}</p>
         </div>
         <div style="padding:12px;background:rgba(82,183,136,0.05);border-radius:10px;">
           <p style="font-size:0.72rem;color:var(--text-muted);margin:0 0 3px;">Order</p>
@@ -2077,7 +2077,7 @@ const Admin = {
         </div>
         <div style="padding:12px;background:rgba(82,183,136,0.05);border-radius:10px;">
           <p style="font-size:0.72rem;color:var(--text-muted);margin:0 0 3px;">Product</p>
-          <p style="font-weight:700;margin:0;font-size:0.9rem;">${ret.product_name || ret.productName || 'N/A'}</p>
+          <p style="font-weight:700;margin:0;font-size:0.9rem;">${escapeHtml(ret.product_name || ret.productName || 'N/A')}</p>
         </div>
         <div style="padding:12px;background:rgba(82,183,136,0.05);border-radius:10px;">
           <p style="font-size:0.72rem;color:var(--text-muted);margin:0 0 3px;">Quantity</p>
@@ -2087,13 +2087,13 @@ const Admin = {
 
       <div style="padding:14px;background:rgba(244,67,54,0.04);border-radius:10px;border-left:3px solid var(--danger);margin-bottom:16px;">
         <p style="font-size:0.72rem;color:var(--text-muted);margin:0 0 3px;">Reason for Return</p>
-        <p style="font-weight:600;margin:0;font-size:0.9rem;">${ret.reason || 'No reason provided'}</p>
+        <p style="font-weight:600;margin:0;font-size:0.9rem;">${escapeHtml(ret.reason || 'No reason provided')}</p>
       </div>
 
       ${(ret.additional_info || ret.additionalInfo) ? `
       <div style="padding:14px;background:rgba(45,106,79,0.04);border-radius:10px;border-left:3px solid var(--primary);margin-bottom:16px;">
         <p style="font-size:0.72rem;color:var(--text-muted);margin:0 0 3px;">Additional Details</p>
-        <p style="font-weight:600;margin:0;font-size:0.88rem;">${ret.additional_info || ret.additionalInfo}</p>
+        <p style="font-weight:600;margin:0;font-size:0.88rem;">${escapeHtml(ret.additional_info || ret.additionalInfo)}</p>
       </div>` : ''}
 
       <div style="display:flex;gap:12px;margin-bottom:16px;">
@@ -2111,7 +2111,7 @@ const Admin = {
         <p style="margin:4px 0;">Requested: ${App.formatDate(ret.created_at || ret.createdAt)}</p>
         ${(ret.reviewed_at || ret.reviewedAt) ? `<p style="margin:4px 0;">Reviewed: ${App.formatDate(ret.reviewed_at || ret.reviewedAt)}</p>` : ''}
         ${(ret.refunded_at || ret.refundedAt) ? `<p style="margin:4px 0;color:var(--primary);font-weight:600;">Refunded: ${App.formatDate(ret.refunded_at || ret.refundedAt)}</p>` : ''}
-        ${(ret.reject_reason || ret.rejectReason) ? `<p style="margin:4px 0;color:var(--danger);">Rejection reason: ${ret.reject_reason || ret.rejectReason}</p>` : ''}
+        ${(ret.reject_reason || ret.rejectReason) ? `<p style="margin:4px 0;color:var(--danger);">Rejection reason: ${escapeHtml(ret.reject_reason || ret.rejectReason)}</p>` : ''}
       </div>
 
       ${ret.status === 'pending' ? `
@@ -2178,13 +2178,13 @@ const Admin = {
           <tbody>
             ${logs.map(log => `
               <tr>
-                <td style="font-weight:600;">${log.product_name || log.productName || '-'}</td>
+                <td style="font-weight:600;">${escapeHtml(log.product_name || log.productName || '-')}</td>
                 <td>
                   <span style="font-weight:700;color:${(log.change_val || log.change) > 0 ? 'var(--primary)' : 'var(--danger)'};">
                     ${(log.change_val || log.change) > 0 ? '+' : ''}${log.change_val || log.change}
                   </span>
                 </td>
-                <td style="font-size:0.85rem;">${log.reason || '-'}</td>
+                <td style="font-size:0.85rem;">${escapeHtml(log.reason || '-')}</td>
                 <td style="font-size:0.82rem;">${App.formatDate(log.timestamp)}</td>
               </tr>
             `).join('')}
@@ -2227,11 +2227,11 @@ const Admin = {
           <tbody>
             ${admins.map(a => `
               <tr>
-                <td style="font-weight:600;">${a.name || '-'}</td>
-                <td>${a.email || '-'}</td>
+                <td style="font-weight:600;">${escapeHtml(a.name || '-')}</td>
+                <td>${escapeHtml(a.email || '-')}</td>
                 <td>
                   <span style="display:inline-block;padding:3px 10px;border-radius:12px;font-size:0.75rem;font-weight:600;background:${a.role === 'superadmin' ? 'rgba(82,183,136,0.15)' : 'rgba(45,106,79,0.08)'};color:${a.role === 'superadmin' ? 'var(--primary)' : 'var(--text-light)'};">
-                    ${a.role || '-'}
+                    ${escapeHtml(a.role || '-')}
                   </span>
                 </td>
               </tr>

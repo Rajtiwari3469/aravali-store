@@ -28,9 +28,9 @@ const Shop = {
           All
         </button>
         ${catalogs.map(cat => `
-          <button class="category-chip ${cat.name === this.currentCategory ? 'active' : ''}" data-category="${cat.name}">
-            ${cat.image ? `<img src="${cat.image}" style="width:20px;height:20px;border-radius:50%;object-fit:cover;">` : `<span class="emoji">${cat.emoji || CATEGORY_EMOJIS[cat.name] || '📦'}</span>`}
-            ${cat.name}
+          <button class="category-chip ${cat.name === this.currentCategory ? 'active' : ''}" data-category="${escapeHtml(cat.name)}">
+            ${cat.image ? `<img src="${escapeHtml(cat.image)}" style="width:20px;height:20px;border-radius:50%;object-fit:cover;" onerror="this.style.display='none';this.nextElementSibling.style.display='inline';">` : ''}<span class="emoji" style="${cat.image ? 'display:none;' : ''}">${escapeHtml(cat.emoji || CATEGORY_EMOJIS[cat.name] || '📦')}</span>
+            ${escapeHtml(cat.name)}
           </button>
         `).join('')}
       `;
@@ -38,9 +38,9 @@ const Shop = {
       const products = await DB.getAll('products');
       const categories = ['All', ...new Set(products.map(p => p.category))];
       container.innerHTML = categories.map(cat => `
-        <button class="category-chip ${cat === this.currentCategory ? 'active' : ''}" data-category="${cat}">
-          <span class="emoji">${CATEGORY_EMOJIS[cat] || '📦'}</span>
-          ${cat}
+        <button class="category-chip ${cat === this.currentCategory ? 'active' : ''}" data-category="${escapeHtml(cat)}">
+          <span class="emoji">${escapeHtml(CATEGORY_EMOJIS[cat] || '📦')}</span>
+          ${escapeHtml(cat)}
         </button>
       `).join('');
     }
@@ -177,22 +177,22 @@ const Shop = {
           ${inWishlist ? '❤️' : '🤍'}
         </button>
         <div class="product-image" style="position:relative;">
-          ${(p.image || (p.images && p.images[0])) ? `<img src="${p.image || p.images[0]}" style="width:100%;height:100%;object-fit:contain;border-radius:var(--border-radius-sm);background:var(--surface-1,#f8f8f8);">` : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--bubble-bg,rgba(45,106,79,0.06)),rgba(82,183,136,0.1));border-radius:var(--border-radius-sm);color:var(--text-muted);font-size:0.75rem;text-align:center;padding:8px;">No Image</div>`}
+          ${(p.image || (p.images && p.images[0])) ? `<img src="${escapeHtml(p.image || p.images[0])}" style="width:100%;height:100%;object-fit:contain;border-radius:var(--border-radius-sm);background:var(--surface-1,#f8f8f8);" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div style="width:100%;height:100%;display:none;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--bubble-bg,rgba(45,106,79,0.06)),rgba(82,183,136,0.1));border-radius:var(--border-radius-sm);color:var(--text-muted);font-size:0.75rem;text-align:center;padding:8px;">No Image</div>` : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--bubble-bg,rgba(45,106,79,0.06)),rgba(82,183,136,0.1));border-radius:var(--border-radius-sm);color:var(--text-muted);font-size:0.75rem;text-align:center;padding:8px;">No Image</div>`}
           ${isOutOfStock ? '<div style="position:absolute;inset:0;background:rgba(0,0,0,0.4);border-radius:var(--border-radius-sm);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:0.85rem;">OUT OF STOCK</div>' : ''}
         </div>
         <div class="product-info">
           <div class="product-tags">
-            <div class="product-category">${p.category}</div>
-            ${isOutOfStock ? '<span class="product-badge" style="position:static;background:var(--danger);font-size:0.6rem;padding:2px 6px;">Out of Stock</span>' : (p.badge ? `<span class="product-badge" style="position:static;font-size:0.6rem;padding:2px 6px;">${p.badge}</span>` : '')}
+            <div class="product-category">${escapeHtml(p.category)}</div>
+            ${isOutOfStock ? '<span class="product-badge" style="position:static;background:var(--danger);font-size:0.6rem;padding:2px 6px;">Out of Stock</span>' : (p.badge ? `<span class="product-badge" style="position:static;font-size:0.6rem;padding:2px 6px;">${escapeHtml(p.badge)}</span>` : '')}
             ${isLowStock && !isOutOfStock ? '<span class="product-badge" style="position:static;background:var(--accent);font-size:0.6rem;padding:2px 6px;">Low Stock</span>' : ''}
-            ${p.offer && !isOutOfStock ? `<span class="product-badge" style="position:static;background:linear-gradient(135deg,#ff6b6b,#ee5a24);font-size:0.58rem;padding:2px 6px;">${p.offer.split(' ').slice(1).join(' ')}</span>` : ''}
+            ${p.offer && !isOutOfStock ? `<span class="product-badge" style="position:static;background:linear-gradient(135deg,#ff6b6b,#ee5a24);font-size:0.58rem;padding:2px 6px;">${escapeHtml(p.offer.split(' ').slice(1).join(' '))}</span>` : ''}
           </div>
-          <div class="product-name">${p.name}</div>
-          <div class="product-desc">${p.description || ''}</div>
+          <div class="product-name">${escapeHtml(p.name)}</div>
+          <div class="product-desc">${escapeHtml(p.description || '')}</div>
           <div class="product-price">
             ${App.formatCurrency(p.price)}
             ${p.mrp && p.mrp > p.price ? `<span style="text-decoration:line-through;color:var(--text-muted);font-size:0.72rem;font-weight:400;margin-left:4px;">${App.formatCurrency(p.mrp)}</span><span style="font-size:0.68rem;color:var(--success);font-weight:700;margin-left:4px;">${Math.round(((p.mrp - p.price) / p.mrp) * 100)}% off</span>` : ''}
-            <small>/${p.unit}</small>
+            <small>/${escapeHtml(p.unit)}</small>
           </div>
           <div class="product-action">
             ${isOutOfStock
